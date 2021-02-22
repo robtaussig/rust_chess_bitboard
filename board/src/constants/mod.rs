@@ -1,6 +1,7 @@
 #[path = "../util/mod.rs"]
 mod util;
 
+pub const EMPTY: u64 = 0;
 pub const INITIAL_WHITE_PAWNS: u64 = 65280;
 pub const INITIAL_WHITE_KNIGHTS: u64 = 66;
 pub const INITIAL_WHITE_BISHOPS: u64 = 36;

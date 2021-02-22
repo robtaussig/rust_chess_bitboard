@@ -1,0 +1,5 @@
+- Finish sliding attack directions for diagonals
+- Implement queen moves
+- Implement checking for check
+- Implement castling
+- Implement en passant
