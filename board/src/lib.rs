@@ -4,9 +4,7 @@ mod util;
 #[allow(unused_imports)]
 use util::*;
 
-#[derive(Clone, Copy)]
-#[derive(Debug)]
-#[derive(PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Pieces {
     WPawn,
     WKnight,
@@ -88,20 +86,10 @@ impl Board {
         black_kings: u64,
     ) -> Board {
         let white_pieces =
-            white_pawns |
-            white_knights |
-            white_bishops |
-            white_rooks |
-            white_queens |
-            white_kings;
+            white_pawns | white_knights | white_bishops | white_rooks | white_queens | white_kings;
 
         let black_pieces =
-            black_pawns |
-            black_knights |
-            black_bishops |
-            black_rooks |
-            black_queens |
-            black_kings;
+            black_pawns | black_knights | black_bishops | black_rooks | black_queens | black_kings;
 
         let pieces = white_pieces | black_pieces;
         let empty_squares = !pieces;
@@ -156,32 +144,28 @@ impl Board {
         let mut black_queens = EMPTY;
         let mut black_kings = EMPTY;
 
-        board.iter()
-            .enumerate()
-            .for_each(|(row, pieces)| {
-                pieces.iter()
-                    .enumerate()
-                    .for_each(|(col, piece)| {
-                        let pos = (row * 8) + col;
-                        let square = SQUARE_MASK[pos];
+        board.iter().enumerate().for_each(|(row, pieces)| {
+            pieces.iter().enumerate().for_each(|(col, piece)| {
+                let pos = (row * 8) + col;
+                let square = SQUARE_MASK[pos];
 
-                        match piece {
-                            Pieces::WPawn => white_pawns |= square,
-                            Pieces::WKnight => white_knights |= square,
-                            Pieces::WBishop => white_bishops |= square,
-                            Pieces::WRook => white_rooks |= square,
-                            Pieces::WQueen => white_queens |= square,
-                            Pieces::WKing => white_kings |= square,
-                            Pieces::BPawn => black_pawns |= square,
-                            Pieces::BKnight => black_knights |= square,
-                            Pieces::BBishop => black_bishops |= square,
-                            Pieces::BRook => black_rooks |= square,
-                            Pieces::BQueen => black_queens |= square,
-                            Pieces::BKing => black_kings |= square,
-                            Pieces::Empty => (),
-                        }
-                    });
+                match piece {
+                    Pieces::WPawn => white_pawns |= square,
+                    Pieces::WKnight => white_knights |= square,
+                    Pieces::WBishop => white_bishops |= square,
+                    Pieces::WRook => white_rooks |= square,
+                    Pieces::WQueen => white_queens |= square,
+                    Pieces::WKing => white_kings |= square,
+                    Pieces::BPawn => black_pawns |= square,
+                    Pieces::BKnight => black_knights |= square,
+                    Pieces::BBishop => black_bishops |= square,
+                    Pieces::BRook => black_rooks |= square,
+                    Pieces::BQueen => black_queens |= square,
+                    Pieces::BKing => black_kings |= square,
+                    Pieces::Empty => (),
+                }
             });
+        });
 
         Board::new(
             white_pawns,
@@ -205,7 +189,7 @@ impl Board {
             let rank = pos / 8;
             let file = pos % 8;
             let square = SQUARE_MASK[pos];
-            
+
             let piece = self.get_piece_at(square);
             board_array[rank][file] = piece;
         }
@@ -258,26 +242,18 @@ impl Board {
     }
 
     pub fn valid_king_moves(&self, squares: u64, own_side: u64) -> u64 {
-        let clip_h = squares & CLEAR_H_FILE;        
-        let clip_a = squares & CLEAR_A_FILE;        
+        let clip_h = squares & CLEAR_H_FILE;
+        let clip_a = squares & CLEAR_A_FILE;
         let left_up = clip_a << 7;
-        let up = squares << 8;        
-        let right_up = clip_h << 9;        
-        let right = clip_h << 1;        
-        let down_right = clip_h >> 7;       
-        let down = squares >> 8;        
-        let left_down = clip_a >> 9;        
-        let left = clip_a >> 1;        
-        
-        let moves =
-            left_up |
-            up |
-            right_up |
-            right |
-            down_right |
-            down |
-            left_down |
-            left;
+        let up = squares << 8;
+        let right_up = clip_h << 9;
+        let right = clip_h << 1;
+        let down_right = clip_h >> 7;
+        let down = squares >> 8;
+        let left_down = clip_a >> 9;
+        let left = clip_a >> 1;
+
+        let moves = left_up | up | right_up | right | down_right | down | left_down | left;
 
         moves & !own_side
     }
@@ -294,7 +270,7 @@ impl Board {
 
         let down_left_clip = CLEAR_A_FILE;
         let left_down_clip = CLEAR_A_FILE & CLEAR_B_FILE;
-        
+
         let left_up = (squares & left_up_clip) << 6;
         let up_left = (squares & up_left_clip) << 15;
         let up_right = (squares & up_right_clip) << 17;
@@ -304,15 +280,14 @@ impl Board {
         let down_left = (squares & down_left_clip) >> 17;
         let left_down = (squares & left_down_clip) >> 10;
 
-        let moves =
-            left_up |
-            up_left |
-            up_right |
-            right_up |
-            right_down |
-            down_right |
-            down_left |
-            left_down;
+        let moves = left_up
+            | up_left
+            | up_right
+            | right_up
+            | right_down
+            | down_right
+            | down_left
+            | left_down;
 
         moves & !own_side
     }
@@ -321,12 +296,12 @@ impl Board {
         let one_step = (squares << 8) & self.empty_squares;
         let two_steps = ((one_step & RANK_3) << 8) & self.empty_squares;
         let valid_steps = one_step | two_steps;
- 
+
         let left_attack = (squares & CLEAR_A_FILE) << 7;
         let right_attack = (squares & CLEAR_H_FILE) << 9;
         let attacks = left_attack | right_attack;
         let valid_attacks = attacks & self.black_pieces;
-        
+
         valid_steps | valid_attacks
     }
 
@@ -334,20 +309,32 @@ impl Board {
         let one_step = (squares >> 8) & self.empty_squares;
         let two_steps = ((one_step & RANK_6) >> 8) & self.empty_squares;
         let valid_steps = one_step | two_steps;
- 
+
         let left_attack = (squares & CLEAR_A_FILE) >> 9;
         let right_attack = (squares & CLEAR_H_FILE) >> 7;
         let attacks = left_attack | right_attack;
         let valid_attacks = attacks & self.white_pieces;
-        
+
         valid_steps | valid_attacks
     }
 
     pub fn valid_rook_moves(&self, squares: u64, own_pieces: u64) -> u64 {
-        self.south_attacks(squares, own_pieces) |
-        self.north_attacks(squares, own_pieces) |
-        self.east_attacks(squares, own_pieces) |
-        self.west_attacks(squares, own_pieces)
+        self.south_attacks(squares, own_pieces)
+            | self.north_attacks(squares, own_pieces)
+            | self.east_attacks(squares, own_pieces)
+            | self.west_attacks(squares, own_pieces)
+    }
+
+    pub fn valid_bishop_moves(&self, squares: u64, own_pieces: u64) -> u64 {
+        self.south_east_attacks(squares, own_pieces)
+            | self.north_east_attacks(squares, own_pieces)
+            | self.north_west_attacks(squares, own_pieces)
+            | self.south_west_attacks(squares, own_pieces)
+    }
+
+    pub fn valid_queen_moves(&self, squares: u64, own_pieces: u64) -> u64 {
+        self.valid_rook_moves(squares, own_pieces)
+            | self.valid_bishop_moves(squares, own_pieces)
     }
 
     pub fn south_attacks(&self, mut attacks: u64, own_pieces: u64) -> u64 {
@@ -387,34 +374,218 @@ impl Board {
         attacks |= empty & (attacks << 4);
         attacks & !own_pieces
     }
+
+    pub fn north_east_attacks(&self, mut attacks: u64, own_pieces: u64) -> u64 {
+        let mut empty = self.empty_squares & CLEAR_A_FILE;
+        attacks |= empty & (attacks << 9);
+        empty &= empty << 9;
+        attacks |= empty & (attacks << 18);
+        empty &= empty << 18;
+        attacks |= empty & (attacks << 36);
+        attacks & !own_pieces
+    }
+
+    pub fn south_east_attacks(&self, mut attacks: u64, own_pieces: u64) -> u64 {
+        let mut empty = self.empty_squares & CLEAR_A_FILE;
+        attacks |= empty & (attacks >> 7);
+        empty &= empty >> 7;
+        attacks |= empty & (attacks >> 14);
+        empty &= empty >> 14;
+        attacks |= empty & (attacks >> 28);
+        attacks & !own_pieces
+    }
+
+    pub fn south_west_attacks(&self, mut attacks: u64, own_pieces: u64) -> u64 {
+        let mut empty = self.empty_squares & CLEAR_H_FILE;
+        attacks |= empty & (attacks >> 9);
+        empty &= empty >> 9;
+        attacks |= empty & (attacks >> 18);
+        empty &= empty >> 18;
+        attacks |= empty & (attacks >> 36);
+        attacks & !own_pieces
+    }
+
+    pub fn north_west_attacks(&self, mut attacks: u64, own_pieces: u64) -> u64 {
+        let mut empty = self.empty_squares & CLEAR_H_FILE;
+        attacks |= empty & (attacks << 7);
+        empty &= empty << 7;
+        attacks |= empty & (attacks << 14);
+        empty &= empty << 14;
+        attacks |= empty & (attacks << 28);
+        attacks & !own_pieces
+    }
 }
 
 #[allow(unused_imports)]
 #[cfg(test)]
 mod tests {
     use super::*;
-    use util::{str_to_u64, print_bb};
+    use util::{print_bb, str_to_u64};
 
     const INTIAL_BOARD: BoardArray = [
-        [Pieces::BRook, Pieces::BKnight, Pieces::BBishop, Pieces::BQueen, Pieces::BKing, Pieces::BBishop, Pieces::BKnight, Pieces::BRook],
-        [Pieces::BPawn, Pieces::BPawn, Pieces::BPawn, Pieces::BPawn, Pieces::BPawn, Pieces::BPawn, Pieces::BPawn, Pieces::BPawn],
-        [Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty],
-        [Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty],
-        [Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty],
-        [Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty],
-        [Pieces::WPawn, Pieces::WPawn, Pieces::WPawn, Pieces::WPawn, Pieces::WPawn, Pieces::WPawn, Pieces::WPawn, Pieces::WPawn],
-        [Pieces::WRook, Pieces::WKnight, Pieces::WBishop, Pieces::WQueen, Pieces::WKing, Pieces::WBishop, Pieces::WKnight, Pieces::WRook],
+        [
+            Pieces::BRook,
+            Pieces::BKnight,
+            Pieces::BBishop,
+            Pieces::BQueen,
+            Pieces::BKing,
+            Pieces::BBishop,
+            Pieces::BKnight,
+            Pieces::BRook,
+        ],
+        [
+            Pieces::BPawn,
+            Pieces::BPawn,
+            Pieces::BPawn,
+            Pieces::BPawn,
+            Pieces::BPawn,
+            Pieces::BPawn,
+            Pieces::BPawn,
+            Pieces::BPawn,
+        ],
+        [
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+        ],
+        [
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+        ],
+        [
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+        ],
+        [
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+        ],
+        [
+            Pieces::WPawn,
+            Pieces::WPawn,
+            Pieces::WPawn,
+            Pieces::WPawn,
+            Pieces::WPawn,
+            Pieces::WPawn,
+            Pieces::WPawn,
+            Pieces::WPawn,
+        ],
+        [
+            Pieces::WRook,
+            Pieces::WKnight,
+            Pieces::WBishop,
+            Pieces::WQueen,
+            Pieces::WKing,
+            Pieces::WBishop,
+            Pieces::WKnight,
+            Pieces::WRook,
+        ],
     ];
 
     const EMPTY_BOARD: BoardArray = [
-        [Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty],
-        [Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty],
-        [Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty],
-        [Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty],
-        [Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty],
-        [Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty],
-        [Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty],
-        [Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty, Pieces::Empty],
+        [
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+        ],
+        [
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+        ],
+        [
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+        ],
+        [
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+        ],
+        [
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+        ],
+        [
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+        ],
+        [
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+        ],
+        [
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+            Pieces::Empty,
+        ],
     ];
 
     mod from_array {
@@ -486,25 +657,13 @@ mod tests {
         #[test]
         fn it_works_with_initial_board() {
             let b = Board::from_array(INTIAL_BOARD);
-            assert_eq!(
-                b.get_piece_at(E2_SQUARE),
-                Pieces::WPawn,
-            );
+            assert_eq!(b.get_piece_at(E2_SQUARE), Pieces::WPawn,);
 
-            assert_eq!(
-                b.get_piece_at(E7_SQUARE),
-                Pieces::BPawn,
-            );
+            assert_eq!(b.get_piece_at(E7_SQUARE), Pieces::BPawn,);
 
-            assert_eq!(
-                b.get_piece_at(E8_SQUARE),
-                Pieces::BKing,
-            );
+            assert_eq!(b.get_piece_at(E8_SQUARE), Pieces::BKing,);
 
-            assert_eq!(
-                b.get_piece_at(E1_SQUARE),
-                Pieces::WKing,
-            );
+            assert_eq!(b.get_piece_at(E1_SQUARE), Pieces::WKing,);
         }
     }
     mod valid_king_moves {
@@ -513,56 +672,38 @@ mod tests {
         #[test]
         fn it_works_with_no_obstacles() {
             let b = Board::new(
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                E3_SQUARE,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
+                EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, E3_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
                 EMPTY,
             );
 
-            let valid_squares =
-                D4_SQUARE |
-                E4_SQUARE |
-                F4_SQUARE |
-                F3_SQUARE |
-                F2_SQUARE |
-                E2_SQUARE |
-                D2_SQUARE |
-                D3_SQUARE;
+            let valid_squares = D4_SQUARE
+                | E4_SQUARE
+                | F4_SQUARE
+                | F3_SQUARE
+                | F2_SQUARE
+                | E2_SQUARE
+                | D2_SQUARE
+                | D3_SQUARE;
 
-            assert_eq!(b.valid_king_moves(b.white_kings, b.white_pieces), valid_squares);
+            assert_eq!(
+                b.valid_king_moves(b.white_kings, b.white_pieces),
+                valid_squares
+            );
         }
 
         #[test]
         fn it_works_with_edges() {
             let b = Board::new(
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                A1_SQUARE,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
+                EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, A1_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
                 EMPTY,
             );
 
-            let valid_squares =
-                A2_SQUARE |
-                B2_SQUARE |
-                B1_SQUARE;
+            let valid_squares = A2_SQUARE | B2_SQUARE | B1_SQUARE;
 
-            assert_eq!(b.valid_king_moves(b.white_kings, b.white_pieces), valid_squares);
+            assert_eq!(
+                b.valid_king_moves(b.white_kings, b.white_pieces),
+                valid_squares
+            );
         }
 
         #[test]
@@ -582,12 +723,12 @@ mod tests {
                 EMPTY,
             );
 
-            let valid_squares =
-                F3_SQUARE |
-                F2_SQUARE |
-                D3_SQUARE;
+            let valid_squares = F3_SQUARE | F2_SQUARE | D3_SQUARE;
 
-            assert_eq!(b.valid_king_moves(b.white_kings, b.white_pieces), valid_squares);
+            assert_eq!(
+                b.valid_king_moves(b.white_kings, b.white_pieces),
+                valid_squares
+            );
         }
 
         #[test]
@@ -609,85 +750,54 @@ mod tests {
         #[test]
         fn it_works_with_no_obstacles() {
             let b = Board::new(
-                EMPTY,
-                D4_SQUARE,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
+                EMPTY, D4_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
                 EMPTY,
             );
 
-            let valid_squares =
-                B5_SQUARE |
-                C6_SQUARE |
-                E6_SQUARE |
-                F5_SQUARE |
-                F3_SQUARE |
-                E2_SQUARE |
-                C2_SQUARE |
-                B3_SQUARE;
+            let valid_squares = B5_SQUARE
+                | C6_SQUARE
+                | E6_SQUARE
+                | F5_SQUARE
+                | F3_SQUARE
+                | E2_SQUARE
+                | C2_SQUARE
+                | B3_SQUARE;
 
-            assert_eq!(b.valid_knight_moves(b.white_knights, b.white_pieces), valid_squares);
+            assert_eq!(
+                b.valid_knight_moves(b.white_knights, b.white_pieces),
+                valid_squares
+            );
         }
 
         #[test]
         fn it_works_with_edges() {
             let b = Board::new(
-                EMPTY,
-                B4_SQUARE,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
+                EMPTY, B4_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
                 EMPTY,
             );
 
             let valid_squares =
-                A6_SQUARE |
-                C6_SQUARE |
-                D5_SQUARE |
-                D3_SQUARE |
-                C2_SQUARE |
-                A2_SQUARE;
+                A6_SQUARE | C6_SQUARE | D5_SQUARE | D3_SQUARE | C2_SQUARE | A2_SQUARE;
 
-            assert_eq!(b.valid_knight_moves(b.white_knights, b.white_pieces), valid_squares);
+            assert_eq!(
+                b.valid_knight_moves(b.white_knights, b.white_pieces),
+                valid_squares
+            );
         }
 
         #[test]
         fn it_works_with_other_shared_pieces() {
             let b = Board::new(
-                C_FILE,
-                B4_SQUARE,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
+                C_FILE, B4_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
                 EMPTY,
             );
 
-            let valid_squares =
-                A6_SQUARE |
-                D5_SQUARE |
-                D3_SQUARE |
-                A2_SQUARE;
+            let valid_squares = A6_SQUARE | D5_SQUARE | D3_SQUARE | A2_SQUARE;
 
-            assert_eq!(b.valid_knight_moves(b.white_knights, b.white_pieces), valid_squares);
+            assert_eq!(
+                b.valid_knight_moves(b.white_knights, b.white_pieces),
+                valid_squares
+            );
         }
 
         #[test]
@@ -696,62 +806,123 @@ mod tests {
             assert!(false);
         }
     }
-    
+
     mod valid_rook_moves {
         use super::*;
 
         #[test]
         fn it_works_with_no_obstacles() {
             let b = Board::new(
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                E4_SQUARE,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
+                EMPTY, EMPTY, EMPTY, E4_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
                 EMPTY,
             );
 
-            let valid_squares =
-                (E_FILE |
-                RANK_4) ^ E4_SQUARE;
-            
-            assert_eq!(b.valid_rook_moves(b.white_rooks, b.white_pieces), valid_squares);
+            let valid_squares = (E_FILE | RANK_4) ^ E4_SQUARE;
+
+            assert_eq!(
+                b.valid_rook_moves(b.white_rooks, b.white_pieces),
+                valid_squares
+            );
         }
 
         #[test]
         fn it_works_with_other_shared_pieces() {
             let b = Board::new(
-                E6_SQUARE,
-                EMPTY,
-                EMPTY,
-                E4_SQUARE,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
+                E6_SQUARE, EMPTY, EMPTY, E4_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+                EMPTY, EMPTY,
             );
 
-            let valid_squares =
-                (E_FILE |
-                RANK_4) ^ E4_SQUARE ^ E6_SQUARE ^ E7_SQUARE ^ E8_SQUARE;
-            
-            assert_eq!(b.valid_rook_moves(b.white_rooks, b.white_pieces), valid_squares);
+            let valid_squares = (E_FILE | RANK_4) ^ E4_SQUARE ^ E6_SQUARE ^ E7_SQUARE ^ E8_SQUARE;
+
+            assert_eq!(
+                b.valid_rook_moves(b.white_rooks, b.white_pieces),
+                valid_squares
+            );
         }
 
         #[test]
         fn it_checks_for_castling() {
             //TODO
             assert!(false);
+        }
+
+        #[test]
+        fn it_checks_for_check() {
+            //TODO
+            assert!(false);
+        }
+    }
+
+    mod valid_bishop_moves {
+        use super::*;
+
+        #[test]
+        fn it_works_with_no_obstacles() {
+            let b = Board::new(
+                EMPTY, EMPTY, B1_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+                EMPTY,
+            );
+
+            let valid_squares =
+                A2_SQUARE |
+                C2_SQUARE |
+                D3_SQUARE |
+                E4_SQUARE |
+                F5_SQUARE |
+                G6_SQUARE |
+                H7_SQUARE;
+
+            assert_eq!(
+                b.valid_bishop_moves(b.white_bishops, b.white_pieces),
+                valid_squares
+            );
+        }
+
+        #[test]
+        fn it_works_with_other_shared_pieces() {
+            let b = Board::new(
+                EMPTY, G6_SQUARE, B1_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+                EMPTY,
+            );
+
+            let valid_squares =
+                A2_SQUARE |
+                C2_SQUARE |
+                D3_SQUARE |
+                E4_SQUARE |
+                F5_SQUARE;
+
+            assert_eq!(
+                b.valid_bishop_moves(b.white_bishops, b.white_pieces),
+                valid_squares
+            );
+        }
+
+        #[test]
+        fn it_checks_for_check() {
+            //TODO
+            assert!(false);
+        }
+    }
+
+    mod valid_queen_moves {
+        use super::*;
+
+        #[test]
+        fn it_combines_rooks_and_bishop_moves() {
+            let b = Board::new(
+                G3_SQUARE, B6_SQUARE, EMPTY, EMPTY, G6_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
+                EMPTY,
+            );
+
+            let bishop_moves = b.valid_bishop_moves(b.white_queens, b.white_pieces);
+            let rook_moves = b.valid_rook_moves(b.white_queens, b.white_pieces);
+            let valid_moves = bishop_moves | rook_moves;
+
+            assert_eq!(
+                b.valid_queen_moves(b.white_queens, b.white_pieces),
+                valid_moves,
+            );
         }
 
         #[test]
@@ -781,21 +952,20 @@ mod tests {
                 EMPTY,
             );
 
-            let valid_squares =
-                A3_SQUARE |
-                A4_SQUARE |
-                B3_SQUARE |
-                B4_SQUARE |
-                D3_SQUARE |
-                D4_SQUARE |
-                E3_SQUARE |
-                E4_SQUARE |
-                F3_SQUARE |
-                F4_SQUARE |
-                G3_SQUARE |
-                G4_SQUARE |
-                H3_SQUARE |
-                H4_SQUARE;
+            let valid_squares = A3_SQUARE
+                | A4_SQUARE
+                | B3_SQUARE
+                | B4_SQUARE
+                | D3_SQUARE
+                | D4_SQUARE
+                | E3_SQUARE
+                | E4_SQUARE
+                | F3_SQUARE
+                | F4_SQUARE
+                | G3_SQUARE
+                | G4_SQUARE
+                | H3_SQUARE
+                | H4_SQUARE;
 
             assert_eq!(b.valid_white_pawn_moves(b.white_pawns), valid_squares);
         }
@@ -803,29 +973,17 @@ mod tests {
         #[test]
         fn it_works_from_non_home_square() {
             let b = Board::new(
-                RANK_4,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
+                RANK_4, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
             );
 
-            let valid_squares =                
-                A5_SQUARE |                
-                B5_SQUARE |                
-                C5_SQUARE |              
-                D5_SQUARE |
-                E5_SQUARE |                
-                F5_SQUARE |                
-                G5_SQUARE |                
-                H5_SQUARE;
+            let valid_squares = A5_SQUARE
+                | B5_SQUARE
+                | C5_SQUARE
+                | D5_SQUARE
+                | E5_SQUARE
+                | F5_SQUARE
+                | G5_SQUARE
+                | H5_SQUARE;
 
             assert_eq!(b.valid_white_pawn_moves(b.white_pawns), valid_squares);
         }
@@ -833,23 +991,11 @@ mod tests {
         #[test]
         fn it_works_with_captures() {
             let b = Board::new(
-                E5_SQUARE,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                F6_SQUARE,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
+                E5_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, F6_SQUARE, EMPTY, EMPTY, EMPTY,
+                EMPTY, EMPTY,
             );
 
-            let valid_squares =                
-                E6_SQUARE |                
-                F6_SQUARE;
+            let valid_squares = E6_SQUARE | F6_SQUARE;
 
             assert_eq!(b.valid_white_pawn_moves(b.white_pawns), valid_squares);
         }
@@ -857,18 +1003,8 @@ mod tests {
         #[test]
         fn it_works_with_obstacles() {
             let b = Board::new(
-                E5_SQUARE,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                E6_SQUARE,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
+                E5_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, E6_SQUARE, EMPTY, EMPTY, EMPTY,
+                EMPTY, EMPTY,
             );
 
             let valid_squares = EMPTY;
@@ -909,21 +1045,20 @@ mod tests {
                 EMPTY,
             );
 
-            let valid_squares =
-                A6_SQUARE |
-                A5_SQUARE |
-                B6_SQUARE |
-                B5_SQUARE |
-                D6_SQUARE |
-                D5_SQUARE |
-                E6_SQUARE |
-                E5_SQUARE |
-                F6_SQUARE |
-                F5_SQUARE |
-                G6_SQUARE |
-                G5_SQUARE |
-                H6_SQUARE |
-                H5_SQUARE;
+            let valid_squares = A6_SQUARE
+                | A5_SQUARE
+                | B6_SQUARE
+                | B5_SQUARE
+                | D6_SQUARE
+                | D5_SQUARE
+                | E6_SQUARE
+                | E5_SQUARE
+                | F6_SQUARE
+                | F5_SQUARE
+                | G6_SQUARE
+                | G5_SQUARE
+                | H6_SQUARE
+                | H5_SQUARE;
 
             assert_eq!(b.valid_black_pawn_moves(b.black_pawns), valid_squares);
         }
@@ -931,29 +1066,17 @@ mod tests {
         #[test]
         fn it_works_from_non_home_square() {
             let b = Board::new(
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                RANK_4,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
+                EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, RANK_4, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
             );
 
-            let valid_squares =                
-                A3_SQUARE |                
-                B3_SQUARE |                
-                C3_SQUARE |              
-                D3_SQUARE |
-                E3_SQUARE |                
-                F3_SQUARE |                
-                G3_SQUARE |                
-                H3_SQUARE;
+            let valid_squares = A3_SQUARE
+                | B3_SQUARE
+                | C3_SQUARE
+                | D3_SQUARE
+                | E3_SQUARE
+                | F3_SQUARE
+                | G3_SQUARE
+                | H3_SQUARE;
 
             assert_eq!(b.valid_black_pawn_moves(b.black_pawns), valid_squares);
         }
@@ -961,23 +1084,11 @@ mod tests {
         #[test]
         fn it_works_with_captures() {
             let b = Board::new(
-                E5_SQUARE,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                F6_SQUARE,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
+                E5_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, F6_SQUARE, EMPTY, EMPTY, EMPTY,
+                EMPTY, EMPTY,
             );
 
-            let valid_squares =                
-                E5_SQUARE |                
-                F5_SQUARE;
+            let valid_squares = E5_SQUARE | F5_SQUARE;
 
             assert_eq!(b.valid_black_pawn_moves(b.black_pawns), valid_squares);
         }
@@ -985,18 +1096,8 @@ mod tests {
         #[test]
         fn it_works_with_obstacles() {
             let b = Board::new(
-                E5_SQUARE,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                E6_SQUARE,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
+                E5_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, E6_SQUARE, EMPTY, EMPTY, EMPTY,
+                EMPTY, EMPTY,
             );
 
             let valid_squares = EMPTY;
@@ -1014,112 +1115,6 @@ mod tests {
         fn it_checks_for_en_passant() {
             //TODO
             assert!(false);
-        }
-    }
-
-    mod directional_attacks {
-        use  super::*;
-        
-        #[test]
-        fn south_attacks_works() {
-            let b = Board::new(
-                INITIAL_WHITE_PAWNS,
-                EMPTY,
-                EMPTY,
-                INITIAL_WHITE_ROOKS,
-                EMPTY,
-                EMPTY,
-                A7_SQUARE,
-                EMPTY,
-                EMPTY,
-                INITIAL_BLACK_ROOKS,
-                EMPTY,
-                EMPTY,
-            );
-
-            let attacks = b.south_attacks(b.black_rooks, b.black_pieces);
-            
-            let expected_moves =
-                H_FILE ^
-                H8_SQUARE ^
-                H1_SQUARE;
-
-            assert_eq!(attacks, expected_moves);
-        }
-
-        #[test]
-        fn north_attacks_works() {
-            let b = Board::new(
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                INITIAL_WHITE_ROOKS,
-                EMPTY,
-                EMPTY,
-                A7_SQUARE,
-                EMPTY,
-                EMPTY,
-                INITIAL_BLACK_ROOKS,
-                EMPTY,
-                EMPTY,
-            );
-
-            let attacks = b.north_attacks(b.white_rooks, b.white_pieces);
-            
-            let expected_moves =
-                ((A_FILE | H_FILE) & CLEAR_RANK_1) ^ A8_SQUARE;
-
-            assert_eq!(attacks, expected_moves);
-        }
-
-        #[test]
-        fn west_attacks_works() {
-            let b = Board::new(
-                EMPTY,
-                B1_SQUARE,
-                EMPTY,
-                H1_SQUARE,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-            );
-
-            let attacks = b.west_attacks(b.white_rooks, b.white_pieces);
-            
-            let expected_moves =
-                RANK_1 ^ A1_SQUARE ^ B1_SQUARE ^ H1_SQUARE;
-
-            assert_eq!(attacks, expected_moves);
-        }
-
-        #[test]
-        fn east_attacks_works() {
-            let b = Board::new(
-                EMPTY,
-                G1_SQUARE,
-                EMPTY,
-                A1_SQUARE,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-            );
-
-            let attacks = b.east_attacks(b.white_rooks, b.white_pieces);
-            
-            let expected_moves =
-                RANK_1 ^ G1_SQUARE ^ H1_SQUARE ^ A1_SQUARE;
-
-            assert_eq!(attacks, expected_moves);
         }
     }
 
