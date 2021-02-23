@@ -81,6 +81,36 @@ impl BitBoard {
     pub fn shr(self, int: u8) -> BitBoard {
         BitBoard(self.0 >> int)
     }
+
+    pub fn bits(self) -> BitIterator {
+        BitIterator::new(self)
+    }
+}
+
+pub struct BitIterator {
+    bb: u64,
+}
+
+impl BitIterator {
+    pub fn new(bb: BitBoard) -> Self {
+        BitIterator {
+            bb: bb.0,
+        }
+    }
+}
+
+impl Iterator for BitIterator {
+    type Item = usize;
+
+    fn next(&mut self) -> Option<usize> {        
+        if self.bb != 0 {
+            let bit = self.bb.trailing_zeros();
+            self.bb &= self.bb - 1;
+            Some(bit as usize)
+        } else {
+            None
+        }
+    }
 }
 
 struct VisualBinaryString { bb: BitBoard }
@@ -171,5 +201,23 @@ impl fmt::Display for VisualBinaryString {
         char_vec[57],
         char_vec[56],
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    mod bits {
+        use super::*;
+
+        #[test]
+        fn it_works() {
+            let mut total: u64 = 0;
+            let bb = BitBoard(18374686479671623680);
+            bb.bits().into_iter().for_each(|bit| {
+                total += bit as u64;
+            });
+            assert_eq!(total, 476);
+        }
     }
 }
