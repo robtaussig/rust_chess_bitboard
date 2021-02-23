@@ -1,37 +1,93 @@
-use std::fmt;
+use std::{fmt, ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not}};
 
-#[allow(dead_code)]
-pub fn str_to_u64(str: &str) -> u64 {
-    u64::from_str_radix(str, 2).unwrap()
-}
+#[derive(PartialEq, PartialOrd, Clone, Copy, Debug, Default)]
+pub struct BitBoard(pub u64);
 
-struct BinaryString { num: u64 }
+pub const EMPTY: BitBoard = BitBoard(0);
 
-impl BinaryString {
-    pub fn new(num: u64) -> Self {
-        BinaryString { num }
+impl BitAnd for BitBoard {
+    type Output = Self;
+
+    fn bitand(self, rhs: Self) -> Self::Output {
+        Self(self.0 & rhs.0)
     }
 }
 
-impl fmt::Display for BinaryString {
+impl BitAndAssign for BitBoard {
+    fn bitand_assign(&mut self, rhs: Self) {
+        self.0 &= rhs.0;
+    }
+}
+
+impl BitOr for BitBoard {
+    type Output = Self;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+        Self(self.0 | rhs.0)
+    }
+}
+
+impl BitOrAssign for BitBoard {
+    fn bitor_assign(&mut self, rhs: Self) {
+        self.0 |= rhs.0;
+    }
+}
+
+impl BitXor for BitBoard {
+    type Output = Self;
+
+    fn bitxor(self, rhs: Self) -> Self::Output {
+        Self(self.0 ^ rhs.0)
+    }
+}
+
+impl BitXorAssign for BitBoard {
+    fn bitxor_assign(&mut self, rhs: Self) {
+        self.0 ^= rhs.0;
+    }
+}
+
+impl Not for BitBoard {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        BitBoard(!self.0)
+    }
+}
+
+impl fmt::Display for BitBoard {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Binary::fmt(&self.num, f)
+        fmt::Binary::fmt(&self.0, f)
     }
 }
 
-struct VisualBinaryString { num: u64 }
+impl BitBoard {
+    pub fn to_str(&self) -> String {
+        format!("{:0>64}", self)
+    }
 
-#[allow(dead_code)]
-impl VisualBinaryString {
-    pub fn new(num: u64) -> Self {
-        VisualBinaryString { num }
+    pub fn from_str(str: &str) -> BitBoard {
+        BitBoard(u64::from_str_radix(str, 2).unwrap())
+    }
+
+    pub fn print_bb(self) {
+        println!("{}", VisualBinaryString { bb: self });
+    }
+
+    pub fn shl(self, int: u8) -> BitBoard {
+        BitBoard(self.0 << int)
+    }
+
+    pub fn shr(self, int: u8) -> BitBoard {
+        BitBoard(self.0 >> int)
     }
 }
+
+struct VisualBinaryString { bb: BitBoard }
 
 impl fmt::Display for VisualBinaryString {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let bb = u64_to_str(self.num);
-        let char_vec: Vec<char> = bb.chars().collect();
+        let char_vec: Vec<char> = self.bb.to_str().chars().collect();
 
         write!(f,"
             {}{}{}{}{}{}{}{}
@@ -116,14 +172,4 @@ impl fmt::Display for VisualBinaryString {
         char_vec[56],
         )
     }
-}
-
-#[allow(dead_code)]
-pub fn u64_to_str(num: u64) -> String {
-    format!("{:0>64}", BinaryString::new(num))
-}
-
-#[allow(dead_code)]
-pub fn print_bb(num: u64) {
-    println!("{}", VisualBinaryString { num });
 }
