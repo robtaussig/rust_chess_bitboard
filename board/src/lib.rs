@@ -6,10 +6,10 @@ mod piece;
 use piece::Pieces;
 
 type BoardArray = [[Pieces; 8]; 8];
-type BitBoardTables = [BitBoard; NUM_BITBOARDS];
 
 pub struct Board {
-    pub bbs: BitBoardTables,
+    pub piece_bbs: [[BitBoard; 6]; 2],
+    pub combined_bbs: [BitBoard; 10],
 }
 
 impl Default for Board {
@@ -46,20 +46,21 @@ impl Board {
         black_queens: BitBoard,
         black_kings: BitBoard,
     ) -> Board {
-        let mut bbs: BitBoardTables = [EMPTY; NUM_BITBOARDS];
+        let mut piece_bbs= [[EMPTY; 6]; 2];
+        let mut combined_bbs= [EMPTY; 10];
 
-        bbs[WHITE_PAWNS_BB] = white_pawns;
-        bbs[WHITE_KNIGHTS_BB] = white_knights;
-        bbs[WHITE_BISHOPS_BB] = white_bishops;
-        bbs[WHITE_ROOKS_BB] = white_rooks;
-        bbs[WHITE_QUEENS_BB] = white_queens;
-        bbs[WHITE_KINGS_BB] = white_kings;
-        bbs[BLACK_PAWNS_BB] = black_pawns;
-        bbs[BLACK_KNIGHTS_BB] = black_knights;
-        bbs[BLACK_BISHOPS_BB] = black_bishops;
-        bbs[BLACK_ROOKS_BB] = black_rooks;
-        bbs[BLACK_QUEENS_BB] = black_queens;
-        bbs[BLACK_KINGS_BB] = black_kings;
+        piece_bbs[WHITE][PAWNS_BB] = white_pawns;
+        piece_bbs[WHITE][KNIGHTS_BB] = white_knights;
+        piece_bbs[WHITE][BISHOPS_BB] = white_bishops;
+        piece_bbs[WHITE][ROOKS_BB] = white_rooks;
+        piece_bbs[WHITE][QUEENS_BB] = white_queens;
+        piece_bbs[WHITE][KINGS_BB] = white_kings;
+        piece_bbs[BLACK][PAWNS_BB] = black_pawns;
+        piece_bbs[BLACK][KNIGHTS_BB] = black_knights;
+        piece_bbs[BLACK][BISHOPS_BB] = black_bishops;
+        piece_bbs[BLACK][ROOKS_BB] = black_rooks;
+        piece_bbs[BLACK][QUEENS_BB] = black_queens;
+        piece_bbs[BLACK][KINGS_BB] = black_kings;
 
         let white_pieces =
             white_pawns | white_knights | white_bishops | white_rooks | white_queens | white_kings;
@@ -77,19 +78,20 @@ impl Board {
         let queens = white_queens | black_queens;
         let kings = white_kings | black_kings;
 
-        bbs[ALL_PAWNS_BB] = pawns;
-        bbs[ALL_KNIGHTS_BB] = knights;
-        bbs[ALL_BISHOPS_BB] = bishops;
-        bbs[ALL_ROOKS_BB] = rooks;
-        bbs[ALL_QUEENS_BB] = queens;
-        bbs[ALL_KINGS_BB] = kings;
-        bbs[WHITE_PIECES_BB] = white_pieces;
-        bbs[BLACK_PIECES_BB] = black_pieces;
-        bbs[ALL_PIECES_BB] = pieces;
-        bbs[EMPTY_SQUARES_BB] = empty_squares;
+        combined_bbs[ALL_PAWNS_BB] = pawns;
+        combined_bbs[ALL_KNIGHTS_BB] = knights;
+        combined_bbs[ALL_BISHOPS_BB] = bishops;
+        combined_bbs[ALL_ROOKS_BB] = rooks;
+        combined_bbs[ALL_QUEENS_BB] = queens;
+        combined_bbs[ALL_KINGS_BB] = kings;
+        combined_bbs[WHITE_PIECES_BB] = white_pieces;
+        combined_bbs[BLACK_PIECES_BB] = black_pieces;
+        combined_bbs[ALL_PIECES_BB] = pieces;
+        combined_bbs[EMPTY_SQUARES_BB] = empty_squares;
 
         Board {
-            bbs,
+            piece_bbs,
+            combined_bbs,
         }
     }
 
@@ -161,41 +163,41 @@ impl Board {
     }
 
     pub fn get_piece_at(&self, square: BitBoard) -> Pieces {
-        if self.bbs[EMPTY_SQUARES_BB] & square != EMPTY {
+        if self.combined_bbs[EMPTY_SQUARES_BB] & square != EMPTY {
             Pieces::Empty
         } else {
-            if self.bbs[ALL_PAWNS_BB] & square != EMPTY {
-                if self.bbs[BLACK_PIECES_BB] & square != EMPTY {
+            if self.combined_bbs[ALL_PAWNS_BB] & square != EMPTY {
+                if self.combined_bbs[BLACK_PIECES_BB] & square != EMPTY {
                     Pieces::BPawn
                 } else {
                     Pieces::WPawn
                 }
-            } else if self.bbs[ALL_KNIGHTS_BB] & square != EMPTY {
-                if self.bbs[BLACK_PIECES_BB] & square != EMPTY {
+            } else if self.combined_bbs[ALL_KNIGHTS_BB] & square != EMPTY {
+                if self.combined_bbs[BLACK_PIECES_BB] & square != EMPTY {
                     Pieces::BKnight
                 } else {
                     Pieces::WKnight
                 }
-            } else if self.bbs[ALL_BISHOPS_BB] & square != EMPTY {
-                if self.bbs[BLACK_PIECES_BB] & square != EMPTY {
+            } else if self.combined_bbs[ALL_BISHOPS_BB] & square != EMPTY {
+                if self.combined_bbs[BLACK_PIECES_BB] & square != EMPTY {
                     Pieces::BBishop
                 } else {
                     Pieces::WBishop
                 }
-            } else if self.bbs[ALL_ROOKS_BB] & square != EMPTY {
-                if self.bbs[BLACK_PIECES_BB] & square != EMPTY {
+            } else if self.combined_bbs[ALL_ROOKS_BB] & square != EMPTY {
+                if self.combined_bbs[BLACK_PIECES_BB] & square != EMPTY {
                     Pieces::BRook
                 } else {
                     Pieces::WRook
                 }
-            } else if self.bbs[ALL_QUEENS_BB] & square != EMPTY {
-                if self.bbs[BLACK_PIECES_BB] & square != EMPTY {
+            } else if self.combined_bbs[ALL_QUEENS_BB] & square != EMPTY {
+                if self.combined_bbs[BLACK_PIECES_BB] & square != EMPTY {
                     Pieces::BQueen
                 } else {
                     Pieces::WQueen
                 }
             } else {
-                if self.bbs[BLACK_PIECES_BB] & square != EMPTY {
+                if self.combined_bbs[BLACK_PIECES_BB] & square != EMPTY {
                     Pieces::BKing
                 } else {
                     Pieces::WKing
@@ -256,27 +258,27 @@ impl Board {
     }
 
     pub fn valid_white_pawn_moves(&self, squares: BitBoard) -> BitBoard {
-        let one_step = (squares.shl(8)) & self.bbs[EMPTY_SQUARES_BB];
-        let two_steps = ((one_step & RANK_3).shl(8)) & self.bbs[EMPTY_SQUARES_BB];
+        let one_step = (squares.shl(8)) & self.combined_bbs[EMPTY_SQUARES_BB];
+        let two_steps = ((one_step & RANK_3).shl(8)) & self.combined_bbs[EMPTY_SQUARES_BB];
         let valid_steps = one_step | two_steps;
 
         let left_attack = (squares & CLEAR_A_FILE).shl(7);
         let right_attack = (squares & CLEAR_H_FILE).shl(9);
         let attacks = left_attack | right_attack;
-        let valid_attacks = attacks & self.bbs[BLACK_PIECES_BB];
+        let valid_attacks = attacks & self.combined_bbs[BLACK_PIECES_BB];
 
         valid_steps | valid_attacks
     }
 
     pub fn valid_black_pawn_moves(&self, squares: BitBoard) -> BitBoard {
-        let one_step = (squares.shr(8)) & self.bbs[EMPTY_SQUARES_BB];
-        let two_steps = ((one_step & RANK_6).shr(8)) & self.bbs[EMPTY_SQUARES_BB];
+        let one_step = (squares.shr(8)) & self.combined_bbs[EMPTY_SQUARES_BB];
+        let two_steps = ((one_step & RANK_6).shr(8)) & self.combined_bbs[EMPTY_SQUARES_BB];
         let valid_steps = one_step | two_steps;
 
         let left_attack = (squares & CLEAR_A_FILE).shr(9);
         let right_attack = (squares & CLEAR_H_FILE).shr(7);
         let attacks = left_attack | right_attack;
-        let valid_attacks = attacks & self.bbs[WHITE_PIECES_BB];
+        let valid_attacks = attacks & self.combined_bbs[WHITE_PIECES_BB];
 
         valid_steps | valid_attacks
     }
@@ -301,8 +303,8 @@ impl Board {
     }
 
     pub fn south_attacks(&self, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
-        attacks |= self.bbs[EMPTY_SQUARES_BB] & (attacks.shr(8));
-        let mut empty = self.bbs[EMPTY_SQUARES_BB] & (self.bbs[EMPTY_SQUARES_BB].shr(8));
+        attacks |= self.combined_bbs[EMPTY_SQUARES_BB] & (attacks.shr(8));
+        let mut empty = self.combined_bbs[EMPTY_SQUARES_BB] & (self.combined_bbs[EMPTY_SQUARES_BB].shr(8));
         attacks |= empty & (attacks.shr(16));
         empty &= empty.shr(16);
         attacks |= empty & (attacks.shr(32));
@@ -310,8 +312,8 @@ impl Board {
     }
 
     pub fn north_attacks(&self, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
-        attacks |= self.bbs[EMPTY_SQUARES_BB] & (attacks.shl(8));
-        let mut empty = self.bbs[EMPTY_SQUARES_BB] & (self.bbs[EMPTY_SQUARES_BB].shl(8));
+        attacks |= self.combined_bbs[EMPTY_SQUARES_BB] & (attacks.shl(8));
+        let mut empty = self.combined_bbs[EMPTY_SQUARES_BB] & (self.combined_bbs[EMPTY_SQUARES_BB].shl(8));
         attacks |= empty & (attacks.shl(16));
         empty &= empty.shl(16);
         attacks |= empty & (attacks.shl(32));
@@ -319,7 +321,7 @@ impl Board {
     }
 
     pub fn west_attacks(&self, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
-        let mut empty = self.bbs[EMPTY_SQUARES_BB] & CLEAR_H_FILE;
+        let mut empty = self.combined_bbs[EMPTY_SQUARES_BB] & CLEAR_H_FILE;
         attacks |= empty & (attacks.shr(1));
         empty &= empty.shr(1);
         attacks |= empty & (attacks.shr(2));
@@ -329,7 +331,7 @@ impl Board {
     }
 
     pub fn east_attacks(&self, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
-        let mut empty = self.bbs[EMPTY_SQUARES_BB] & CLEAR_A_FILE;
+        let mut empty = self.combined_bbs[EMPTY_SQUARES_BB] & CLEAR_A_FILE;
         attacks |= empty & (attacks.shl(1));
         empty &= empty.shl(1);
         attacks |= empty & (attacks.shl(2));
@@ -339,7 +341,7 @@ impl Board {
     }
 
     pub fn north_east_attacks(&self, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
-        let mut empty = self.bbs[EMPTY_SQUARES_BB] & CLEAR_A_FILE;
+        let mut empty = self.combined_bbs[EMPTY_SQUARES_BB] & CLEAR_A_FILE;
         attacks |= empty & (attacks.shl(9));
         empty &= empty.shl(9);
         attacks |= empty & (attacks.shl(18));
@@ -349,7 +351,7 @@ impl Board {
     }
 
     pub fn south_east_attacks(&self, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
-        let mut empty = self.bbs[EMPTY_SQUARES_BB] & CLEAR_A_FILE;
+        let mut empty = self.combined_bbs[EMPTY_SQUARES_BB] & CLEAR_A_FILE;
         attacks |= empty & (attacks.shr(7));
         empty &= empty.shr(7);
         attacks |= empty & (attacks.shr(14));
@@ -359,7 +361,7 @@ impl Board {
     }
 
     pub fn south_west_attacks(&self, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
-        let mut empty = self.bbs[EMPTY_SQUARES_BB] & CLEAR_H_FILE;
+        let mut empty = self.combined_bbs[EMPTY_SQUARES_BB] & CLEAR_H_FILE;
         attacks |= empty & (attacks.shr(9));
         empty &= empty.shr(9);
         attacks |= empty & (attacks.shr(18));
@@ -369,7 +371,7 @@ impl Board {
     }
 
     pub fn north_west_attacks(&self, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
-        let mut empty = self.bbs[EMPTY_SQUARES_BB] & CLEAR_H_FILE;
+        let mut empty = self.combined_bbs[EMPTY_SQUARES_BB] & CLEAR_H_FILE;
         attacks |= empty & (attacks.shl(7));
         empty &= empty.shl(7);
         attacks |= empty & (attacks.shl(14));
@@ -556,35 +558,35 @@ mod tests {
         #[test]
         fn it_works_with_initial_board() {
             let b = Board::from_array(INTIAL_BOARD);
-            assert_eq!(b.bbs[WHITE_PAWNS_BB], INITIAL_WHITE_PAWNS);
-            assert_eq!(b.bbs[WHITE_KNIGHTS_BB], INITIAL_WHITE_KNIGHTS);
-            assert_eq!(b.bbs[WHITE_BISHOPS_BB], INITIAL_WHITE_BISHOPS);
-            assert_eq!(b.bbs[WHITE_ROOKS_BB], INITIAL_WHITE_ROOKS);
-            assert_eq!(b.bbs[WHITE_QUEENS_BB], INITIAL_WHITE_QUEENS);
-            assert_eq!(b.bbs[WHITE_KINGS_BB], INITIAL_WHITE_KINGS);
-            assert_eq!(b.bbs[BLACK_PAWNS_BB], INITIAL_BLACK_PAWNS);
-            assert_eq!(b.bbs[BLACK_KNIGHTS_BB], INITIAL_BLACK_KNIGHTS);
-            assert_eq!(b.bbs[BLACK_BISHOPS_BB], INITIAL_BLACK_BISHOPS);
-            assert_eq!(b.bbs[BLACK_ROOKS_BB], INITIAL_BLACK_ROOKS);
-            assert_eq!(b.bbs[BLACK_QUEENS_BB], INITIAL_BLACK_QUEENS);
-            assert_eq!(b.bbs[BLACK_KINGS_BB], INITIAL_BLACK_KINGS);
+            assert_eq!(b.piece_bbs[WHITE][PAWNS_BB], INITIAL_WHITE_PAWNS);
+            assert_eq!(b.piece_bbs[WHITE][KNIGHTS_BB], INITIAL_WHITE_KNIGHTS);
+            assert_eq!(b.piece_bbs[WHITE][BISHOPS_BB], INITIAL_WHITE_BISHOPS);
+            assert_eq!(b.piece_bbs[WHITE][ROOKS_BB], INITIAL_WHITE_ROOKS);
+            assert_eq!(b.piece_bbs[WHITE][QUEENS_BB], INITIAL_WHITE_QUEENS);
+            assert_eq!(b.piece_bbs[WHITE][KINGS_BB], INITIAL_WHITE_KINGS);
+            assert_eq!(b.piece_bbs[BLACK][PAWNS_BB], INITIAL_BLACK_PAWNS);
+            assert_eq!(b.piece_bbs[BLACK][KNIGHTS_BB], INITIAL_BLACK_KNIGHTS);
+            assert_eq!(b.piece_bbs[BLACK][BISHOPS_BB], INITIAL_BLACK_BISHOPS);
+            assert_eq!(b.piece_bbs[BLACK][ROOKS_BB], INITIAL_BLACK_ROOKS);
+            assert_eq!(b.piece_bbs[BLACK][QUEENS_BB], INITIAL_BLACK_QUEENS);
+            assert_eq!(b.piece_bbs[BLACK][KINGS_BB], INITIAL_BLACK_KINGS);
         }
 
         #[test]
         fn it_works_with_empty_board() {
             let b = Board::from_array(EMPTY_BOARD);
-            assert_eq!(b.bbs[WHITE_PAWNS_BB], EMPTY);
-            assert_eq!(b.bbs[WHITE_KNIGHTS_BB], EMPTY);
-            assert_eq!(b.bbs[WHITE_BISHOPS_BB], EMPTY);
-            assert_eq!(b.bbs[WHITE_ROOKS_BB], EMPTY);
-            assert_eq!(b.bbs[WHITE_QUEENS_BB], EMPTY);
-            assert_eq!(b.bbs[WHITE_KINGS_BB], EMPTY);
-            assert_eq!(b.bbs[BLACK_PAWNS_BB], EMPTY);
-            assert_eq!(b.bbs[BLACK_KNIGHTS_BB], EMPTY);
-            assert_eq!(b.bbs[BLACK_BISHOPS_BB], EMPTY);
-            assert_eq!(b.bbs[BLACK_ROOKS_BB], EMPTY);
-            assert_eq!(b.bbs[BLACK_QUEENS_BB], EMPTY);
-            assert_eq!(b.bbs[BLACK_KINGS_BB], EMPTY);
+            assert_eq!(b.piece_bbs[WHITE][PAWNS_BB], EMPTY);
+            assert_eq!(b.piece_bbs[WHITE][KNIGHTS_BB], EMPTY);
+            assert_eq!(b.piece_bbs[WHITE][BISHOPS_BB], EMPTY);
+            assert_eq!(b.piece_bbs[WHITE][ROOKS_BB], EMPTY);
+            assert_eq!(b.piece_bbs[WHITE][QUEENS_BB], EMPTY);
+            assert_eq!(b.piece_bbs[WHITE][KINGS_BB], EMPTY);
+            assert_eq!(b.piece_bbs[BLACK][PAWNS_BB], EMPTY);
+            assert_eq!(b.piece_bbs[BLACK][KNIGHTS_BB], EMPTY);
+            assert_eq!(b.piece_bbs[BLACK][BISHOPS_BB], EMPTY);
+            assert_eq!(b.piece_bbs[BLACK][ROOKS_BB], EMPTY);
+            assert_eq!(b.piece_bbs[BLACK][QUEENS_BB], EMPTY);
+            assert_eq!(b.piece_bbs[BLACK][KINGS_BB], EMPTY);
         }
 
         #[test]
@@ -593,22 +595,22 @@ mod tests {
 
             assert_eq!(
                 BitBoard::from_str("0000000000000000111111111111111111111111111111110000000000000000"),
-                b.bbs[EMPTY_SQUARES_BB],
+                b.combined_bbs[EMPTY_SQUARES_BB],
             );
 
             assert_eq!(
                 BitBoard::from_str("1111111111111111000000000000000000000000000000000000000000000000"),
-                b.bbs[BLACK_PIECES_BB],
+                b.combined_bbs[BLACK_PIECES_BB],
             );
 
             assert_eq!(
                 BitBoard::from_str("0000000000000000000000000000000000000000000000001111111111111111"),
-                b.bbs[WHITE_PIECES_BB],
+                b.combined_bbs[WHITE_PIECES_BB],
             );
 
             assert_eq!(
                 BitBoard::from_str("1111111111111111000000000000000000000000000000001111111111111111"),
-                b.bbs[ALL_PIECES_BB],
+                b.combined_bbs[ALL_PIECES_BB],
             );
         }
     }
@@ -648,7 +650,7 @@ mod tests {
                 | D3_SQUARE;
 
             assert_eq!(
-                b.valid_king_moves(b.bbs[WHITE_KINGS_BB], b.bbs[WHITE_PIECES_BB]),
+                b.valid_king_moves(b.piece_bbs[WHITE][KINGS_BB], b.combined_bbs[WHITE_PIECES_BB]),
                 valid_squares
             );
         }
@@ -663,7 +665,7 @@ mod tests {
             let valid_squares = A2_SQUARE | B2_SQUARE | B1_SQUARE;
 
             assert_eq!(
-                b.valid_king_moves(b.bbs[WHITE_KINGS_BB], b.bbs[WHITE_PIECES_BB]),
+                b.valid_king_moves(b.piece_bbs[WHITE][KINGS_BB], b.combined_bbs[WHITE_PIECES_BB]),
                 valid_squares
             );
         }
@@ -688,7 +690,7 @@ mod tests {
             let valid_squares = F3_SQUARE | F2_SQUARE | D3_SQUARE;
 
             assert_eq!(
-                b.valid_king_moves(b.bbs[WHITE_KINGS_BB], b.bbs[WHITE_PIECES_BB]),
+                b.valid_king_moves(b.piece_bbs[WHITE][KINGS_BB], b.combined_bbs[WHITE_PIECES_BB]),
                 valid_squares
             );
         }
@@ -726,7 +728,7 @@ mod tests {
                 | B3_SQUARE;
 
             assert_eq!(
-                b.valid_knight_moves(b.bbs[WHITE_KNIGHTS_BB], b.bbs[WHITE_PIECES_BB]),
+                b.valid_knight_moves(b.piece_bbs[WHITE][KNIGHTS_BB], b.combined_bbs[WHITE_PIECES_BB]),
                 valid_squares
             );
         }
@@ -742,7 +744,7 @@ mod tests {
                 A6_SQUARE | C6_SQUARE | D5_SQUARE | D3_SQUARE | C2_SQUARE | A2_SQUARE;
 
             assert_eq!(
-                b.valid_knight_moves(b.bbs[WHITE_KNIGHTS_BB], b.bbs[WHITE_PIECES_BB]),
+                b.valid_knight_moves(b.piece_bbs[WHITE][KNIGHTS_BB], b.combined_bbs[WHITE_PIECES_BB]),
                 valid_squares
             );
         }
@@ -757,7 +759,7 @@ mod tests {
             let valid_squares = A6_SQUARE | D5_SQUARE | D3_SQUARE | A2_SQUARE;
 
             assert_eq!(
-                b.valid_knight_moves(b.bbs[WHITE_KNIGHTS_BB], b.bbs[WHITE_PIECES_BB]),
+                b.valid_knight_moves(b.piece_bbs[WHITE][KNIGHTS_BB], b.combined_bbs[WHITE_PIECES_BB]),
                 valid_squares
             );
         }
@@ -782,7 +784,7 @@ mod tests {
             let valid_squares = (E_FILE | RANK_4) ^ E4_SQUARE;
 
             assert_eq!(
-                b.valid_rook_moves(b.bbs[WHITE_ROOKS_BB], b.bbs[WHITE_PIECES_BB]),
+                b.valid_rook_moves(b.piece_bbs[WHITE][ROOKS_BB], b.combined_bbs[WHITE_PIECES_BB]),
                 valid_squares
             );
         }
@@ -797,7 +799,7 @@ mod tests {
             let valid_squares = (E_FILE | RANK_4) ^ E4_SQUARE ^ E6_SQUARE ^ E7_SQUARE ^ E8_SQUARE;
 
             assert_eq!(
-                b.valid_rook_moves(b.bbs[WHITE_ROOKS_BB], b.bbs[WHITE_PIECES_BB]),
+                b.valid_rook_moves(b.piece_bbs[WHITE][ROOKS_BB], b.combined_bbs[WHITE_PIECES_BB]),
                 valid_squares
             );
         }
@@ -835,7 +837,7 @@ mod tests {
                 H7_SQUARE;
 
             assert_eq!(
-                b.valid_bishop_moves(b.bbs[WHITE_BISHOPS_BB], b.bbs[WHITE_PIECES_BB]),
+                b.valid_bishop_moves(b.piece_bbs[WHITE][BISHOPS_BB], b.combined_bbs[WHITE_PIECES_BB]),
                 valid_squares
             );
         }
@@ -855,7 +857,7 @@ mod tests {
                 F5_SQUARE;
 
             assert_eq!(
-                b.valid_bishop_moves(b.bbs[WHITE_BISHOPS_BB], b.bbs[WHITE_PIECES_BB]),
+                b.valid_bishop_moves(b.piece_bbs[WHITE][BISHOPS_BB], b.combined_bbs[WHITE_PIECES_BB]),
                 valid_squares
             );
         }
@@ -877,12 +879,12 @@ mod tests {
                 EMPTY,
             );
 
-            let bishop_moves = b.valid_bishop_moves(b.bbs[WHITE_QUEENS_BB], b.bbs[WHITE_PIECES_BB]);
-            let rook_moves = b.valid_rook_moves(b.bbs[WHITE_QUEENS_BB], b.bbs[WHITE_PIECES_BB]);
+            let bishop_moves = b.valid_bishop_moves(b.piece_bbs[WHITE][QUEENS_BB], b.combined_bbs[WHITE_PIECES_BB]);
+            let rook_moves = b.valid_rook_moves(b.piece_bbs[WHITE][QUEENS_BB], b.combined_bbs[WHITE_PIECES_BB]);
             let valid_moves = bishop_moves | rook_moves;
 
             assert_eq!(
-                b.valid_queen_moves(b.bbs[WHITE_QUEENS_BB], b.bbs[WHITE_PIECES_BB]),
+                b.valid_queen_moves(b.piece_bbs[WHITE][QUEENS_BB], b.combined_bbs[WHITE_PIECES_BB]),
                 valid_moves,
             );
         }
@@ -929,7 +931,7 @@ mod tests {
                 | H3_SQUARE
                 | H4_SQUARE;
 
-            assert_eq!(b.valid_white_pawn_moves(b.bbs[WHITE_PAWNS_BB]), valid_squares);
+            assert_eq!(b.valid_white_pawn_moves(b.piece_bbs[WHITE][PAWNS_BB]), valid_squares);
         }
 
         #[test]
@@ -947,7 +949,7 @@ mod tests {
                 | G5_SQUARE
                 | H5_SQUARE;
 
-            assert_eq!(b.valid_white_pawn_moves(b.bbs[WHITE_PAWNS_BB]), valid_squares);
+            assert_eq!(b.valid_white_pawn_moves(b.piece_bbs[WHITE][PAWNS_BB]), valid_squares);
         }
 
         #[test]
@@ -959,7 +961,7 @@ mod tests {
 
             let valid_squares = E6_SQUARE | F6_SQUARE;
 
-            assert_eq!(b.valid_white_pawn_moves(b.bbs[WHITE_PAWNS_BB]), valid_squares);
+            assert_eq!(b.valid_white_pawn_moves(b.piece_bbs[WHITE][PAWNS_BB]), valid_squares);
         }
 
         #[test]
@@ -971,7 +973,7 @@ mod tests {
 
             let valid_squares = EMPTY;
 
-            assert_eq!(b.valid_white_pawn_moves(b.bbs[WHITE_PAWNS_BB]), valid_squares);
+            assert_eq!(b.valid_white_pawn_moves(b.piece_bbs[WHITE][PAWNS_BB]), valid_squares);
         }
 
         #[test]
@@ -1022,7 +1024,7 @@ mod tests {
                 | H6_SQUARE
                 | H5_SQUARE;
 
-            assert_eq!(b.valid_black_pawn_moves(b.bbs[BLACK_PAWNS_BB]), valid_squares);
+            assert_eq!(b.valid_black_pawn_moves(b.piece_bbs[BLACK][PAWNS_BB]), valid_squares);
         }
 
         #[test]
@@ -1040,7 +1042,7 @@ mod tests {
                 | G3_SQUARE
                 | H3_SQUARE;
 
-            assert_eq!(b.valid_black_pawn_moves(b.bbs[BLACK_PAWNS_BB]), valid_squares);
+            assert_eq!(b.valid_black_pawn_moves(b.piece_bbs[BLACK][PAWNS_BB]), valid_squares);
         }
 
         #[test]
@@ -1052,7 +1054,7 @@ mod tests {
 
             let valid_squares = E5_SQUARE | F5_SQUARE;
 
-            assert_eq!(b.valid_black_pawn_moves(b.bbs[BLACK_PAWNS_BB]), valid_squares);
+            assert_eq!(b.valid_black_pawn_moves(b.piece_bbs[BLACK][PAWNS_BB]), valid_squares);
         }
 
         #[test]
@@ -1064,7 +1066,7 @@ mod tests {
 
             let valid_squares = EMPTY;
 
-            assert_eq!(b.valid_black_pawn_moves(b.bbs[BLACK_PAWNS_BB]), valid_squares);
+            assert_eq!(b.valid_black_pawn_moves(b.piece_bbs[BLACK][PAWNS_BB]), valid_squares);
         }
 
         #[test]
@@ -1086,18 +1088,18 @@ mod tests {
         #[test]
         fn it_works() {
             let b = Board::default();
-            assert_eq!(b.bbs[WHITE_PAWNS_BB], INITIAL_WHITE_PAWNS);
-            assert_eq!(b.bbs[WHITE_KNIGHTS_BB], INITIAL_WHITE_KNIGHTS);
-            assert_eq!(b.bbs[WHITE_BISHOPS_BB], INITIAL_WHITE_BISHOPS);
-            assert_eq!(b.bbs[WHITE_ROOKS_BB], INITIAL_WHITE_ROOKS);
-            assert_eq!(b.bbs[WHITE_QUEENS_BB], INITIAL_WHITE_QUEENS);
-            assert_eq!(b.bbs[WHITE_KINGS_BB], INITIAL_WHITE_KINGS);
-            assert_eq!(b.bbs[BLACK_PAWNS_BB], INITIAL_BLACK_PAWNS);
-            assert_eq!(b.bbs[BLACK_KNIGHTS_BB], INITIAL_BLACK_KNIGHTS);
-            assert_eq!(b.bbs[BLACK_BISHOPS_BB], INITIAL_BLACK_BISHOPS);
-            assert_eq!(b.bbs[BLACK_ROOKS_BB], INITIAL_BLACK_ROOKS);
-            assert_eq!(b.bbs[BLACK_QUEENS_BB], INITIAL_BLACK_QUEENS);
-            assert_eq!(b.bbs[BLACK_KINGS_BB], INITIAL_BLACK_KINGS);
+            assert_eq!(b.piece_bbs[WHITE][PAWNS_BB], INITIAL_WHITE_PAWNS);
+            assert_eq!(b.piece_bbs[WHITE][KNIGHTS_BB], INITIAL_WHITE_KNIGHTS);
+            assert_eq!(b.piece_bbs[WHITE][BISHOPS_BB], INITIAL_WHITE_BISHOPS);
+            assert_eq!(b.piece_bbs[WHITE][ROOKS_BB], INITIAL_WHITE_ROOKS);
+            assert_eq!(b.piece_bbs[WHITE][QUEENS_BB], INITIAL_WHITE_QUEENS);
+            assert_eq!(b.piece_bbs[WHITE][KINGS_BB], INITIAL_WHITE_KINGS);
+            assert_eq!(b.piece_bbs[BLACK][PAWNS_BB], INITIAL_BLACK_PAWNS);
+            assert_eq!(b.piece_bbs[BLACK][KNIGHTS_BB], INITIAL_BLACK_KNIGHTS);
+            assert_eq!(b.piece_bbs[BLACK][BISHOPS_BB], INITIAL_BLACK_BISHOPS);
+            assert_eq!(b.piece_bbs[BLACK][ROOKS_BB], INITIAL_BLACK_ROOKS);
+            assert_eq!(b.piece_bbs[BLACK][QUEENS_BB], INITIAL_BLACK_QUEENS);
+            assert_eq!(b.piece_bbs[BLACK][KINGS_BB], INITIAL_BLACK_KINGS);
         }
     }
 }

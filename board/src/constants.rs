@@ -1,29 +1,25 @@
 use crate::bitboard::{BitBoard};
 
-pub const NUM_BITBOARDS: usize = 22;
+pub const WHITE: usize = 0;
+pub const BLACK: usize = 1;
 
-pub const WHITE_PAWNS_BB: usize = 0;
-pub const WHITE_KNIGHTS_BB: usize = 1;
-pub const WHITE_BISHOPS_BB: usize = 2;
-pub const WHITE_ROOKS_BB: usize = 3;
-pub const WHITE_QUEENS_BB: usize = 4;
-pub const WHITE_KINGS_BB: usize = 5;
-pub const BLACK_PAWNS_BB: usize = 6;
-pub const BLACK_KNIGHTS_BB: usize = 7;
-pub const BLACK_BISHOPS_BB: usize = 8;
-pub const BLACK_ROOKS_BB: usize = 9;
-pub const BLACK_QUEENS_BB: usize = 10;
-pub const BLACK_KINGS_BB: usize = 11;
-pub const ALL_PAWNS_BB: usize = 12;
-pub const ALL_KNIGHTS_BB: usize = 13;
-pub const ALL_BISHOPS_BB: usize = 14;
-pub const ALL_ROOKS_BB: usize = 15;
-pub const ALL_QUEENS_BB: usize = 16;
-pub const ALL_KINGS_BB: usize = 17;
-pub const WHITE_PIECES_BB: usize = 18;
-pub const BLACK_PIECES_BB: usize = 19;
-pub const ALL_PIECES_BB: usize = 20;
-pub const EMPTY_SQUARES_BB: usize = 21;
+pub const PAWNS_BB: usize = 0;
+pub const KNIGHTS_BB: usize = 1;
+pub const BISHOPS_BB: usize = 2;
+pub const ROOKS_BB: usize = 3;
+pub const QUEENS_BB: usize = 4;
+pub const KINGS_BB: usize = 5;
+
+pub const ALL_PAWNS_BB: usize = 0;
+pub const ALL_KNIGHTS_BB: usize = 1;
+pub const ALL_BISHOPS_BB: usize = 2;
+pub const ALL_ROOKS_BB: usize = 3;
+pub const ALL_QUEENS_BB: usize = 4;
+pub const ALL_KINGS_BB: usize = 5;
+pub const WHITE_PIECES_BB: usize = 6;
+pub const BLACK_PIECES_BB: usize = 7;
+pub const ALL_PIECES_BB: usize = 8;
+pub const EMPTY_SQUARES_BB: usize = 9;
 
 pub const INITIAL_WHITE_PAWNS: BitBoard = BitBoard(65280);
 pub const INITIAL_WHITE_KNIGHTS: BitBoard = BitBoard(66);
