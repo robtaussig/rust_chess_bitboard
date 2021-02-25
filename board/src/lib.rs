@@ -6,6 +6,7 @@ mod piece;
 use piece::Pieces;
 mod chessmove;
 use crate::chessmove::{ChessMove};
+use std::{fmt};
 
 type BoardArray = [[Pieces; 8]; 8];
 
@@ -14,6 +15,10 @@ pub struct Board {
     pub color_bbs: [BitBoard; 2],
     pub combined_bbs: [BitBoard; 8],
     pub side_to_move: usize,
+    pub checkers: BitBoard,
+    pub pinned: BitBoard,
+    pub en_passant: BitBoard,
+    pub castle_rights: BitBoard,
 }
 
 impl Default for Board {
@@ -32,6 +37,86 @@ impl Default for Board {
             INITIAL_BLACK_QUEENS,
             INITIAL_BLACK_KINGS,
             WHITE,
+        )
+    }
+}
+
+impl fmt::Display for Board {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f,"
+            {}{}{}{}{}{}{}{}
+            {}{}{}{}{}{}{}{}
+            {}{}{}{}{}{}{}{}
+            {}{}{}{}{}{}{}{}
+            {}{}{}{}{}{}{}{}
+            {}{}{}{}{}{}{}{}
+            {}{}{}{}{}{}{}{}
+            {}{}{}{}{}{}{}{}
+        ",
+        self.get_piece_at(A8_SQUARE),
+        self.get_piece_at(B8_SQUARE),
+        self.get_piece_at(C8_SQUARE),
+        self.get_piece_at(D8_SQUARE),
+        self.get_piece_at(E8_SQUARE),
+        self.get_piece_at(F8_SQUARE),
+        self.get_piece_at(G8_SQUARE),
+        self.get_piece_at(H8_SQUARE),
+        self.get_piece_at(A7_SQUARE),
+        self.get_piece_at(B7_SQUARE),
+        self.get_piece_at(C7_SQUARE),
+        self.get_piece_at(D7_SQUARE),
+        self.get_piece_at(E7_SQUARE),
+        self.get_piece_at(F7_SQUARE),
+        self.get_piece_at(G7_SQUARE),
+        self.get_piece_at(H7_SQUARE),
+        self.get_piece_at(A6_SQUARE),
+        self.get_piece_at(B6_SQUARE),
+        self.get_piece_at(C6_SQUARE),
+        self.get_piece_at(D6_SQUARE),
+        self.get_piece_at(E6_SQUARE),
+        self.get_piece_at(F6_SQUARE),
+        self.get_piece_at(G6_SQUARE),
+        self.get_piece_at(H6_SQUARE),
+        self.get_piece_at(A5_SQUARE),
+        self.get_piece_at(B5_SQUARE),
+        self.get_piece_at(C5_SQUARE),
+        self.get_piece_at(D5_SQUARE),
+        self.get_piece_at(E5_SQUARE),
+        self.get_piece_at(F5_SQUARE),
+        self.get_piece_at(G5_SQUARE),
+        self.get_piece_at(H5_SQUARE),
+        self.get_piece_at(A4_SQUARE),
+        self.get_piece_at(B4_SQUARE),
+        self.get_piece_at(C4_SQUARE),
+        self.get_piece_at(D4_SQUARE),
+        self.get_piece_at(E4_SQUARE),
+        self.get_piece_at(F4_SQUARE),
+        self.get_piece_at(G4_SQUARE),
+        self.get_piece_at(H4_SQUARE),
+        self.get_piece_at(A3_SQUARE),
+        self.get_piece_at(B3_SQUARE),
+        self.get_piece_at(C3_SQUARE),
+        self.get_piece_at(D3_SQUARE),
+        self.get_piece_at(E3_SQUARE),
+        self.get_piece_at(F3_SQUARE),
+        self.get_piece_at(G3_SQUARE),
+        self.get_piece_at(H3_SQUARE),
+        self.get_piece_at(A2_SQUARE),
+        self.get_piece_at(B2_SQUARE),
+        self.get_piece_at(C2_SQUARE),
+        self.get_piece_at(D2_SQUARE),
+        self.get_piece_at(E2_SQUARE),
+        self.get_piece_at(F2_SQUARE),
+        self.get_piece_at(G2_SQUARE),
+        self.get_piece_at(H2_SQUARE),
+        self.get_piece_at(A1_SQUARE),
+        self.get_piece_at(B1_SQUARE),
+        self.get_piece_at(C1_SQUARE),
+        self.get_piece_at(D1_SQUARE),
+        self.get_piece_at(E1_SQUARE),
+        self.get_piece_at(F1_SQUARE),
+        self.get_piece_at(G1_SQUARE),
+        self.get_piece_at(H1_SQUARE),
         )
     }
 }
@@ -96,12 +181,22 @@ impl Board {
         combined_bbs[ALL_PIECES_BB] = pieces;
         combined_bbs[EMPTY_SQUARES_BB] = empty_squares;
 
-        Board {
+        let mut b = Board {
             piece_bbs,
             color_bbs,
             combined_bbs,
             side_to_move,
-        }
+            pinned: EMPTY,
+            checkers: EMPTY,
+            en_passant: EMPTY,
+            castle_rights: INITIAL_CASTLE_RIGHTS,
+        };
+
+        let (checkers, pinned) = Board::find_checkers_and_pinners(&b);
+        b.checkers = checkers;
+        b.pinned = pinned;
+
+        b
     }
 
     pub fn to_array(&self) -> BoardArray {
@@ -118,6 +213,26 @@ impl Board {
         board_array
     }
 
+    //TODO test
+    pub fn gen_legal_moves(&self) -> Vec<ChessMove> {
+        if self.checkers != EMPTY {
+            if self.checkers.popcnt() > 1 {
+                //TODO only generate moves that involve moving king
+                Vec::new()
+            } else {
+                //TODO only generate moves that involve moving king, blocking check, or capturing checker
+                Vec::new()
+            }
+        } else if self.pinned != EMPTY {
+            //TODO filter pseudo legal moves for any moves that involve a pinned piece that does not move along pinned line
+            self.gen_psuedo_legal_moves()
+        } else {
+            self.gen_psuedo_legal_moves()
+        }
+    }
+
+    //TODO test
+    //TODO determine castling
     pub fn gen_psuedo_legal_moves(&self) -> Vec<ChessMove> {
         let mut move_vec: Vec<ChessMove> = Vec::new();
         let pawns = self.piece_bbs[self.side_to_move][PAWNS_BB];
@@ -205,6 +320,204 @@ impl Board {
         };
 
         move_vec
+    }
+
+    //TODO test
+    //TODO implement pinned
+    pub fn find_checkers_and_pinners(board: &Board) -> (BitBoard, BitBoard) {
+        let mut checkers = EMPTY;
+
+        let ksq = board.piece_bbs[board.side_to_move][KINGS_BB];
+        let other_pieces: [BitBoard; 6];
+        if board.side_to_move == WHITE {
+            other_pieces = board.piece_bbs[BLACK];
+        } else {
+            other_pieces = board.piece_bbs[WHITE];
+        }
+        let own_pieces = board.color_bbs[board.side_to_move];
+        let bishop_attackers = board.valid_bishop_moves(ksq, own_pieces);
+        let rook_attackers = board.valid_rook_moves(ksq, own_pieces);
+        let knight_attackers = board.valid_knight_moves(ksq, own_pieces);
+        let pawn_attackers: BitBoard;
+        if board.side_to_move == WHITE {
+            pawn_attackers = board.valid_white_pawn_moves(ksq);
+        } else {
+            pawn_attackers = board.valid_black_pawn_moves(ksq);
+        }
+        checkers ^= bishop_attackers & (other_pieces[BISHOPS_BB] | other_pieces[QUEENS_BB]);
+        checkers ^= rook_attackers & (other_pieces[ROOKS_BB] | other_pieces[QUEENS_BB]);
+        checkers ^= knight_attackers & other_pieces[KNIGHTS_BB];
+        checkers ^= pawn_attackers & other_pieces[PAWNS_BB];
+
+        (checkers, EMPTY)
+    }
+
+    //TODO test
+    //TODO handle promotion
+    //TODO test for castling
+    //TODO test for en passant
+    pub fn make_move(&mut self, chessmove: &ChessMove) -> &mut Self {
+        self.en_passant = EMPTY;
+
+        let moving_piece = self.get_piece_at(chessmove.from);
+        let target_piece = self.get_piece_at(chessmove.to);
+        let combined_move = chessmove.from | chessmove.to;
+
+        self.combined_bbs[EMPTY_SQUARES_BB] |= chessmove.from;
+        self.combined_bbs[EMPTY_SQUARES_BB] &= !chessmove.to;
+        self.combined_bbs[ALL_PIECES_BB] ^= chessmove.from;
+        self.combined_bbs[ALL_PIECES_BB] |= chessmove.to;
+
+        match moving_piece {
+            Pieces::WPawn => {
+                //TODO Update enpassant
+                self.piece_bbs[WHITE][PAWNS_BB] ^= combined_move;
+                self.color_bbs[WHITE] ^= combined_move;
+                self.combined_bbs[ALL_PAWNS_BB] &= !chessmove.from;
+                self.combined_bbs[ALL_PAWNS_BB] |= chessmove.to;
+            },
+            Pieces::BPawn => {
+                //TODO Update enpassant
+                self.piece_bbs[BLACK][PAWNS_BB] ^= combined_move;
+                self.color_bbs[BLACK] ^= combined_move;
+                self.combined_bbs[ALL_PAWNS_BB] ^= chessmove.from;
+                self.combined_bbs[ALL_PAWNS_BB] |= chessmove.to;
+            },
+            Pieces::WKnight => {
+                self.piece_bbs[WHITE][KNIGHTS_BB] ^= combined_move;
+                self.color_bbs[WHITE] ^= combined_move;
+                self.combined_bbs[ALL_KNIGHTS_BB] ^= chessmove.from;
+                self.combined_bbs[ALL_KNIGHTS_BB] |= chessmove.to;
+            },
+            Pieces::BKnight => {
+                self.piece_bbs[BLACK][KNIGHTS_BB] ^= combined_move;
+                self.color_bbs[BLACK] ^= combined_move;
+                self.combined_bbs[ALL_KNIGHTS_BB] ^= chessmove.from;
+                self.combined_bbs[ALL_KNIGHTS_BB] |= chessmove.to;
+            },
+            Pieces::WBishop => {
+                self.piece_bbs[WHITE][BISHOPS_BB] ^= combined_move;
+                self.color_bbs[WHITE] ^= combined_move;
+                self.combined_bbs[ALL_BISHOPS_BB] ^= chessmove.from;
+                self.combined_bbs[ALL_BISHOPS_BB] |= chessmove.to;
+            },
+            Pieces::BBishop => {
+                self.piece_bbs[BLACK][BISHOPS_BB] ^= combined_move;
+                self.color_bbs[BLACK] ^= combined_move;
+                self.combined_bbs[ALL_BISHOPS_BB] ^= chessmove.from;
+                self.combined_bbs[ALL_BISHOPS_BB] |= chessmove.to;
+            },
+            Pieces::WRook => {
+                //TODO Update castling rights
+                self.piece_bbs[WHITE][ROOKS_BB] ^= combined_move;
+                self.color_bbs[WHITE] ^= combined_move;
+                self.combined_bbs[ALL_ROOKS_BB] ^= chessmove.from;
+                self.combined_bbs[ALL_ROOKS_BB] |= chessmove.to;
+            },
+            Pieces::BRook => {
+                //TODO Update castling rights
+                self.piece_bbs[BLACK][ROOKS_BB] ^= combined_move;
+                self.color_bbs[BLACK] ^= combined_move;
+                self.combined_bbs[ALL_ROOKS_BB] ^= chessmove.from;
+                self.combined_bbs[ALL_ROOKS_BB] |= chessmove.to;
+            },
+            Pieces::WQueen => {
+                self.piece_bbs[WHITE][QUEENS_BB] ^= combined_move;
+                self.color_bbs[WHITE] ^= combined_move;
+                self.combined_bbs[ALL_QUEENS_BB] ^= chessmove.from;
+                self.combined_bbs[ALL_QUEENS_BB] |= chessmove.to;
+            },
+            Pieces::BQueen => {
+                self.piece_bbs[BLACK][QUEENS_BB] ^= combined_move;
+                self.color_bbs[BLACK] ^= combined_move;
+                self.combined_bbs[ALL_QUEENS_BB] ^= chessmove.from;
+                self.combined_bbs[ALL_QUEENS_BB] |= chessmove.to;
+            },
+            Pieces::WKing => {
+                //TODO Update castling rights
+                self.piece_bbs[WHITE][KINGS_BB] ^= combined_move;
+                self.color_bbs[WHITE] ^= combined_move;
+                self.combined_bbs[ALL_KINGS_BB] ^= chessmove.from;
+                self.combined_bbs[ALL_KINGS_BB] |= chessmove.to;
+            },
+            Pieces::BKing => {
+                //TODO Update castling rights
+                self.piece_bbs[BLACK][KINGS_BB] ^= combined_move;
+                self.color_bbs[BLACK] ^= combined_move;
+                self.combined_bbs[ALL_KINGS_BB] ^= chessmove.from;
+                self.combined_bbs[ALL_KINGS_BB] |= chessmove.to;
+            },
+            _ => {
+                //TODO Handle error
+            }
+        }
+
+        match target_piece {
+            Pieces::WPawn => {
+                //TODO Update enpassant
+                self.piece_bbs[WHITE][PAWNS_BB] ^= chessmove.to;
+                self.color_bbs[WHITE] ^= chessmove.to;
+            },
+            Pieces::BPawn => {
+                //TODO Update enpassant
+                self.piece_bbs[BLACK][PAWNS_BB] ^= chessmove.to;                
+                self.color_bbs[BLACK] ^= chessmove.to;
+            },
+            Pieces::WKnight => {
+                self.piece_bbs[WHITE][KNIGHTS_BB] ^= chessmove.to;                
+                self.color_bbs[WHITE] ^= chessmove.to;
+            },
+            Pieces::BKnight => {
+                self.piece_bbs[BLACK][KNIGHTS_BB] ^= chessmove.to;                
+                self.color_bbs[BLACK] ^= chessmove.to;
+            },
+            Pieces::WBishop => {
+                self.piece_bbs[WHITE][BISHOPS_BB] ^= chessmove.to;                
+                self.color_bbs[WHITE] ^= chessmove.to;
+            },
+            Pieces::BBishop => {
+                self.piece_bbs[BLACK][BISHOPS_BB] ^= chessmove.to;                
+                self.color_bbs[BLACK] ^= chessmove.to;
+            },
+            Pieces::WRook => {
+                //TODO Update castling rights
+                self.piece_bbs[WHITE][ROOKS_BB] ^= chessmove.to;                
+                self.color_bbs[WHITE] ^= chessmove.to;
+            },
+            Pieces::BRook => {
+                //TODO Update castling rights
+                self.piece_bbs[BLACK][ROOKS_BB] ^= chessmove.to;                
+                self.color_bbs[BLACK] ^= chessmove.to;
+            },
+            Pieces::WQueen => {
+                self.piece_bbs[WHITE][QUEENS_BB] ^= chessmove.to;                
+                self.color_bbs[WHITE] ^= chessmove.to;
+            },
+            Pieces::BQueen => {
+                self.piece_bbs[BLACK][QUEENS_BB] ^= chessmove.to;                
+                self.color_bbs[BLACK] ^= chessmove.to;
+            },
+            Pieces::WKing => {
+                //TODO Update castling rights
+                self.piece_bbs[WHITE][KINGS_BB] ^= chessmove.to;                
+                self.color_bbs[WHITE] ^= chessmove.to;
+            },
+            Pieces::BKing => {
+                //TODO Update castling rights
+                self.piece_bbs[BLACK][KINGS_BB] ^= chessmove.to;                
+                self.color_bbs[BLACK] ^= chessmove.to;
+            },
+            _ => {
+                //TODO Handle error
+            }
+        }
+
+        let (checkers, pinned) = Board::find_checkers_and_pinners(self);
+
+        self.checkers = checkers;
+        self.pinned = pinned;
+
+        self
     }
 
     pub fn get_piece_at(&self, square: BitBoard) -> Pieces {
@@ -443,6 +756,20 @@ mod tests {
                 chessmove.from.print_bb();
                 chessmove.to.print_bb();
             }
+        }
+    }
+
+    mod make_move {
+        use super::*;
+        #[test]
+        fn it_works() {
+            let mut b = Board::default();
+
+            b
+                .make_move(&ChessMove::from_notation("E2", "E4"))
+                .make_move(&ChessMove::from_notation("E7", "E5"));
+
+            assert_eq!(b.get_piece_at(E5_SQUARE), Pieces::BPawn);
         }
     }
 

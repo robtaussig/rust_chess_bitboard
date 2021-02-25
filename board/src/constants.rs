@@ -1,4 +1,5 @@
 use crate::bitboard::{BitBoard};
+use phf::{phf_map, phf_set};
 
 pub const WHITE: usize = 0;
 pub const BLACK: usize = 1;
@@ -31,6 +32,7 @@ pub const INITIAL_BLACK_BISHOPS: BitBoard = BitBoard(2594073385365405696);
 pub const INITIAL_BLACK_ROOKS: BitBoard = BitBoard(9295429630892703744);
 pub const INITIAL_BLACK_QUEENS: BitBoard = BitBoard(576460752303423488);
 pub const INITIAL_BLACK_KINGS: BitBoard = BitBoard(1152921504606846976);
+pub const INITIAL_CASTLE_RIGHTS: BitBoard = BitBoard(9223372036854775808);
 
 pub const RANK_1: BitBoard = BitBoard(255);
 pub const RANK_2: BitBoard = BitBoard(65280);
@@ -154,6 +156,73 @@ pub const E1_SQUARE: BitBoard = BitBoard(E_FILE.0 & RANK_1.0);
 pub const F1_SQUARE: BitBoard = BitBoard(F_FILE.0 & RANK_1.0);
 pub const G1_SQUARE: BitBoard = BitBoard(G_FILE.0 & RANK_1.0);
 pub const H1_SQUARE: BitBoard = BitBoard(H_FILE.0 & RANK_1.0);
+
+pub static NOTATION_MAP: phf::Map<&str, BitBoard> = phf_map! {
+    "A1" => A1_SQUARE,
+    "B1" => B1_SQUARE,
+    "C1" => C1_SQUARE,
+    "D1" => D1_SQUARE,
+    "E1" => E1_SQUARE,
+    "F1" => F1_SQUARE,
+    "G1" => G1_SQUARE,
+    "H1" => H1_SQUARE,
+    "A2" => A2_SQUARE,
+    "B2" => B2_SQUARE,
+    "C2" => C2_SQUARE,
+    "D2" => D2_SQUARE,
+    "E2" => E2_SQUARE,
+    "F2" => F2_SQUARE,
+    "G2" => G2_SQUARE,
+    "H2" => H2_SQUARE,
+    "A3" => A3_SQUARE,
+    "B3" => B3_SQUARE,
+    "C3" => C3_SQUARE,
+    "D3" => D3_SQUARE,
+    "E3" => E3_SQUARE,
+    "F3" => F3_SQUARE,
+    "G3" => G3_SQUARE,
+    "H3" => H3_SQUARE,
+    "A4" => A4_SQUARE,
+    "B4" => B4_SQUARE,
+    "C4" => C4_SQUARE,
+    "D4" => D4_SQUARE,
+    "E4" => E4_SQUARE,
+    "F4" => F4_SQUARE,
+    "G4" => G4_SQUARE,
+    "H4" => H4_SQUARE,
+    "A5" => A5_SQUARE,
+    "B5" => B5_SQUARE,
+    "C5" => C5_SQUARE,
+    "D5" => D5_SQUARE,
+    "E5" => E5_SQUARE,
+    "F5" => F5_SQUARE,
+    "G5" => G5_SQUARE,
+    "H5" => H5_SQUARE,
+    "A6" => A6_SQUARE,
+    "B6" => B6_SQUARE,
+    "C6" => C6_SQUARE,
+    "D6" => D6_SQUARE,
+    "E6" => E6_SQUARE,
+    "F6" => F6_SQUARE,
+    "G6" => G6_SQUARE,
+    "H6" => H6_SQUARE,
+    "A7" => A7_SQUARE,
+    "B7" => B7_SQUARE,
+    "C7" => C7_SQUARE,
+    "D7" => D7_SQUARE,
+    "E7" => E7_SQUARE,
+    "F7" => F7_SQUARE,
+    "G7" => G7_SQUARE,
+    "H7" => H7_SQUARE,
+    "A8" => A8_SQUARE,
+    "B8" => B8_SQUARE,
+    "C8" => C8_SQUARE,
+    "D8" => D8_SQUARE,
+    "E8" => E8_SQUARE,
+    "F8" => F8_SQUARE,
+    "G8" => G8_SQUARE,
+    "H8" => H8_SQUARE,
+};
 
 pub const SQUARES: [BitBoard; 64] = [
     A1_SQUARE,

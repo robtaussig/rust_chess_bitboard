@@ -70,20 +70,24 @@ impl BitBoard {
         BitBoard(u64::from_str_radix(str, 2).unwrap())
     }
 
-    pub fn print_bb(self) {
-        println!("{}", VisualBinaryString { bb: self });
+    pub fn print_bb(&self) {
+        println!("{}", VisualBinaryString::new(self));
     }
 
-    pub fn shl(self, int: u8) -> BitBoard {
+    pub fn shl(&self, int: u8) -> BitBoard {
         BitBoard(self.0 << int)
     }
 
-    pub fn shr(self, int: u8) -> BitBoard {
+    pub fn shr(&self, int: u8) -> BitBoard {
         BitBoard(self.0 >> int)
     }
 
-    pub fn bits(self) -> BitIterator {
+    pub fn bits(&self) -> BitIterator {
         BitIterator::new(self)
+    }
+
+    pub fn popcnt(&self) -> u32 {
+        self.0.count_ones()
     }
 }
 
@@ -92,7 +96,7 @@ pub struct BitIterator {
 }
 
 impl BitIterator {
-    pub fn new(bb: BitBoard) -> Self {
+    pub fn new(bb: &BitBoard) -> Self {
         BitIterator {
             bb: bb.0,
         }
@@ -113,11 +117,19 @@ impl Iterator for BitIterator {
     }
 }
 
-struct VisualBinaryString { bb: BitBoard }
+struct VisualBinaryString { bb: u64 }
+
+impl VisualBinaryString {
+    pub fn new(bb: &BitBoard) -> Self {
+        VisualBinaryString {
+            bb: bb.0,
+        }
+    }
+}
 
 impl fmt::Display for VisualBinaryString {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let char_vec: Vec<char> = self.bb.to_str().chars().collect();
+        let char_vec: Vec<char> = BitBoard(self.bb).to_str().chars().collect();
 
         write!(f,"
             {}{}{}{}{}{}{}{}
