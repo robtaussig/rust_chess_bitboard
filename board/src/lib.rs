@@ -328,26 +328,27 @@ impl Board {
         let mut checkers = EMPTY;
 
         let ksq = board.piece_bbs[board.side_to_move][KINGS_BB];
-        let other_pieces: [BitBoard; 6];
+        let other_pieces_collection: [BitBoard; 6];
         if board.side_to_move == WHITE {
-            other_pieces = board.piece_bbs[BLACK];
+            other_pieces_collection = board.piece_bbs[BLACK];
         } else {
-            other_pieces = board.piece_bbs[WHITE];
+            other_pieces_collection = board.piece_bbs[WHITE];
         }
-        let own_pieces = board.color_bbs[board.side_to_move];
-        let bishop_attackers = board.valid_bishop_moves(ksq, own_pieces);
-        let rook_attackers = board.valid_rook_moves(ksq, own_pieces);
-        let knight_attackers = board.valid_knight_moves(ksq, own_pieces);
+
+        let bishop_attackers = board.valid_bishop_moves(ksq, board.color_bbs[board.side_to_move]);
+        let rook_attackers = board.valid_rook_moves(ksq, board.color_bbs[board.side_to_move]);
+        let knight_attackers = board.valid_knight_moves(ksq, board.color_bbs[board.side_to_move]);
         let pawn_attackers: BitBoard;
         if board.side_to_move == WHITE {
             pawn_attackers = board.valid_white_pawn_moves(ksq);
         } else {
             pawn_attackers = board.valid_black_pawn_moves(ksq);
         }
-        checkers ^= bishop_attackers & (other_pieces[BISHOPS_BB] | other_pieces[QUEENS_BB]);
-        checkers ^= rook_attackers & (other_pieces[ROOKS_BB] | other_pieces[QUEENS_BB]);
-        checkers ^= knight_attackers & other_pieces[KNIGHTS_BB];
-        checkers ^= pawn_attackers & other_pieces[PAWNS_BB];
+
+        checkers ^= bishop_attackers & (other_pieces_collection[BISHOPS_BB] | other_pieces_collection[QUEENS_BB]);
+        checkers ^= rook_attackers & (other_pieces_collection[ROOKS_BB] | other_pieces_collection[QUEENS_BB]);
+        checkers ^= knight_attackers & other_pieces_collection[KNIGHTS_BB];
+        checkers ^= pawn_attackers & other_pieces_collection[PAWNS_BB];
 
         (checkers, EMPTY)
     }
@@ -516,6 +517,11 @@ impl Board {
 
         self.checkers = checkers;
         self.pinned = pinned;
+        if self.side_to_move == WHITE {
+            self.side_to_move = BLACK;
+        } else {
+            self.side_to_move = BLACK;
+        }
 
         self
     }
@@ -662,7 +668,7 @@ impl Board {
 
     pub fn south_attacks(&self, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
         attacks |= self.combined_bbs[EMPTY_SQUARES_BB] & (attacks.shr(8));
-        let mut empty = self.combined_bbs[EMPTY_SQUARES_BB] & (self.combined_bbs[EMPTY_SQUARES_BB].shr(8));
+        let mut empty = !own_pieces & (!own_pieces.shr(8));
         attacks |= empty & (attacks.shr(16));
         empty &= empty.shr(16);
         attacks |= empty & (attacks.shr(32));
@@ -670,8 +676,8 @@ impl Board {
     }
 
     pub fn north_attacks(&self, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
-        attacks |= self.combined_bbs[EMPTY_SQUARES_BB] & (attacks.shl(8));
-        let mut empty = self.combined_bbs[EMPTY_SQUARES_BB] & (self.combined_bbs[EMPTY_SQUARES_BB].shl(8));
+        attacks |= !own_pieces & (attacks.shl(8));
+        let mut empty = !own_pieces & (!own_pieces.shl(8));
         attacks |= empty & (attacks.shl(16));
         empty &= empty.shl(16);
         attacks |= empty & (attacks.shl(32));
@@ -679,7 +685,7 @@ impl Board {
     }
 
     pub fn west_attacks(&self, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
-        let mut empty = self.combined_bbs[EMPTY_SQUARES_BB] & CLEAR_H_FILE;
+        let mut empty = !own_pieces & CLEAR_H_FILE;
         attacks |= empty & (attacks.shr(1));
         empty &= empty.shr(1);
         attacks |= empty & (attacks.shr(2));
@@ -689,7 +695,7 @@ impl Board {
     }
 
     pub fn east_attacks(&self, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
-        let mut empty = self.combined_bbs[EMPTY_SQUARES_BB] & CLEAR_A_FILE;
+        let mut empty = !own_pieces & CLEAR_A_FILE;
         attacks |= empty & (attacks.shl(1));
         empty &= empty.shl(1);
         attacks |= empty & (attacks.shl(2));
@@ -699,7 +705,7 @@ impl Board {
     }
 
     pub fn north_east_attacks(&self, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
-        let mut empty = self.combined_bbs[EMPTY_SQUARES_BB] & CLEAR_A_FILE;
+        let mut empty = !own_pieces & CLEAR_A_FILE;
         attacks |= empty & (attacks.shl(9));
         empty &= empty.shl(9);
         attacks |= empty & (attacks.shl(18));
@@ -709,7 +715,7 @@ impl Board {
     }
 
     pub fn south_east_attacks(&self, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
-        let mut empty = self.combined_bbs[EMPTY_SQUARES_BB] & CLEAR_A_FILE;
+        let mut empty = !own_pieces & CLEAR_A_FILE;
         attacks |= empty & (attacks.shr(7));
         empty &= empty.shr(7);
         attacks |= empty & (attacks.shr(14));
@@ -719,7 +725,7 @@ impl Board {
     }
 
     pub fn south_west_attacks(&self, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
-        let mut empty = self.combined_bbs[EMPTY_SQUARES_BB] & CLEAR_H_FILE;
+        let mut empty = !own_pieces & CLEAR_H_FILE;
         attacks |= empty & (attacks.shr(9));
         empty &= empty.shr(9);
         attacks |= empty & (attacks.shr(18));
@@ -729,13 +735,17 @@ impl Board {
     }
 
     pub fn north_west_attacks(&self, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
-        let mut empty = self.combined_bbs[EMPTY_SQUARES_BB] & CLEAR_H_FILE;
+        let mut empty = !own_pieces & CLEAR_H_FILE;
         attacks |= empty & (attacks.shl(7));
         empty &= empty.shl(7);
         attacks |= empty & (attacks.shl(14));
         empty &= empty.shl(14);
         attacks |= empty & (attacks.shl(28));
         attacks & !own_pieces
+    }
+
+    pub fn print_board(&self) {
+        println!("{}", self);
     }
 }
 
@@ -767,9 +777,11 @@ mod tests {
 
             b
                 .make_move(&ChessMove::from_notation("E2", "E4"))
-                .make_move(&ChessMove::from_notation("E7", "E5"));
+                .make_move(&ChessMove::from_notation("F7", "F5"))
+                .make_move(&ChessMove::from_notation("D1", "H5"));
 
-            assert_eq!(b.get_piece_at(E5_SQUARE), Pieces::BPawn);
+            assert_eq!(b.get_piece_at(F5_SQUARE), Pieces::BPawn);
+            assert_eq!(b.checkers, H5_SQUARE);
         }
     }
 
