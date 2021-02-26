@@ -3,4 +3,7 @@
 members = [
   "game",
   "board",
+  "bitboard",
+  "piece",
+  "chessmove",
 ]

@@ -1,11 +1,13 @@
 mod constants;
 use constants::*;
-mod bitboard;
+extern crate bitboard;
 use crate::bitboard::{BitBoard, EMPTY};
-mod piece;
+extern crate piece;
 use piece::Pieces;
-mod chessmove;
+extern crate chessmove;
 use crate::chessmove::{ChessMove};
+use crate::chessmove::constants::*;
+
 use std::{fmt};
 
 type BoardArray = [[Pieces; 8]; 8];

@@ -1,5 +1,5 @@
 [package]
-name = "board"
+name = "chessmove"
 version = "0.1.0"
 authors = ["Robert Taussig <robert.taussig@gmail.com>"]
 edition = "2018"
@@ -10,4 +10,3 @@ edition = "2018"
 phf = { version = "0.8.0", features = ["macros"] }
 bitboard = { path = "../bitboard" }
 piece = { path = "../piece" }
-chessmove = { path = "../chessmove" }

@@ -150,6 +150,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "bitboard"
+version = "0.1.0"
+
+[[package]]
 name = "bitflags"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -176,7 +180,10 @@ checksum = "0d8c1fef690941d3e7788d328517591fecc684c084084702d6ff1641e993699a"
 name = "board"
 version = "0.1.0"
 dependencies = [
+ "bitboard",
+ "chessmove",
  "phf",
+ "piece",
 ]
 
 [[package]]
@@ -265,6 +272,15 @@ checksum = "55e7ec0b74fe5897894cbc207092c577e87c52f8a59e8ca8d97ef37551f60a49"
 dependencies = [
  "gleam",
  "libc",
+]
+
+[[package]]
+name = "chessmove"
+version = "0.1.0"
+dependencies = [
+ "bitboard",
+ "phf",
+ "piece",
 ]
 
 [[package]]
@@ -1498,6 +1514,10 @@ checksum = "c00cf8b9eafe68dde5e9eaa2cef8ee84a9336a47d566ec55ca16589633b65af7"
 dependencies = [
  "siphasher",
 ]
+
+[[package]]
+name = "piece"
+version = "0.1.0"
 
 [[package]]
 name = "pkg-config"

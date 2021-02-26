@@ -1,5 +1,8 @@
-use crate::bitboard::{BitBoard, EMPTY};
-use crate::constants::{SQUARES, NOTATION_MAP};
+extern crate bitboard;
+use crate::bitboard::{BitBoard};
+pub mod constants;
+use constants::*;
+extern crate piece;
 use crate::piece::{Pieces};
 
 pub struct ChessMove {
@@ -35,5 +38,25 @@ impl ChessMove {
         }
 
         broken_up_chessmoves
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    mod from_notation {
+        use super::*;
+
+        #[test]
+        fn it_works() {
+            let m = ChessMove::from_notation("E2", "E4");
+
+            assert_eq!(m.from, E2_SQUARE);
+        }
+    }
+
+    //TODO
+    mod broken_up {
+
     }
 }
