@@ -1,7 +1,7 @@
 extern crate bitboard;
 use crate::bitboard::{BitBoard};
-pub mod constants;
-use constants::*;
+extern crate constants;
+use crate::constants::*;
 extern crate piece;
 use crate::piece::{Pieces};
 

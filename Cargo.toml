@@ -1,9 +1,12 @@
 [workspace]
 
 members = [
-  "game",
+  "ui",
   "board",
   "bitboard",
   "piece",
   "chessmove",
+  "movegen",
+  "constants",
+  "game",
 ]

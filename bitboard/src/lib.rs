@@ -3,8 +3,6 @@ use std::{fmt, ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAss
 #[derive(PartialEq, PartialOrd, Clone, Copy, Debug, Default)]
 pub struct BitBoard(pub u64);
 
-pub const EMPTY: BitBoard = BitBoard(0);
-
 impl BitAnd for BitBoard {
     type Output = Self;
 

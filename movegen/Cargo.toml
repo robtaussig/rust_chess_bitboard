@@ -1,5 +1,5 @@
 [package]
-name = "game"
+name = "movegen"
 version = "0.1.0"
 authors = ["Robert Taussig <robert.taussig@gmail.com>"]
 edition = "2018"
@@ -8,7 +8,6 @@ edition = "2018"
 
 [dependencies]
 board = { path = "../board" }
-movegen = { path = "../movegen" }
-chessmove = { path = "../chessmove" }
-piece = { path = "../piece" }
 constants = { path = "../constants" }
+chessmove = { path = "../chessmove" }
+bitboard = { path = "../bitboard" }
