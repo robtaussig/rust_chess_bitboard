@@ -186,17 +186,12 @@ impl Game {
                 //TODO Handle error
             }
         }
+        
+        self.board.side_to_move ^= 1;
 
         let (checkers, pinned) = MoveGen::find_checkers_and_pinners(&self.board);
-
         self.board.checkers = checkers;
         self.board.pinned = pinned;
-        if self.board.side_to_move == WHITE {
-            self.board.side_to_move = BLACK;
-        } else {
-            self.board.side_to_move = BLACK;
-        }
-
         self
     }
 }
