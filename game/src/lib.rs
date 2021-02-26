@@ -16,7 +16,14 @@ pub struct Game {
 impl Game {
     pub fn new() -> Self {
         Game {
-            board:Board::default(),
+            board: Board::default(),
+        }
+    }
+
+    //TODO implement, calculate pinners and checkers
+    pub fn from_fen(_fen: &str) -> Self {
+        Game {
+            board: Board::default(),
         }
     }
 
