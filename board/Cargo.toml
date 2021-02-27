@@ -11,3 +11,4 @@ phf = { version = "0.8.0", features = ["macros"] }
 bitboard = { path = "../bitboard" }
 piece = { path = "../piece" }
 constants = { path = "../constants" }
+square = { path = "../square" }

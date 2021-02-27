@@ -1,13 +1,13 @@
 extern crate bitboard;
-use crate::bitboard::{BitBoard};
+use crate::bitboard::BitBoard;
 extern crate piece;
 use piece::Pieces;
+extern crate square;
+use square::Square;
 extern crate constants;
 use crate::constants::*;
 
-use std::{fmt};
-
-type BoardArray = [[Pieces; 8]; 8];
+use std::fmt;
 
 pub struct Board {
     pub piece_bbs: [[BitBoard; 6]; 2],
@@ -36,8 +36,8 @@ impl Board {
         black_kings: BitBoard,
         side_to_move: usize,
     ) -> Board {
-        let mut piece_bbs= [[EMPTY; 6]; 2];
-        let mut combined_bbs= [EMPTY; 8];
+        let mut piece_bbs = [[EMPTY; 6]; 2];
+        let mut combined_bbs = [EMPTY; 8];
         let mut color_bbs = [EMPTY; 2];
 
         piece_bbs[WHITE][PAWNS_BB] = white_pawns;
@@ -92,15 +92,15 @@ impl Board {
         }
     }
 
-    pub fn to_array(&self) -> BoardArray {
-        let mut board_array: BoardArray = [[Pieces::Empty; 8]; 8];
+    pub fn to_array(&self) -> [[Square; 8]; 8] {
+        let mut board_array: [[Square; 8]; 8] = [[Square::default(); 8]; 8];
         for pos in 0..64 {
             let rank = pos / 8;
             let file = pos % 8;
             let square = SQUARES[pos];
 
             let piece = self.get_piece_at(square);
-            board_array[rank][file] = piece;
+            board_array[rank][file] = Square::new(square, piece);
         }
 
         board_array
@@ -177,7 +177,9 @@ impl Default for Board {
 
 impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,"
+        write!(
+            f,
+            "
             {}{}{}{}{}{}{}{}
             {}{}{}{}{}{}{}{}
             {}{}{}{}{}{}{}{}
@@ -187,70 +189,70 @@ impl fmt::Display for Board {
             {}{}{}{}{}{}{}{}
             {}{}{}{}{}{}{}{}
         ",
-        self.get_piece_at(A8_SQUARE),
-        self.get_piece_at(B8_SQUARE),
-        self.get_piece_at(C8_SQUARE),
-        self.get_piece_at(D8_SQUARE),
-        self.get_piece_at(E8_SQUARE),
-        self.get_piece_at(F8_SQUARE),
-        self.get_piece_at(G8_SQUARE),
-        self.get_piece_at(H8_SQUARE),
-        self.get_piece_at(A7_SQUARE),
-        self.get_piece_at(B7_SQUARE),
-        self.get_piece_at(C7_SQUARE),
-        self.get_piece_at(D7_SQUARE),
-        self.get_piece_at(E7_SQUARE),
-        self.get_piece_at(F7_SQUARE),
-        self.get_piece_at(G7_SQUARE),
-        self.get_piece_at(H7_SQUARE),
-        self.get_piece_at(A6_SQUARE),
-        self.get_piece_at(B6_SQUARE),
-        self.get_piece_at(C6_SQUARE),
-        self.get_piece_at(D6_SQUARE),
-        self.get_piece_at(E6_SQUARE),
-        self.get_piece_at(F6_SQUARE),
-        self.get_piece_at(G6_SQUARE),
-        self.get_piece_at(H6_SQUARE),
-        self.get_piece_at(A5_SQUARE),
-        self.get_piece_at(B5_SQUARE),
-        self.get_piece_at(C5_SQUARE),
-        self.get_piece_at(D5_SQUARE),
-        self.get_piece_at(E5_SQUARE),
-        self.get_piece_at(F5_SQUARE),
-        self.get_piece_at(G5_SQUARE),
-        self.get_piece_at(H5_SQUARE),
-        self.get_piece_at(A4_SQUARE),
-        self.get_piece_at(B4_SQUARE),
-        self.get_piece_at(C4_SQUARE),
-        self.get_piece_at(D4_SQUARE),
-        self.get_piece_at(E4_SQUARE),
-        self.get_piece_at(F4_SQUARE),
-        self.get_piece_at(G4_SQUARE),
-        self.get_piece_at(H4_SQUARE),
-        self.get_piece_at(A3_SQUARE),
-        self.get_piece_at(B3_SQUARE),
-        self.get_piece_at(C3_SQUARE),
-        self.get_piece_at(D3_SQUARE),
-        self.get_piece_at(E3_SQUARE),
-        self.get_piece_at(F3_SQUARE),
-        self.get_piece_at(G3_SQUARE),
-        self.get_piece_at(H3_SQUARE),
-        self.get_piece_at(A2_SQUARE),
-        self.get_piece_at(B2_SQUARE),
-        self.get_piece_at(C2_SQUARE),
-        self.get_piece_at(D2_SQUARE),
-        self.get_piece_at(E2_SQUARE),
-        self.get_piece_at(F2_SQUARE),
-        self.get_piece_at(G2_SQUARE),
-        self.get_piece_at(H2_SQUARE),
-        self.get_piece_at(A1_SQUARE),
-        self.get_piece_at(B1_SQUARE),
-        self.get_piece_at(C1_SQUARE),
-        self.get_piece_at(D1_SQUARE),
-        self.get_piece_at(E1_SQUARE),
-        self.get_piece_at(F1_SQUARE),
-        self.get_piece_at(G1_SQUARE),
-        self.get_piece_at(H1_SQUARE),
+            self.get_piece_at(A8_SQUARE),
+            self.get_piece_at(B8_SQUARE),
+            self.get_piece_at(C8_SQUARE),
+            self.get_piece_at(D8_SQUARE),
+            self.get_piece_at(E8_SQUARE),
+            self.get_piece_at(F8_SQUARE),
+            self.get_piece_at(G8_SQUARE),
+            self.get_piece_at(H8_SQUARE),
+            self.get_piece_at(A7_SQUARE),
+            self.get_piece_at(B7_SQUARE),
+            self.get_piece_at(C7_SQUARE),
+            self.get_piece_at(D7_SQUARE),
+            self.get_piece_at(E7_SQUARE),
+            self.get_piece_at(F7_SQUARE),
+            self.get_piece_at(G7_SQUARE),
+            self.get_piece_at(H7_SQUARE),
+            self.get_piece_at(A6_SQUARE),
+            self.get_piece_at(B6_SQUARE),
+            self.get_piece_at(C6_SQUARE),
+            self.get_piece_at(D6_SQUARE),
+            self.get_piece_at(E6_SQUARE),
+            self.get_piece_at(F6_SQUARE),
+            self.get_piece_at(G6_SQUARE),
+            self.get_piece_at(H6_SQUARE),
+            self.get_piece_at(A5_SQUARE),
+            self.get_piece_at(B5_SQUARE),
+            self.get_piece_at(C5_SQUARE),
+            self.get_piece_at(D5_SQUARE),
+            self.get_piece_at(E5_SQUARE),
+            self.get_piece_at(F5_SQUARE),
+            self.get_piece_at(G5_SQUARE),
+            self.get_piece_at(H5_SQUARE),
+            self.get_piece_at(A4_SQUARE),
+            self.get_piece_at(B4_SQUARE),
+            self.get_piece_at(C4_SQUARE),
+            self.get_piece_at(D4_SQUARE),
+            self.get_piece_at(E4_SQUARE),
+            self.get_piece_at(F4_SQUARE),
+            self.get_piece_at(G4_SQUARE),
+            self.get_piece_at(H4_SQUARE),
+            self.get_piece_at(A3_SQUARE),
+            self.get_piece_at(B3_SQUARE),
+            self.get_piece_at(C3_SQUARE),
+            self.get_piece_at(D3_SQUARE),
+            self.get_piece_at(E3_SQUARE),
+            self.get_piece_at(F3_SQUARE),
+            self.get_piece_at(G3_SQUARE),
+            self.get_piece_at(H3_SQUARE),
+            self.get_piece_at(A2_SQUARE),
+            self.get_piece_at(B2_SQUARE),
+            self.get_piece_at(C2_SQUARE),
+            self.get_piece_at(D2_SQUARE),
+            self.get_piece_at(E2_SQUARE),
+            self.get_piece_at(F2_SQUARE),
+            self.get_piece_at(G2_SQUARE),
+            self.get_piece_at(H2_SQUARE),
+            self.get_piece_at(A1_SQUARE),
+            self.get_piece_at(B1_SQUARE),
+            self.get_piece_at(C1_SQUARE),
+            self.get_piece_at(D1_SQUARE),
+            self.get_piece_at(E1_SQUARE),
+            self.get_piece_at(F1_SQUARE),
+            self.get_piece_at(G1_SQUARE),
+            self.get_piece_at(H1_SQUARE),
         )
     }
 }

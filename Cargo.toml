@@ -9,4 +9,5 @@ members = [
   "movegen",
   "constants",
   "game",
+  "square",
 ]

@@ -1,4 +1,4 @@
-use std::{fmt};
+use std::fmt;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Pieces {
@@ -15,6 +15,32 @@ pub enum Pieces {
     BQueen,
     BKing,
     Empty,
+}
+
+impl Pieces {
+    pub fn white(&self) -> bool {
+        match self {
+            Pieces::WPawn => true,
+            Pieces::WKnight => true,
+            Pieces::WBishop => true,
+            Pieces::WRook => true,
+            Pieces::WQueen => true,
+            Pieces::WKing => true,
+            _ => false,
+        }
+    }
+
+    pub fn black(&self) -> bool {
+        match self {
+            Pieces::BPawn => true,
+            Pieces::BKnight => true,
+            Pieces::BBishop => true,
+            Pieces::BRook => true,
+            Pieces::BQueen => true,
+            Pieces::BKing => true,
+            _ => false,
+        }
+    }
 }
 
 impl fmt::Display for Pieces {

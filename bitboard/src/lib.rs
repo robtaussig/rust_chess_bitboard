@@ -1,4 +1,7 @@
-use std::{fmt, ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not}};
+use std::{
+    fmt,
+    ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not},
+};
 
 #[derive(PartialEq, PartialOrd, Clone, Copy, Debug, Default)]
 pub struct BitBoard(pub u64);
@@ -87,6 +90,16 @@ impl BitBoard {
     pub fn popcnt(&self) -> u32 {
         self.0.count_ones()
     }
+
+    //Returns row index of first positive bit
+    pub fn row(&self) -> usize {
+        (self.0.leading_zeros() / 8) as usize
+    }
+
+    //Returns col index of first positive bit
+    pub fn col(&self) -> usize {
+        (self.0.leading_zeros() % 8) as usize
+    }
 }
 
 pub struct BitIterator {
@@ -95,16 +108,14 @@ pub struct BitIterator {
 
 impl BitIterator {
     pub fn new(bb: &BitBoard) -> Self {
-        BitIterator {
-            bb: bb.0,
-        }
+        BitIterator { bb: bb.0 }
     }
 }
 
 impl Iterator for BitIterator {
     type Item = usize;
 
-    fn next(&mut self) -> Option<usize> {        
+    fn next(&mut self) -> Option<usize> {
         if self.bb != 0 {
             let bit = self.bb.trailing_zeros();
             self.bb &= self.bb - 1;
@@ -115,13 +126,13 @@ impl Iterator for BitIterator {
     }
 }
 
-struct VisualBinaryString { bb: u64 }
+struct VisualBinaryString {
+    bb: u64,
+}
 
 impl VisualBinaryString {
     pub fn new(bb: &BitBoard) -> Self {
-        VisualBinaryString {
-            bb: bb.0,
-        }
+        VisualBinaryString { bb: bb.0 }
     }
 }
 
@@ -129,7 +140,9 @@ impl fmt::Display for VisualBinaryString {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let char_vec: Vec<char> = BitBoard(self.bb).to_str().chars().collect();
 
-        write!(f,"
+        write!(
+            f,
+            "
             {}{}{}{}{}{}{}{}
             {}{}{}{}{}{}{}{}
             {}{}{}{}{}{}{}{}
@@ -139,77 +152,70 @@ impl fmt::Display for VisualBinaryString {
             {}{}{}{}{}{}{}{}
             {}{}{}{}{}{}{}{}
         ",
-        char_vec[7],
-        char_vec[6],
-        char_vec[5],
-        char_vec[4],
-        char_vec[3],
-        char_vec[2],
-        char_vec[1],
-        char_vec[0],
-
-        char_vec[15],
-        char_vec[14],
-        char_vec[13],
-        char_vec[12],
-        char_vec[11],
-        char_vec[10],
-        char_vec[9],
-        char_vec[8],
-
-        char_vec[23],
-        char_vec[22],
-        char_vec[21],
-        char_vec[20],
-        char_vec[19],
-        char_vec[18],
-        char_vec[17],
-        char_vec[16],
-
-        char_vec[31],
-        char_vec[30],
-        char_vec[29],
-        char_vec[28],
-        char_vec[27],
-        char_vec[26],
-        char_vec[25],
-        char_vec[24],
-
-        char_vec[39],
-        char_vec[38],
-        char_vec[37],
-        char_vec[36],
-        char_vec[35],
-        char_vec[34],
-        char_vec[33],
-        char_vec[32],
-
-        char_vec[47],
-        char_vec[46],
-        char_vec[45],
-        char_vec[44],
-        char_vec[43],
-        char_vec[42],
-        char_vec[41],
-        char_vec[40],
-
-        char_vec[55],
-        char_vec[54],
-        char_vec[53],
-        char_vec[52],
-        char_vec[51],
-        char_vec[50],
-        char_vec[49],
-        char_vec[48],
-
-        char_vec[63],
-        char_vec[62],
-        char_vec[61],
-        char_vec[60],
-        char_vec[59],
-        char_vec[58],
-        char_vec[57],
-        char_vec[56],
+            char_vec[7],
+            char_vec[6],
+            char_vec[5],
+            char_vec[4],
+            char_vec[3],
+            char_vec[2],
+            char_vec[1],
+            char_vec[0],
+            char_vec[15],
+            char_vec[14],
+            char_vec[13],
+            char_vec[12],
+            char_vec[11],
+            char_vec[10],
+            char_vec[9],
+            char_vec[8],
+            char_vec[23],
+            char_vec[22],
+            char_vec[21],
+            char_vec[20],
+            char_vec[19],
+            char_vec[18],
+            char_vec[17],
+            char_vec[16],
+            char_vec[31],
+            char_vec[30],
+            char_vec[29],
+            char_vec[28],
+            char_vec[27],
+            char_vec[26],
+            char_vec[25],
+            char_vec[24],
+            char_vec[39],
+            char_vec[38],
+            char_vec[37],
+            char_vec[36],
+            char_vec[35],
+            char_vec[34],
+            char_vec[33],
+            char_vec[32],
+            char_vec[47],
+            char_vec[46],
+            char_vec[45],
+            char_vec[44],
+            char_vec[43],
+            char_vec[42],
+            char_vec[41],
+            char_vec[40],
+            char_vec[55],
+            char_vec[54],
+            char_vec[53],
+            char_vec[52],
+            char_vec[51],
+            char_vec[50],
+            char_vec[49],
+            char_vec[48],
+            char_vec[63],
+            char_vec[62],
+            char_vec[61],
+            char_vec[60],
+            char_vec[59],
+            char_vec[58],
+            char_vec[57],
+            char_vec[56],
         )
     }
 }

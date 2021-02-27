@@ -1,5 +1,5 @@
 [package]
-name = "ui"
+name = "square"
 version = "0.1.0"
 authors = ["Robert Taussig <robert.taussig@gmail.com>"]
 edition = "2018"
@@ -7,13 +7,6 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-board = { path = "../board" }
-game = { path = "../game" }
 piece = { path = "../piece" }
 bitboard = { path = "../bitboard" }
-chessmove = { path = "../chessmove" }
 constants = { path = "../constants" }
-movegen = { path = "../movegen" }
-ggez = "*"
-legion = "0.4.0"
-rand = "0.8.3"
