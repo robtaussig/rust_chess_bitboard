@@ -196,96 +196,96 @@ impl MoveGen {
 
     pub fn south_attacks(board: &Board, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
         attacks |= board.combined_bbs[EMPTY_SQUARES_BB] & (attacks.shr(8));
-        let mut empty = !own_pieces & (!own_pieces.shr(8));
+        let mut empty = board.combined_bbs[EMPTY_SQUARES_BB] & (board.combined_bbs[EMPTY_SQUARES_BB].shr(8));
         attacks |= empty & (attacks.shr(16));
         empty &= empty.shr(16);
         attacks |= empty & (attacks.shr(32));
         (attacks.shr(8)) & !own_pieces
     }
 
-    pub fn north_attacks(_board: &Board, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
-        attacks |= !own_pieces & (attacks.shl(8));
-        let mut empty = !own_pieces & (!own_pieces.shl(8));
+    pub fn north_attacks(board: &Board, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
+        attacks |= board.combined_bbs[EMPTY_SQUARES_BB] & (attacks.shl(8));
+        let mut empty = board.combined_bbs[EMPTY_SQUARES_BB] & (board.combined_bbs[EMPTY_SQUARES_BB].shl(8));
         attacks |= empty & (attacks.shl(16));
         empty &= empty.shl(16);
         attacks |= empty & (attacks.shl(32));
         (attacks.shl(8)) & !own_pieces
     }
 
-    pub fn west_attacks(_board: &Board, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
-        let mut empty = !own_pieces & CLEAR_H_FILE;
+    pub fn west_attacks(board: &Board, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
+        let mut empty = board.combined_bbs[EMPTY_SQUARES_BB] & CLEAR_H_FILE;
         attacks |= empty & (attacks.shr(1));
         empty &= empty.shr(1);
         attacks |= empty & (attacks.shr(2));
         empty &= empty.shr(2);
         attacks |= empty & (attacks.shr(4));
-        attacks & !own_pieces
+        attacks.shr(1) & !own_pieces
     }
 
-    pub fn east_attacks(_board: &Board, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
-        let mut empty = !own_pieces & CLEAR_A_FILE;
+    pub fn east_attacks(board: &Board, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
+        let mut empty = board.combined_bbs[EMPTY_SQUARES_BB] & CLEAR_A_FILE;
         attacks |= empty & (attacks.shl(1));
         empty &= empty.shl(1);
         attacks |= empty & (attacks.shl(2));
         empty &= empty.shl(2);
         attacks |= empty & (attacks.shl(4));
-        attacks & !own_pieces
+        attacks.shl(1) & !own_pieces
     }
 
     pub fn north_east_attacks(
-        _board: &Board,
+        board: &Board,
         mut attacks: BitBoard,
         own_pieces: BitBoard,
     ) -> BitBoard {
-        let mut empty = !own_pieces & CLEAR_A_FILE;
+        let mut empty = board.combined_bbs[EMPTY_SQUARES_BB] & CLEAR_A_FILE;
         attacks |= empty & (attacks.shl(9));
         empty &= empty.shl(9);
         attacks |= empty & (attacks.shl(18));
         empty &= empty.shl(18);
         attacks |= empty & (attacks.shl(36));
-        attacks & !own_pieces
+        attacks.shl(9) & !own_pieces & CLEAR_A_FILE
     }
 
     pub fn south_east_attacks(
-        _board: &Board,
+        board: &Board,
         mut attacks: BitBoard,
         own_pieces: BitBoard,
     ) -> BitBoard {
-        let mut empty = !own_pieces & CLEAR_A_FILE;
+        let mut empty = board.combined_bbs[EMPTY_SQUARES_BB] & CLEAR_A_FILE;
         attacks |= empty & (attacks.shr(7));
         empty &= empty.shr(7);
         attacks |= empty & (attacks.shr(14));
         empty &= empty.shr(14);
         attacks |= empty & (attacks.shr(28));
-        attacks & !own_pieces
+        attacks.shr(7) & !own_pieces & CLEAR_A_FILE
     }
 
     pub fn south_west_attacks(
-        _board: &Board,
+        board: &Board,
         mut attacks: BitBoard,
         own_pieces: BitBoard,
     ) -> BitBoard {
-        let mut empty = !own_pieces & CLEAR_H_FILE;
+        let mut empty = board.combined_bbs[EMPTY_SQUARES_BB] & CLEAR_H_FILE;
         attacks |= empty & (attacks.shr(9));
         empty &= empty.shr(9);
         attacks |= empty & (attacks.shr(18));
         empty &= empty.shr(18);
         attacks |= empty & (attacks.shr(36));
-        attacks & !own_pieces
+        attacks.shr(9) & !own_pieces & CLEAR_H_FILE
     }
 
     pub fn north_west_attacks(
-        _board: &Board,
+        board: &Board,
         mut attacks: BitBoard,
         own_pieces: BitBoard,
     ) -> BitBoard {
-        let mut empty = !own_pieces & CLEAR_H_FILE;
+        let mut empty = board.combined_bbs[EMPTY_SQUARES_BB] & CLEAR_H_FILE;
         attacks |= empty & (attacks.shl(7));
         empty &= empty.shl(7);
         attacks |= empty & (attacks.shl(14));
         empty &= empty.shl(14);
         attacks |= empty & (attacks.shl(28));
-        attacks & !own_pieces
+        attacks.shl(7) & !own_pieces & CLEAR_H_FILE
     }
 
     //TODO test
