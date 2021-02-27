@@ -3,7 +3,7 @@ use std::{
     ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not},
 };
 
-#[derive(PartialEq, PartialOrd, Clone, Copy, Debug, Default)]
+#[derive(PartialEq, PartialOrd, Clone, Copy, Debug, Default, Eq, Hash)]
 pub struct BitBoard(pub u64);
 
 impl BitAnd for BitBoard {
@@ -98,7 +98,7 @@ impl BitBoard {
 
     //Returns col index of first positive bit
     pub fn col(&self) -> usize {
-        (self.0.leading_zeros() % 8) as usize
+        (7 - self.0.leading_zeros() % 8) as usize
     }
 }
 

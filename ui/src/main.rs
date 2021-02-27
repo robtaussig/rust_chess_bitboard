@@ -1,6 +1,8 @@
-extern crate board;
-use board::Board;
 extern crate game;
+use std::cell::{RefCell};
+use std::collections::HashMap;
+use std::rc::Rc;
+
 use game::Game;
 extern crate piece;
 use piece::Pieces;
@@ -13,11 +15,12 @@ use movegen::MoveGen;
 extern crate constants;
 use constants::*;
 use ggez;
-use ggez::event::{run, EventHandler, KeyCode, KeyMods};
+use ggez::event::{run, EventHandler};
 use ggez::graphics::{
-    clear, draw, present, Color, DrawMode, DrawParam, Font, Mesh, Rect, Scale, Text,
+    clear, draw, present, Color, DrawMode, DrawParam, Mesh, Rect,
 };
-use ggez::input::keyboard;
+mod moving_piece;
+use moving_piece::*;
 
 const SCREEN_HEIGHT: f32 = 600.;
 const SCREEN_WIDTH: f32 = 600.;
@@ -38,6 +41,7 @@ struct MainState {
     last_move: (BitBoard, BitBoard),
     needs_draw: bool,
     valid_moves: Vec<ChessMove>,
+    moving_pieces: Rc<RefCell<HashMap<BitBoard, MovingPiece>>>,
 }
 
 impl MainState {
@@ -51,6 +55,7 @@ impl MainState {
             last_move: (EMPTY, EMPTY),
             needs_draw: true,
             valid_moves,
+            moving_pieces: Rc::new(RefCell::new(HashMap::new())),
         }
     }
 
@@ -64,6 +69,14 @@ impl MainState {
         self.game.make_move(&ChessMove::new(from, to));
         self.valid_moves = MoveGen::gen_legal_moves(&self.game.board);
         self.last_move = (from, to);
+        let mut moving_pieces = self.moving_pieces.borrow_mut();
+        moving_pieces.insert(to, MovingPiece::new(
+            self.game.board.get_piece_at(to),
+            from,
+            to,
+            SQUARE_SIZE,
+            20,
+        ));
     }
 }
 
@@ -76,7 +89,7 @@ pub fn draw_piece(
     let center_y = (row as f32 * SQUARE_SIZE) + (SQUARE_SIZE / 2f32);
     let center_x = (col as f32 * SQUARE_SIZE) + (SQUARE_SIZE / 2f32);
     let color: Color;
-    if piece.white() {
+    if piece.is_white() {
         color = WHITE_PIECE_COLOR;
     } else {
         color = BLACK_PIECE_COLOR;
@@ -133,7 +146,7 @@ pub fn draw_square(
         Mesh::new_rectangle(ctx, DrawMode::fill(), rect, color).expect("error creating rect");
 
     if piece != &Pieces::Empty {
-        draw(ctx, &mesh, DrawParam::default());
+        draw(ctx, &mesh, DrawParam::default()).expect("error drawing square");
         draw_piece(ctx, row, col, piece)
     } else {
         draw(ctx, &mesh, DrawParam::default())
@@ -154,7 +167,20 @@ pub fn coord_to_bitboard(x: f32, y: f32) -> BitBoard {
 }
 
 impl EventHandler for MainState {
-    fn update(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
+    fn update(&mut self, _ctx: &mut ggez::Context) -> ggez::GameResult {
+        let mut moving_pieces = self.moving_pieces.borrow_mut();
+        let mut to_remove: Vec<BitBoard> = Vec::new();
+        moving_pieces.iter_mut().for_each(|(bitboard, piece)| {
+            piece.update();
+            if piece.done == true {
+                to_remove.push(*bitboard);
+            }
+        });
+
+        to_remove.iter().for_each(|bitboard| {
+            moving_pieces.remove(bitboard);
+        });
+
         Ok(())
     }
 
@@ -182,6 +208,8 @@ impl EventHandler for MainState {
         }
         clear(ctx, Color::new(0.0, 0.0, 0.0, 1.0));
 
+        let mut moving_pieces = self.moving_pieces.borrow_mut();
+
         self.game
             .board
             .to_array()
@@ -189,11 +217,17 @@ impl EventHandler for MainState {
             .enumerate()
             .for_each(|(row_idx, row)| {
                 row.iter().enumerate().for_each(|(col_idx, square)| {
+                    let piece: Pieces;
+                    if moving_pieces.contains_key(&square.bitboard) == true {
+                        piece = Pieces::Empty;
+                    } else {
+                        piece = square.piece;
+                    }
                     draw_square(
                         ctx,
                         7 - row_idx,
                         col_idx,
-                        &square.piece,
+                        &piece,
                         self.last_move.0 == square.bitboard,
                         self.last_move.1 == square.bitboard,
                         self.move_from == square.bitboard,
@@ -203,9 +237,15 @@ impl EventHandler for MainState {
                 })
             });
 
+        moving_pieces.iter_mut().for_each(|(_, piece)| {
+            piece.draw(ctx).expect("error drawing moving piece");
+        });
+
         present(ctx).expect("error presenting");
 
-        self.needs_draw = false;
+        if moving_pieces.len() == 0 {
+            self.needs_draw = false;
+        }
         Ok(())
     }
 }

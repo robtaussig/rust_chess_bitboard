@@ -18,7 +18,7 @@ pub enum Pieces {
 }
 
 impl Pieces {
-    pub fn white(&self) -> bool {
+    pub fn is_white(&self) -> bool {
         match self {
             Pieces::WPawn => true,
             Pieces::WKnight => true,
@@ -30,7 +30,7 @@ impl Pieces {
         }
     }
 
-    pub fn black(&self) -> bool {
+    pub fn is_black(&self) -> bool {
         match self {
             Pieces::BPawn => true,
             Pieces::BKnight => true,
