@@ -17,3 +17,6 @@ movegen = { path = "../movegen" }
 ggez = "*"
 legion = "0.4.0"
 rand = "0.8.3"
+clipboard = "0.5.0"
+regex = "1.4.3"
+lazy_static = "1.4.0"

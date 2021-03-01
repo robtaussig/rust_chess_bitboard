@@ -181,6 +181,7 @@ impl Board {
                             let rank = 7 - row_idx;
                             let square_idx = (rank * 8) + col_idx + empty_cols;
                             let square = SQUARES[square_idx];
+
                             match char.as_str() {
                                 "r" => {
                                     black_rooks |= square;
@@ -220,7 +221,7 @@ impl Board {
                                 },
                                 _ => {
                                     let empties = char.parse::<usize>().unwrap();
-                                    empty_cols += empties;
+                                    empty_cols += empties - 1;
                                 },
                             }
                         });
@@ -571,7 +572,7 @@ mod tests {
         use super::*;
 
         #[test]
-        fn it_works() {
+        fn it_works_with_initial_board() {
             let fen_board = Board::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
             let default_board = Board::default();
 
@@ -582,6 +583,13 @@ mod tests {
             fen_board.piece_bbs[BLACK].iter().enumerate().for_each(|(idx, bb)| {
                 assert_eq!(&default_board.piece_bbs[BLACK][idx], bb);
             });
+        }
+        
+        #[test]
+        fn it_works_after_move_1_e4() {
+            let fen_board = Board::from_fen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1");
+            let white_pawns = fen_board.piece_bbs[WHITE][PAWNS_BB];
+            assert_eq!(white_pawns, RANK_2 ^ E2_SQUARE | E4_SQUARE);
         }
     }
 

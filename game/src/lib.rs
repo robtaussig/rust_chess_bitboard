@@ -20,10 +20,9 @@ impl Game {
         }
     }
 
-    //TODO implement, calculate pinners and checkers
-    pub fn from_fen(_fen: &str) -> Self {
+    pub fn from_fen(fen: &str) -> Self {
         Game {
-            board: Board::default(),
+            board: Board::from_fen(fen),
         }
     }
 

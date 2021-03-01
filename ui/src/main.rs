@@ -1,8 +1,9 @@
+#[macro_use] extern crate lazy_static;
 extern crate game;
 use std::cell::{RefCell};
 use std::collections::HashMap;
 use std::rc::Rc;
-
+use clipboard::{ClipboardProvider, ClipboardContext};
 use game::Game;
 extern crate piece;
 use piece::Pieces;
@@ -15,7 +16,7 @@ use movegen::MoveGen;
 extern crate constants;
 use constants::*;
 use ggez;
-use ggez::event::{run, EventHandler};
+use ggez::event::{run, EventHandler, KeyCode, KeyMods};
 use ggez::graphics::{
     clear, draw, present, Color, DrawMode, DrawParam, Mesh, Rect,
 };
@@ -77,6 +78,17 @@ impl MainState {
             SQUARE_SIZE,
             20,
         ));
+    }
+
+    fn restart_from_fen(&mut self, fen: &str) {
+        let game = Game::from_fen(fen);
+        let valid_moves = MoveGen::gen_legal_moves(&game.board);
+        game.board.print_board();
+        self.game = game;
+        self.last_move = (EMPTY, EMPTY);
+        self.move_from = EMPTY;
+        self.valid_moves = valid_moves;
+        self.needs_draw = true;
     }
 }
 
@@ -166,6 +178,14 @@ pub fn coord_to_bitboard(x: f32, y: f32) -> BitBoard {
     row_and_col_to_square(row, col)
 }
 
+pub fn is_fen(fen: &String) -> bool {
+    use regex::Regex;
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"\s*([rnbqkpRNBQKP1-8]+/){7}([rnbqkpRNBQKP1-8]+)\s[bw-]\s(([a-hkqA-HKQ]{1,4})|(-))\s(([a-h][36])|(-))\s\d+\s\d+\s*").unwrap();
+    }
+    RE.is_match(fen.as_str())
+}
+
 impl EventHandler for MainState {
     fn update(&mut self, _ctx: &mut ggez::Context) -> ggez::GameResult {
         let mut moving_pieces = self.moving_pieces.borrow_mut();
@@ -201,6 +221,21 @@ impl EventHandler for MainState {
         }
     }
 
+    fn key_up_event(&mut self, _ctx: &mut ggez::Context, keycode: KeyCode, keymods: KeyMods) {
+        match keycode {
+            KeyCode::V => {
+                if keymods.contains(KeyMods::CTRL) {
+                    let mut cp: ClipboardContext = ClipboardProvider::new().unwrap();
+                    let contents = cp.get_contents().unwrap();
+                    if is_fen(&contents) {
+                        self.restart_from_fen(contents.as_str());
+                    }
+                }
+            },
+            _ => (),
+        }
+    }
+
     //TODO format cell if valid target
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
         if self.needs_draw == false {
@@ -225,7 +260,7 @@ impl EventHandler for MainState {
                     }
                     draw_square(
                         ctx,
-                        7 - row_idx,
+                        row_idx,
                         col_idx,
                         &piece,
                         self.last_move.0 == square.bitboard,
