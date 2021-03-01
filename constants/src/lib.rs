@@ -45,6 +45,17 @@ pub const RANK_6: BitBoard = BitBoard(280375465082880);
 pub const RANK_7: BitBoard = BitBoard(71776119061217280);
 pub const RANK_8: BitBoard = BitBoard(18374686479671623680);
 
+pub const RANKS: [BitBoard; 8] = [
+    RANK_1,
+    RANK_2,
+    RANK_3,
+    RANK_4,
+    RANK_5,
+    RANK_6,
+    RANK_7,
+    RANK_8,
+];
+
 pub const A_FILE: BitBoard = BitBoard(72340172838076673);
 pub const B_FILE: BitBoard = BitBoard(144680345676153346);
 pub const C_FILE: BitBoard = BitBoard(289360691352306692);
@@ -53,6 +64,17 @@ pub const E_FILE: BitBoard = BitBoard(1157442765409226768);
 pub const F_FILE: BitBoard = BitBoard(2314885530818453536);
 pub const G_FILE: BitBoard = BitBoard(4629771061636907072);
 pub const H_FILE: BitBoard = BitBoard(9259542123273814144);
+
+pub const FILES: [BitBoard; 8] = [
+    A_FILE,
+    B_FILE,
+    C_FILE,
+    D_FILE,
+    E_FILE,
+    F_FILE,
+    G_FILE,
+    H_FILE,
+];
 
 pub const CLEAR_A_FILE: BitBoard = BitBoard(!A_FILE.0);
 pub const CLEAR_B_FILE: BitBoard = BitBoard(!B_FILE.0);

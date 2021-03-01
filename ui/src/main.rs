@@ -3,6 +3,7 @@ extern crate game;
 use std::cell::{RefCell};
 use std::collections::HashMap;
 use std::rc::Rc;
+use board::Board;
 use clipboard::{ClipboardProvider, ClipboardContext};
 use game::Game;
 extern crate piece;
@@ -35,6 +36,16 @@ const WHITE_SQUARE: Color = Color::new(1.0, 1.0, 1.0, 1.0);
 const BLACK_SQUARE: Color = Color::new(0.0, 0.0, 0.0, 1.0);
 const WHITE_PIECE_COLOR: Color = Color::new(0.8, 0.8, 0.8, 1.0);
 const BLACK_PIECE_COLOR: Color = Color::new(0.2, 0.2, 0.2, 1.0);
+const SEARCH_DIRS: [(i8, i8); 8] = [
+    (-1, -1),
+    (-1, 0),
+    (-1, 1),
+    (0, -1),
+    (0, 1),
+    (1, -1),
+    (1, 0),
+    (1, 1),
+];
 
 struct MainState {
     game: Game,
@@ -82,13 +93,85 @@ impl MainState {
 
     fn restart_from_fen(&mut self, fen: &str) {
         let game = Game::from_fen(fen);
+        
+        self.move_pieces_between_game_boards(&self.game.board, &game.board);
+
         let valid_moves = MoveGen::gen_legal_moves(&game.board);
-        game.board.print_board();
         self.game = game;
         self.last_move = (EMPTY, EMPTY);
         self.move_from = EMPTY;
         self.valid_moves = valid_moves;
         self.needs_draw = true;
+    }
+
+    fn move_pieces_between_game_boards(&self, old_game_board: &Board, new_game_board: &Board) {
+        let old_pieces = old_game_board.to_array();
+        let new_pieces = new_game_board.to_array();
+
+        let mut movers: HashMap<BitBoard, BitBoard> = HashMap::new();
+        let mut found_pieces = [[false; 8]; 8];
+
+        new_pieces.iter().for_each(|row| {
+            row.iter().for_each(|square| {
+                let search_pointer_x = square.bitboard.col();
+                let search_pointer_y = square.bitboard.row();
+
+                if old_pieces[search_pointer_y][search_pointer_x].piece == square.piece {
+                    found_pieces[search_pointer_y][search_pointer_x] = true;
+                }
+            });
+        });
+
+        new_pieces.iter().for_each(|row| {
+            row.iter().for_each(|square| {
+                if square.piece != Pieces::Empty {
+                    let mut searched = [[false; 8]; 8];
+                    let search_pointer_x = square.bitboard.col();
+                    let search_pointer_y = square.bitboard.row();
+                    if found_pieces[search_pointer_y][search_pointer_x] == false {
+                        let mut found_piece: BitBoard = EMPTY;
+                        searched[search_pointer_y][search_pointer_x] = true;
+                        let mut to_search = vec![(search_pointer_x, search_pointer_y)];
+                        while to_search.len() > 0 {
+                            let (x, y) = to_search.remove(0);
+                            if searched[y][x] == false {
+                                searched[y][x] = true;
+                                if found_pieces[y][x] == false && old_pieces[y][x].piece == square.piece {
+                                    found_piece = old_pieces[y][x].bitboard;
+                                    break;
+                                }
+                            }
+                            for (x_dir, y_dir) in SEARCH_DIRS.iter() {
+                                let next_x = x as i8 + x_dir;
+                                let next_y = y as i8 + y_dir;
+                                if next_x >= 0 && next_y >= 0 && next_x <= 7 && next_y <= 7 {
+                                    if searched[next_y as usize][next_x as usize] == false {
+                                        to_search.push((next_x as usize, next_y as usize));
+                                    }
+                                }
+                            }
+                        }
+                        if found_piece != EMPTY {
+                            found_pieces[found_piece.row()][found_piece.col()] = true;
+                            movers.insert(square.bitboard, found_piece);
+                        }
+                    }
+                }
+                
+            });
+        });
+
+        let mut moving_pieces = self.moving_pieces.borrow_mut();
+        
+        movers.iter().for_each(|(to, from)| {
+            moving_pieces.insert(*to, MovingPiece::new(
+                new_game_board.get_piece_at(*to),
+                *from,
+                *to,
+                SQUARE_SIZE,
+                20,
+            ));
+        });
     }
 }
 
