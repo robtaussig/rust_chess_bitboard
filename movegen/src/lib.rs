@@ -219,7 +219,7 @@ impl MoveGen {
         attacks |= empty & (attacks.shr(2));
         empty &= empty.shr(2);
         attacks |= empty & (attacks.shr(4));
-        attacks.shr(1) & !own_pieces
+        attacks.shr(1) & !own_pieces & CLEAR_H_FILE
     }
 
     pub fn east_attacks(board: &Board, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
@@ -229,7 +229,7 @@ impl MoveGen {
         attacks |= empty & (attacks.shl(2));
         empty &= empty.shl(2);
         attacks |= empty & (attacks.shl(4));
-        attacks.shl(1) & !own_pieces
+        attacks.shl(1) & !own_pieces & CLEAR_A_FILE
     }
 
     pub fn north_east_attacks(

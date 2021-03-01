@@ -192,12 +192,6 @@ impl Game {
         let (checkers, pinned) = MoveGen::find_checkers_and_pinners(&self.board);
         self.board.checkers = checkers;
         self.board.pinned = pinned;
-        self.board.piece_bbs[WHITE][KNIGHTS_BB].print_bb();
-        self.board.piece_bbs[WHITE][PAWNS_BB].print_bb();
-
-        self.board.combined_bbs[ALL_PAWNS_BB].print_bb();
-
-        self.board.print_board();
         self
     }
 }
@@ -222,6 +216,24 @@ mod tests {
 
             assert_eq!(g.board.get_piece_at(F5_SQUARE), Pieces::BPawn);
             assert_eq!(g.board.checkers, H5_SQUARE);
+        }
+    }
+
+    mod north_east_attacks {
+        use super::*;
+
+        #[test]
+        fn it_works() {
+            let mut g = Game::new();
+
+            g.make_move(&ChessMove::from_notation("E2", "E4"))
+                .make_move(&ChessMove::from_notation("E7", "E5"))
+                .make_move(&ChessMove::from_notation("D1", "F3"))
+                .make_move(&ChessMove::from_notation("C7", "C5"));
+            
+            let valid_queen_moves = MoveGen::valid_queen_moves(&g.board, F3_SQUARE, g.board.color_bbs[WHITE]);
+            let is_a5_valid = valid_queen_moves & A4_SQUARE;
+            println!("{}", is_a5_valid);
         }
     }
 }
