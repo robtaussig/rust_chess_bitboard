@@ -95,7 +95,7 @@ impl Board {
     pub fn to_array(&self) -> [[Square; 8]; 8] {
         let mut board_array: [[Square; 8]; 8] = [[Square::default(); 8]; 8];
         for pos in 0..64 {
-            let rank = pos / 8;
+            let rank = 7 - (pos / 8);
             let file = pos % 8;
             let square = SQUARES[pos];
 
@@ -104,6 +104,160 @@ impl Board {
         }
 
         board_array
+    }
+
+    pub fn from_fen(fen: &str) -> Board {
+        use std::iter::FromIterator;
+        let res = Vec::from_iter(fen.split(" ").map(String::from));
+        let mut white_pawns: BitBoard = EMPTY;
+        let mut white_knights: BitBoard = EMPTY;
+        let mut white_bishops: BitBoard = EMPTY;
+        let mut white_rooks: BitBoard = EMPTY;
+        let mut white_queens: BitBoard = EMPTY;
+        let mut white_kings: BitBoard = EMPTY;
+        let mut black_pawns: BitBoard = EMPTY;
+        let mut black_knights: BitBoard = EMPTY;
+        let mut black_bishops: BitBoard = EMPTY;
+        let mut black_rooks: BitBoard = EMPTY;
+        let mut black_queens: BitBoard = EMPTY;
+        let mut black_kings: BitBoard = EMPTY;
+        let mut side_to_move: usize = WHITE;
+        res.iter().enumerate().for_each(|(part_idx, part)| {
+            match part_idx {
+                0 => {
+                    let rows = Vec::from_iter(part.split("/").map(String::from));
+                    rows.iter().enumerate().for_each(|(row_idx, row)| {
+                        let mut empty_cols: usize = 0;
+                        row.chars().map(String::from).enumerate().for_each(|(col_idx, char)| {
+                            let rank = 7 - row_idx;
+                            let square_idx = (rank * 8) + col_idx + empty_cols;
+                            let square = SQUARES[square_idx];
+                            match char.as_str() {
+                                "r" => {
+                                    black_rooks |= square;
+                                },
+                                "b" => {
+                                    black_bishops |= square;
+                                },
+                                "n" => {
+                                    black_knights |= square;
+                                },
+                                "q" => {
+                                    black_queens |= square;
+                                },
+                                "k" => {
+                                    black_kings |= square;
+                                },
+                                "p" => {
+                                    black_pawns |= square;
+                                },
+                                "R" => {
+                                    white_rooks |= square;
+                                },
+                                "B" => {
+                                    white_bishops |= square;
+                                },
+                                "N" => {
+                                    white_knights |= square;
+                                },
+                                "Q" => {
+                                    white_queens |= square;
+                                },
+                                "K" => {
+                                    white_kings |= square;
+                                },
+                                "P" => {
+                                    white_pawns |= square;
+                                },
+                                _ => {
+                                    let empties = char.parse::<usize>().unwrap();
+                                    empty_cols += empties;
+                                },
+                            }
+                        });
+                    });
+                },
+                1 => {
+                    if part == "w" {
+                        side_to_move = WHITE;
+                    } else {
+                        side_to_move = BLACK;
+                    }
+                },
+                2 => {
+                    //castling: KQkq
+                    //TODO
+                },
+                3 => {
+                    //enpassant: e3 / -
+                    //TODO
+                },
+                4 => {
+                    //turns since last capture/pawn advance
+                    //TODO
+                },
+                5 => {
+                    //# of fullmoves, starts at 1
+                    //TODO
+                },
+                _ => {
+
+                },
+            }
+        });
+        
+        Board::new(
+            white_pawns,
+            white_knights,
+            white_bishops,
+            white_rooks,
+            white_queens,
+            white_kings,
+            black_pawns,
+            black_knights,
+            black_bishops,
+            black_rooks,
+            black_queens,
+            black_kings,
+            side_to_move,
+        )
+    }
+
+    pub fn to_fen(&self) -> String {
+        let mut pieces: Vec<String> = Vec::new();
+        self.to_array().iter().for_each(|row| {
+            let mut empty_count = 0;
+            let mut row_str: Vec<String> = Vec::new();
+            row.iter().for_each(|square| {
+                let piece = format!("{}", square.piece);
+                if piece == "." {
+                    empty_count += 1;
+                } else {
+                    if empty_count > 0 {
+                        row_str.push(empty_count.to_string());
+                        empty_count = 0;
+                    }
+                    row_str.push(piece);
+                }
+            });
+            if empty_count > 0 {
+                row_str.push(empty_count.to_string());
+            }
+            pieces.push(row_str.join(""));
+        });
+        let board_str = pieces.join("/");
+        let side_to_move_str: &str;
+        if self.side_to_move == WHITE {
+            side_to_move_str = "w";
+        } else {
+            side_to_move_str = "b";
+        }
+        let castling_rights_str= "KQkq"; //TODO
+        let en_passant_str= "-"; //TODO
+        let half_moves_since_capture_promotion= "0"; //TODO
+        let full_moves= "1"; //TODO
+
+        format!("{} {} {} {} {} {}", board_str, side_to_move_str, castling_rights_str, en_passant_str, half_moves_since_capture_promotion, full_moves)
     }
 
     pub fn get_piece_at(&self, square: BitBoard) -> Pieces {
@@ -275,6 +429,35 @@ mod tests {
             assert_eq!(b.get_piece_at(E8_SQUARE), Pieces::BKing,);
 
             assert_eq!(b.get_piece_at(E1_SQUARE), Pieces::WKing,);
+        }
+    }
+
+    mod from_fen {
+        use super::*;
+
+        #[test]
+        fn it_works() {
+            let fen_board = Board::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            let default_board = Board::default();
+
+            fen_board.piece_bbs[WHITE].iter().enumerate().for_each(|(idx, bb)| {
+                assert_eq!(&default_board.piece_bbs[WHITE][idx], bb);
+            });
+
+            fen_board.piece_bbs[BLACK].iter().enumerate().for_each(|(idx, bb)| {
+                assert_eq!(&default_board.piece_bbs[BLACK][idx], bb);
+            });
+        }
+    }
+
+    mod to_fen {
+        use super::*;
+
+        #[test]
+        fn it_works() {
+            let default_board = Board::default();
+
+            assert_eq!(default_board.to_fen(), "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         }
     }
 
