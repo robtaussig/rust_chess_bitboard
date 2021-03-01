@@ -18,6 +18,8 @@ pub struct Board {
     pub pinned: BitBoard,
     pub en_passant: BitBoard,
     pub castle_rights: BitBoard,
+    pub half_moves_since_action: u8,
+    pub full_moves: u16,
 }
 
 impl Board {
@@ -35,6 +37,10 @@ impl Board {
         black_queens: BitBoard,
         black_kings: BitBoard,
         side_to_move: usize,
+        castle_rights: BitBoard,
+        en_passant: BitBoard,
+        half_moves_since_action: u8,
+        full_moves: u16,
     ) -> Board {
         let mut piece_bbs = [[EMPTY; 6]; 2];
         let mut combined_bbs = [EMPTY; 8];
@@ -87,9 +93,48 @@ impl Board {
             side_to_move,
             pinned: EMPTY,
             checkers: EMPTY,
-            en_passant: EMPTY,
-            castle_rights: INITIAL_CASTLE_RIGHTS,
+            en_passant,
+            castle_rights,
+            half_moves_since_action,
+            full_moves,
         }
+    }
+
+    pub fn new_from_pieces(
+        white_pawns: BitBoard,
+        white_knights: BitBoard,
+        white_bishops: BitBoard,
+        white_rooks: BitBoard,
+        white_queens: BitBoard,
+        white_kings: BitBoard,
+        black_pawns: BitBoard,
+        black_knights: BitBoard,
+        black_bishops: BitBoard,
+        black_rooks: BitBoard,
+        black_queens: BitBoard,
+        black_kings: BitBoard,
+        side_to_move: usize,
+    ) -> Board {
+        
+        Board::new(
+            white_pawns,
+            white_knights,
+            white_bishops,
+            white_rooks,
+            white_queens,
+            white_kings,
+            black_pawns,
+            black_knights,
+            black_bishops,
+            black_rooks,
+            black_queens,
+            black_kings,
+            side_to_move,
+            INITIAL_CASTLE_RIGHTS,
+            EMPTY,
+            0,
+            1,
+        )
     }
 
     pub fn to_array(&self) -> [[Square; 8]; 8] {
@@ -122,6 +167,10 @@ impl Board {
         let mut black_queens: BitBoard = EMPTY;
         let mut black_kings: BitBoard = EMPTY;
         let mut side_to_move: usize = WHITE;
+        let mut en_passant: BitBoard = EMPTY;
+        let mut castle_rights: BitBoard = EMPTY;
+        let mut half_moves_since_action: u8 = 0;
+        let mut full_moves: u16 = 0;
         res.iter().enumerate().for_each(|(part_idx, part)| {
             match part_idx {
                 0 => {
@@ -185,20 +234,27 @@ impl Board {
                     }
                 },
                 2 => {
-                    //castling: KQkq
-                    //TODO
+                    castle_rights = part.chars().fold(
+                        castle_rights, 
+                        |acc, piece| acc | match piece.to_string().as_str() {
+                            "K" => G1_SQUARE,
+                            "Q" => C1_SQUARE,
+                            "k" => G8_SQUARE,
+                            "q" => C8_SQUARE,
+                            _ => EMPTY,
+                        });
                 },
                 3 => {
-                    //enpassant: e3 / -
-                    //TODO
+                    en_passant = match part.as_str() {
+                        "-" => EMPTY,
+                        _ => Board::square_from_notation(part),
+                    };
                 },
                 4 => {
-                    //turns since last capture/pawn advance
-                    //TODO
+                    half_moves_since_action = part.parse::<u8>().unwrap();
                 },
                 5 => {
-                    //# of fullmoves, starts at 1
-                    //TODO
+                    full_moves = part.parse::<u16>().unwrap();
                 },
                 _ => {
 
@@ -220,6 +276,10 @@ impl Board {
             black_queens,
             black_kings,
             side_to_move,
+            castle_rights,
+            en_passant,
+            half_moves_since_action,
+            full_moves,
         )
     }
 
@@ -252,12 +312,36 @@ impl Board {
         } else {
             side_to_move_str = "b";
         }
-        let castling_rights_str= "KQkq"; //TODO
-        let en_passant_str= "-"; //TODO
-        let half_moves_since_capture_promotion= "0"; //TODO
-        let full_moves= "1"; //TODO
+        let mut castle_rights: Vec<&str> = Vec::new();
 
-        format!("{} {} {} {} {} {}", board_str, side_to_move_str, castling_rights_str, en_passant_str, half_moves_since_capture_promotion, full_moves)
+        if self.castle_rights & G1_SQUARE != EMPTY {
+            castle_rights.push("K");
+        }
+
+        if self.castle_rights & C1_SQUARE != EMPTY {
+            castle_rights.push("Q");
+        }
+
+        if self.castle_rights & G8_SQUARE != EMPTY {
+            castle_rights.push("k");
+        }
+
+        if self.castle_rights & C8_SQUARE != EMPTY {
+            castle_rights.push("q");
+        }
+        
+        let castle_rights_str= castle_rights.join("");
+        let en_passant_str: String;
+        if self.en_passant == EMPTY {
+            en_passant_str = String::from("-");
+        } else {
+            en_passant_str = Board::square_to_notation(self.en_passant);
+        }
+        
+        let half_moves_since_capture_promotion = self.half_moves_since_action.to_string();
+        let full_moves = self.full_moves.to_string();
+
+        format!("{} {} {} {} {} {}", board_str, side_to_move_str, castle_rights_str, en_passant_str, half_moves_since_capture_promotion, full_moves)
     }
 
     pub fn get_piece_at(&self, square: BitBoard) -> Pieces {
@@ -304,6 +388,53 @@ impl Board {
         }
     }
 
+    pub fn square_to_notation(square: BitBoard) -> String {
+        let (row, col) = (7 - square.row(), square.col());
+        let rank = (row + 1).to_string();
+        let file = match col {
+            0 => "a",
+            1 => "b",
+            2 => "c",
+            3 => "d",
+            4 => "e",
+            5 => "f",
+            6 => "g",
+            7 => "h",
+            _ => "",
+        };
+        format!("{}{}", file, rank)
+    }
+
+    pub fn square_from_notation(notation: &str) -> BitBoard {
+        let file: usize = match notation
+            .chars()
+            .nth(0)
+            .unwrap()
+            .to_string()
+            .as_str() {
+            "a" => 0,
+            "b" => 1,
+            "c" => 2,
+            "d" => 3,
+            "e" => 4,
+            "f" => 5,
+            "g" => 6,
+            "h" => 7,
+            _ => 0,
+        };
+
+        let rank = notation
+            .chars()
+            .nth(1)
+            .unwrap()
+            .to_string()
+            .parse::<usize>()
+            .unwrap() - 1;
+
+        let square_pos = rank * 8 + file;
+        SQUARES[square_pos]
+    }
+
     pub fn print_board(&self) {
         println!("{}", self);
     }
@@ -325,6 +456,10 @@ impl Default for Board {
             INITIAL_BLACK_QUEENS,
             INITIAL_BLACK_KINGS,
             WHITE,
+            INITIAL_CASTLE_RIGHTS,
+            EMPTY,
+            0,
+            1,
         )
     }
 }
@@ -458,6 +593,34 @@ mod tests {
             let default_board = Board::default();
 
             assert_eq!(default_board.to_fen(), "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        }
+    }
+
+    mod square_to_notation {
+        use super::*;
+
+        #[test]
+        fn it_works() {
+            assert_eq!("h8", Board::square_to_notation(H8_SQUARE));
+            assert_eq!("h2", Board::square_to_notation(H2_SQUARE));
+            assert_eq!("a1", Board::square_to_notation(A1_SQUARE));
+            assert_eq!("a8", Board::square_to_notation(A8_SQUARE));
+            assert_eq!("c5", Board::square_to_notation(C5_SQUARE));
+            assert_eq!("f3", Board::square_to_notation(F3_SQUARE));
+        }
+    }
+
+    mod square_from_notation {
+        use super::*;
+
+        #[test]
+        fn it_works() {
+            assert_eq!(Board::square_from_notation("h8"), H8_SQUARE);
+            assert_eq!(Board::square_from_notation("h2"), H2_SQUARE);
+            assert_eq!(Board::square_from_notation("a1"), A1_SQUARE);
+            assert_eq!(Board::square_from_notation("a8"), A8_SQUARE);
+            assert_eq!(Board::square_from_notation("c5"), C5_SQUARE);
+            assert_eq!(Board::square_from_notation("f3"), F3_SQUARE);
         }
     }
 

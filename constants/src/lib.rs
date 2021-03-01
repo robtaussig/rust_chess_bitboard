@@ -35,7 +35,6 @@ pub const INITIAL_BLACK_BISHOPS: BitBoard = BitBoard(2594073385365405696);
 pub const INITIAL_BLACK_ROOKS: BitBoard = BitBoard(9295429630892703744);
 pub const INITIAL_BLACK_QUEENS: BitBoard = BitBoard(576460752303423488);
 pub const INITIAL_BLACK_KINGS: BitBoard = BitBoard(1152921504606846976);
-pub const INITIAL_CASTLE_RIGHTS: BitBoard = BitBoard(9223372036854775808);
 
 pub const RANK_1: BitBoard = BitBoard(255);
 pub const RANK_2: BitBoard = BitBoard(65280);
@@ -124,6 +123,10 @@ pub const E1_SQUARE: BitBoard = BitBoard(E_FILE.0 & RANK_1.0);
 pub const F1_SQUARE: BitBoard = BitBoard(F_FILE.0 & RANK_1.0);
 pub const G1_SQUARE: BitBoard = BitBoard(G_FILE.0 & RANK_1.0);
 pub const H1_SQUARE: BitBoard = BitBoard(H_FILE.0 & RANK_1.0);
+
+pub const INITIAL_CASTLE_RIGHTS: BitBoard = BitBoard(
+    C1_SQUARE.0 | G1_SQUARE.0 | C8_SQUARE.0 | G8_SQUARE.0
+);
 
 pub static NOTATION_MAP: phf::Map<&str, BitBoard> = phf_map! {
     "A1" => A1_SQUARE,

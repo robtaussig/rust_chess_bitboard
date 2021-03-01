@@ -354,7 +354,7 @@ mod tests {
 
         #[test]
         fn it_works_with_no_obstacles() {
-            let b = Board::new(
+            let b = Board::new_from_pieces(
                 EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, E3_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
                 EMPTY, WHITE,
             );
@@ -376,7 +376,7 @@ mod tests {
 
         #[test]
         fn it_works_with_edges() {
-            let b = Board::new(
+            let b = Board::new_from_pieces(
                 EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, A1_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
                 EMPTY, WHITE,
             );
@@ -391,7 +391,7 @@ mod tests {
 
         #[test]
         fn it_works_with_other_shared_pieces() {
-            let b = Board::new(
+            let b = Board::new_from_pieces(
                 RANK_4,
                 E2_SQUARE | D2_SQUARE,
                 EMPTY,
@@ -433,7 +433,7 @@ mod tests {
 
         #[test]
         fn it_works_with_no_obstacles() {
-            let b = Board::new(
+            let b = Board::new_from_pieces(
                 EMPTY, D4_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
                 EMPTY, WHITE,
             );
@@ -455,7 +455,7 @@ mod tests {
 
         #[test]
         fn it_works_with_edges() {
-            let b = Board::new(
+            let b = Board::new_from_pieces(
                 EMPTY, B4_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
                 EMPTY, WHITE,
             );
@@ -471,7 +471,7 @@ mod tests {
 
         #[test]
         fn it_works_with_other_shared_pieces() {
-            let b = Board::new(
+            let b = Board::new_from_pieces(
                 C_FILE, B4_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
                 EMPTY, WHITE,
             );
@@ -496,7 +496,7 @@ mod tests {
 
         #[test]
         fn it_works_with_no_obstacles() {
-            let b = Board::new(
+            let b = Board::new_from_pieces(
                 EMPTY, EMPTY, EMPTY, E4_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
                 EMPTY, WHITE,
             );
@@ -511,7 +511,7 @@ mod tests {
 
         #[test]
         fn it_works_with_other_shared_pieces() {
-            let b = Board::new(
+            let b = Board::new_from_pieces(
                 E6_SQUARE, EMPTY, EMPTY, E4_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
                 EMPTY, EMPTY, WHITE,
             );
@@ -542,7 +542,7 @@ mod tests {
 
         #[test]
         fn it_works_with_no_obstacles() {
-            let b = Board::new(
+            let b = Board::new_from_pieces(
                 EMPTY, EMPTY, B1_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
                 EMPTY, WHITE,
             );
@@ -558,7 +558,7 @@ mod tests {
 
         #[test]
         fn it_works_with_other_shared_pieces() {
-            let b = Board::new(
+            let b = Board::new_from_pieces(
                 EMPTY, G6_SQUARE, B1_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
                 EMPTY, EMPTY, WHITE,
             );
@@ -583,7 +583,7 @@ mod tests {
 
         #[test]
         fn it_combines_rooks_and_bishop_moves() {
-            let b = Board::new(
+            let b = Board::new_from_pieces(
                 G3_SQUARE, B6_SQUARE, EMPTY, EMPTY, G6_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
                 EMPTY, EMPTY, WHITE,
             );
@@ -612,7 +612,7 @@ mod tests {
 
         #[test]
         fn it_works_from_home_square() {
-            let b = Board::new(
+            let b = Board::new_from_pieces(
                 RANK_2 ^ C2_SQUARE,
                 EMPTY,
                 EMPTY,
@@ -651,7 +651,7 @@ mod tests {
 
         #[test]
         fn it_works_from_non_home_square() {
-            let b = Board::new(
+            let b = Board::new_from_pieces(
                 RANK_4, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
                 EMPTY, WHITE,
             );
@@ -673,7 +673,7 @@ mod tests {
 
         #[test]
         fn it_works_with_captures() {
-            let b = Board::new(
+            let b = Board::new_from_pieces(
                 E5_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, F6_SQUARE, EMPTY, EMPTY, EMPTY,
                 EMPTY, EMPTY, WHITE,
             );
@@ -688,7 +688,7 @@ mod tests {
 
         #[test]
         fn it_works_with_obstacles() {
-            let b = Board::new(
+            let b = Board::new_from_pieces(
                 E5_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, E6_SQUARE, EMPTY, EMPTY, EMPTY,
                 EMPTY, EMPTY, WHITE,
             );
@@ -719,7 +719,7 @@ mod tests {
 
         #[test]
         fn it_works_from_home_square() {
-            let b = Board::new(
+            let b = Board::new_from_pieces(
                 EMPTY,
                 EMPTY,
                 EMPTY,
@@ -758,7 +758,7 @@ mod tests {
 
         #[test]
         fn it_works_from_non_home_square() {
-            let b = Board::new(
+            let b = Board::new_from_pieces(
                 EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, RANK_4, EMPTY, EMPTY, EMPTY, EMPTY,
                 EMPTY, WHITE,
             );
@@ -780,7 +780,7 @@ mod tests {
 
         #[test]
         fn it_works_with_captures() {
-            let b = Board::new(
+            let b = Board::new_from_pieces(
                 E5_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, F6_SQUARE, EMPTY, EMPTY, EMPTY,
                 EMPTY, EMPTY, WHITE,
             );
@@ -795,7 +795,7 @@ mod tests {
 
         #[test]
         fn it_works_with_obstacles() {
-            let b = Board::new(
+            let b = Board::new_from_pieces(
                 E5_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, E6_SQUARE, EMPTY, EMPTY, EMPTY,
                 EMPTY, EMPTY, WHITE,
             );
