@@ -17,6 +17,7 @@ use movegen::MoveGen;
 extern crate constants;
 use constants::*;
 use ggez;
+use ggez::mint::{Point2};
 use ggez::event::{run, EventHandler, KeyCode, KeyMods};
 use ggez::graphics::{
     clear, draw, present, Color, DrawMode, DrawParam, Mesh, Rect,
@@ -196,26 +197,215 @@ pub fn draw_piece(
 ) -> ggez::GameResult {
     let center_y = (row as f32 * SQUARE_SIZE) + (SQUARE_SIZE / 2f32);
     let center_x = (col as f32 * SQUARE_SIZE) + (SQUARE_SIZE / 2f32);
+    
+    draw_piece_at(ctx, center_x, center_y, piece)
+}
+
+pub fn draw_pawn(ctx: &mut ggez::Context, x: f32, y: f32, color: Color) -> ggez::GameResult {
+    let points = [
+        Point2 {
+            x: x - SQUARE_SIZE * 0.3,
+            y: y - SQUARE_SIZE * 0.3,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.3,
+            y: y - SQUARE_SIZE * 0.3,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.3,
+            y: y + SQUARE_SIZE * 0.3,
+        },
+        Point2 {
+            x: x - SQUARE_SIZE * 0.3,
+            y: y + SQUARE_SIZE * 0.3,
+        },
+    ];
+
+    let mesh = Mesh::new_polygon(
+        ctx,
+        DrawMode::fill(),
+        &points,
+        color,
+    )
+    .expect("error building piece");
+
+    draw(ctx, &mesh, DrawParam::default())
+}
+
+pub fn draw_rook(ctx: &mut ggez::Context, x: f32, y: f32, color: Color) -> ggez::GameResult {
+    let points = [
+        Point2 {
+            x: x - SQUARE_SIZE * 0.3,
+            y: y - SQUARE_SIZE * 0.3,
+        },
+        Point2 {
+            x: x - SQUARE_SIZE * 0.18,
+            y: y - SQUARE_SIZE * 0.3,
+        },
+        Point2 {
+            x: x - SQUARE_SIZE * 0.18,
+            y: y - SQUARE_SIZE * 0.18,
+        },
+        Point2 {
+            x: x - SQUARE_SIZE * 0.06,
+            y: y - SQUARE_SIZE * 0.18,
+        },
+        Point2 {
+            x: x - SQUARE_SIZE * 0.06,
+            y: y - SQUARE_SIZE * 0.3,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.06,
+            y: y - SQUARE_SIZE * 0.3,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.06,
+            y: y - SQUARE_SIZE * 0.18,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.18,
+            y: y - SQUARE_SIZE * 0.18,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.18,
+            y: y - SQUARE_SIZE * 0.3,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.3,
+            y: y - SQUARE_SIZE * 0.3,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.3,
+            y: y + SQUARE_SIZE * 0.3,
+        },
+        Point2 {
+            x: x - SQUARE_SIZE * 0.3,
+            y: y + SQUARE_SIZE * 0.3,
+        },
+    ];
+
+    let mesh = Mesh::new_polygon(
+        ctx,
+        DrawMode::fill(),
+        &points,
+        color,
+    )
+    .expect("error building piece");
+
+    draw(ctx, &mesh, DrawParam::default())
+}
+
+pub fn draw_knight(ctx: &mut ggez::Context, x: f32, y: f32, color: Color) -> ggez::GameResult {
+    let points = [
+        Point2 {
+            x: x - SQUARE_SIZE * 0.3,
+            y: y - SQUARE_SIZE * 0.3,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.3,
+            y: y - SQUARE_SIZE * 0.3,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.3,
+            y: y + SQUARE_SIZE * 0.3,
+        },
+        Point2 {
+            x: x - SQUARE_SIZE * 0.3,
+            y: y + SQUARE_SIZE * 0.3,
+        },
+        Point2 {
+            x: x - SQUARE_SIZE * 0.3,
+            y: y + SQUARE_SIZE * 0.18,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.18,
+            y: y + SQUARE_SIZE * 0.18,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.18,
+            y: y - SQUARE_SIZE * 0.06,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.06,
+            y: y + SQUARE_SIZE * 0.06,
+        },
+        Point2 {
+            x: x - SQUARE_SIZE * 0.3,
+            y: y + SQUARE_SIZE * 0.06,
+        },
+    ];
+
+    let mesh = Mesh::new_polygon(
+        ctx,
+        DrawMode::fill(),
+        &points,
+        color,
+    )
+    .expect("error building piece");
+
+    draw(ctx, &mesh, DrawParam::default())
+}
+
+//TODO
+pub fn draw_bishop(ctx: &mut ggez::Context, x: f32, y: f32, color: Color) -> ggez::GameResult {
+    let points = [
+        Point2 {
+            x: x - SQUARE_SIZE * 0.3,
+            y: y - SQUARE_SIZE * 0.3,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.3,
+            y: y - SQUARE_SIZE * 0.3,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.3,
+            y: y + SQUARE_SIZE * 0.3,
+        },
+        Point2 {
+            x: x - SQUARE_SIZE * 0.3,
+            y: y + SQUARE_SIZE * 0.3,
+        },
+    ];
+
+    let mesh = Mesh::new_polygon(
+        ctx,
+        DrawMode::fill(),
+        &points,
+        color,
+    )
+    .expect("error building piece");
+
+    draw(ctx, &mesh, DrawParam::default())
+}
+
+pub fn draw_piece_at(
+    ctx: &mut ggez::Context,
+    x: f32,
+    y: f32,
+    piece: &Pieces,
+) -> ggez::GameResult {
     let color: Color;
     if piece.is_white() {
         color = WHITE_PIECE_COLOR;
     } else {
         color = BLACK_PIECE_COLOR;
     }
-    let mesh = Mesh::new_circle(
-        ctx,
-        DrawMode::fill(),
-        ggez::mint::Point2 {
-            x: center_x,
-            y: center_y,
-        },
-        SQUARE_SIZE * 0.4,
-        0.1,
-        color,
-    )
-    .expect("error building piece");
 
-    draw(ctx, &mesh, DrawParam::default())
+    match piece {
+        Pieces::WPawn => draw_pawn(ctx, x, y, color),
+        Pieces::BPawn => draw_pawn(ctx, x, y, color),
+        Pieces::WKnight => draw_knight(ctx, x, y, color),
+        Pieces::BKnight => draw_knight(ctx, x, y, color),
+        Pieces::WBishop => draw_bishop(ctx, x, y, color),
+        Pieces::BBishop => draw_bishop(ctx, x, y, color),
+        Pieces::WRook => draw_rook(ctx, x, y, color),
+        Pieces::BRook => draw_rook(ctx, x, y, color),
+        Pieces::WQueen => draw_pawn(ctx, x, y, color),
+        Pieces::BQueen => draw_pawn(ctx, x, y, color),
+        Pieces::WKing => draw_pawn(ctx, x, y, color),
+        Pieces::BKing => draw_pawn(ctx, x, y, color),
+        Pieces::Empty => draw_pawn(ctx, x, y, color),
+    }
 }
 
 pub fn draw_square(
@@ -374,7 +564,7 @@ impl EventHandler for MainState {
             });
 
         moving_pieces.iter_mut().for_each(|(_, piece)| {
-            piece.draw(ctx).expect("error drawing moving piece");
+            draw_piece_at(ctx, piece.pos.0, piece.pos.1, &piece.piece).expect("Error drawing moving piece");
         });
 
         present(ctx).expect("error presenting");

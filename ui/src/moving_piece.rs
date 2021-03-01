@@ -5,9 +5,9 @@ use ggez::graphics::{
 };
 
 pub struct MovingPiece {
-    _piece: Pieces,
+    pub piece: Pieces,
     pub bitboard: BitBoard,
-    pos: (f32, f32),
+    pub pos: (f32, f32),
     to: (f32, f32),
     radius: f32,
     vel: (f32, f32),
@@ -29,7 +29,7 @@ impl MovingPiece {
         };
 
         MovingPiece {
-            _piece: piece,
+            piece,
             bitboard: to_square,
             pos: (from_x, from_y),
             to: (to_x, to_y),
@@ -57,22 +57,5 @@ impl MovingPiece {
         }
 
         self
-    }
-
-    pub fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
-        let mesh = Mesh::new_circle(
-            ctx,
-            DrawMode::fill(),
-            ggez::mint::Point2 {
-                x: self.pos.0,
-                y: self.pos.1,
-            },
-            self.radius,
-            0.1,
-            self.color,
-        )
-        .expect("error building piece");
-    
-        draw(ctx, &mesh, DrawParam::default())
     }
 }
