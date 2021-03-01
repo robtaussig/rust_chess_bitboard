@@ -193,6 +193,125 @@ impl Game {
         self.board.pinned = pinned;
         self
     }
+
+    pub fn randomize_board(&mut self) -> &Self {
+        use rand::{thread_rng, Rng};
+        let mut rng = thread_rng();
+
+        let mut white_pawns = EMPTY;
+        let mut taken_squares = EMPTY;
+        
+        while white_pawns.popcnt() < 8 {
+            let square = SQUARES[rng.gen_range(8..56)];
+            white_pawns |= square;
+        }
+
+        taken_squares |= white_pawns;
+        
+        let mut black_pawns = EMPTY;
+        while black_pawns.popcnt() < 8 {
+            let square = SQUARES[rng.gen_range(8..56)];
+            black_pawns |= square & !taken_squares;
+        }
+
+        taken_squares |= black_pawns;
+
+        let mut white_knights = EMPTY;
+        while white_knights.popcnt() < 2 {
+            let square = SQUARES[rng.gen_range(0..64)];
+            white_knights |= square & !taken_squares;
+        }
+
+        taken_squares |= white_knights;
+
+        let mut black_knights = EMPTY;
+        while black_knights.popcnt() < 2 {
+            let square = SQUARES[rng.gen_range(0..64)];
+            black_knights |= square & !taken_squares;
+        }
+
+        taken_squares |= black_knights;
+
+        let mut white_bishops = EMPTY;
+        while white_bishops.popcnt() < 2 {
+            let square = SQUARES[rng.gen_range(0..64)];
+            white_bishops |= square & !taken_squares;
+        }
+
+        taken_squares |= white_bishops;
+
+        let mut black_bishops = EMPTY;
+        while black_bishops.popcnt() < 2 {
+            let square = SQUARES[rng.gen_range(0..64)];
+            black_bishops |= square & !taken_squares;
+        }
+
+        taken_squares |= black_bishops;
+
+        let mut white_rooks = EMPTY;
+        while white_rooks.popcnt() < 2 {
+            let square = SQUARES[rng.gen_range(0..64)];
+            white_rooks |= square & !taken_squares;
+        }
+
+        taken_squares |= white_rooks;
+
+        let mut black_rooks = EMPTY;
+        while black_rooks.popcnt() < 2 {
+            let square = SQUARES[rng.gen_range(0..64)];
+            black_rooks |= square & !taken_squares;
+        }
+
+        taken_squares |= black_rooks;
+
+        let mut white_queens = EMPTY;
+        while white_queens.popcnt() < 1 {
+            let square = SQUARES[rng.gen_range(0..64)];
+            white_queens |= square & !taken_squares;
+        }
+
+        taken_squares |= white_queens;
+
+        let mut black_queens = EMPTY;
+        while black_queens.popcnt() < 1 {
+            let square = SQUARES[rng.gen_range(0..64)];
+            black_queens |= square & !taken_squares;
+        }
+
+        taken_squares |= black_queens;
+
+        let mut white_kings = EMPTY;
+        while white_kings.popcnt() < 1 {
+            let square = SQUARES[rng.gen_range(0..64)];
+            white_kings |= square & !taken_squares;
+        }
+
+        taken_squares |= white_kings;
+
+        let mut black_kings = EMPTY;
+        while black_kings.popcnt() < 1 {
+            let square = SQUARES[rng.gen_range(0..64)];
+            black_kings |= square & !taken_squares;
+        }
+        
+        self.board = Board::new_from_pieces(
+            white_pawns,
+            white_knights,
+            white_bishops,
+            white_rooks,
+            white_queens,
+            white_kings,
+            black_pawns,
+            black_knights,
+            black_bishops,
+            black_rooks,
+            black_queens,
+            black_kings,
+            WHITE,
+        );
+
+        self
+    }
 }
 
 #[cfg(test)]

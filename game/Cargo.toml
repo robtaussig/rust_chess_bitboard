@@ -12,3 +12,4 @@ movegen = { path = "../movegen" }
 chessmove = { path = "../chessmove" }
 piece = { path = "../piece" }
 constants = { path = "../constants" }
+rand = "0.8.3"

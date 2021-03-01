@@ -703,6 +703,7 @@ dependencies = [
  "constants",
  "movegen",
  "piece",
+ "rand 0.8.3",
 ]
 
 [[package]]

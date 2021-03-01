@@ -9,6 +9,7 @@ use crate::constants::*;
 
 use std::fmt;
 
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Board {
     pub piece_bbs: [[BitBoard; 6]; 2],
     pub color_bbs: [BitBoard; 2],

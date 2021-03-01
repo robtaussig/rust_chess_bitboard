@@ -95,13 +95,26 @@ impl MainState {
         let game = Game::from_fen(fen);
         
         self.move_pieces_between_game_boards(&self.game.board, &game.board);
-
-        let valid_moves = MoveGen::gen_legal_moves(&game.board);
         self.game = game;
+        self.restart_game();
+    }
+
+    fn restart_game(&mut self) {
+        let valid_moves = MoveGen::gen_legal_moves(&self.game.board);
+        
         self.last_move = (EMPTY, EMPTY);
         self.move_from = EMPTY;
         self.valid_moves = valid_moves;
         self.needs_draw = true;
+    }
+
+    fn randomize_board(&mut self) {
+        let old_board = self.game.board;
+        self.game.randomize_board();
+        let new_board = self.game.board;
+        self.move_pieces_between_game_boards(&old_board, &new_board);
+
+        self.restart_game();
     }
 
     fn move_pieces_between_game_boards(&self, old_game_board: &Board, new_game_board: &Board) {
@@ -313,6 +326,11 @@ impl EventHandler for MainState {
                     if is_fen(&contents) {
                         self.restart_from_fen(contents.as_str());
                     }
+                }
+            },
+            KeyCode::R => {
+                if keymods.contains(KeyMods::CTRL) {
+                    self.randomize_board();
                 }
             },
             _ => (),
