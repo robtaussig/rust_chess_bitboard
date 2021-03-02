@@ -12,12 +12,16 @@ use ggez::graphics::{
 };
 
 const SQUARE_SIZE: f32 = SCREEN_HEIGHT / 8.;
+
 const MOVE_FROM_COLOR: Color = Color::new(0.2, 0.4, 0.2, 1.0);
 const LAST_MOVE_BORDER_COLOR: Color = Color::new(0.6, 0.3, 0.3, 1.0);
-const WHITE_SQUARE: Color = Color::new(1.0, 1.0, 1.0, 1.0);
-const BLACK_SQUARE: Color = Color::new(0.1, 0.2, 0.4, 1.0);
+
+const WHITE_SQUARE: Color = Color::new(0.9, 0.9, 0.9, 1.0);
+const BLACK_SQUARE: Color = Color::new(0.1, 0.1, 0.1, 1.0);
+
 const WHITE_PIECE_COLOR: Color = Color::new(0.8, 0.8, 0.8, 1.0);
-const BLACK_PIECE_COLOR: Color = Color::new(0.2, 0.4, 0.6, 1.0);
+const BLACK_PIECE_COLOR: Color = Color::new(0.5, 0.8, 0.45, 1.0);
+
 const PIECE_BORDER_COLOR: Color = Color::new(0.0, 0.0, 0.0, 1.0);
 
 pub fn draw_piece(
