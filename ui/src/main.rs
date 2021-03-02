@@ -104,17 +104,19 @@ impl MainState {
     }
 
     fn commit_move(&mut self, from: BitBoard, to: BitBoard) {
-        self.game.make_move(&ChessMove::new(from, to));
+        let moves = self.game.make_move(&ChessMove::new(from, to));
         self.valid_moves = MoveGen::gen_legal_moves(&self.game.board);
         self.last_move = (from, to);
         let mut moving_pieces = self.moving_pieces.borrow_mut();
-        moving_pieces.insert(to, MovingPiece::new(
-            self.game.board.get_piece_at(to),
-            from,
-            to,
-            SQUARE_SIZE,
-            20,
-        ));
+        moves.iter().for_each(|move_tuple| {
+            moving_pieces.insert(move_tuple.1, MovingPiece::new(
+                self.game.board.get_piece_at(move_tuple.1),
+                move_tuple.0,
+                move_tuple.1,
+                SQUARE_SIZE,
+                20,
+            ));
+        });
     }
 
     fn restart_from_fen(&mut self, fen: &str) {

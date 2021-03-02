@@ -1,5 +1,15 @@
 use std::fmt;
 
+pub enum PieceType {
+    Pawn,
+    Knight,
+    Bishop,
+    Rook,
+    Queen,
+    King,
+    Empty,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Pieces {
     WPawn,
@@ -39,6 +49,24 @@ impl Pieces {
             Pieces::BQueen => true,
             Pieces::BKing => true,
             _ => false,
+        }
+    }
+
+    pub fn piece_type(&self) -> PieceType {
+        match self {
+            Pieces::WPawn => PieceType::Pawn,
+            Pieces::WKnight => PieceType::Knight,
+            Pieces::WBishop => PieceType::Bishop,
+            Pieces::WRook => PieceType::Rook,
+            Pieces::WQueen => PieceType::Queen,
+            Pieces::WKing => PieceType::King,
+            Pieces::BPawn => PieceType::Pawn,
+            Pieces::BKnight => PieceType::Knight,
+            Pieces::BBishop => PieceType::Bishop,
+            Pieces::BRook => PieceType::Rook,
+            Pieces::BQueen => PieceType::Queen,
+            Pieces::BKing => PieceType::King,
+            _ => PieceType::Empty,
         }
     }
 }

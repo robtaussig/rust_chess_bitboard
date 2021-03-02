@@ -8,6 +8,8 @@ extern crate chessmove;
 use crate::chessmove::ChessMove;
 extern crate constants;
 use crate::constants::*;
+extern crate bitboard;
+use crate::bitboard::*;
 
 pub struct Game {
     pub board: Board,
@@ -28,97 +30,46 @@ impl Game {
 
     //TODO test
     //TODO handle promotion
-    //TODO test for castling
-    //TODO test for en passant
-    pub fn make_move(&mut self, chessmove: &ChessMove) -> &mut Self {
+    //Returns list of all moved pieces, including castling rook
+    pub fn make_move(&mut self, chessmove: &ChessMove) -> Vec<(BitBoard, BitBoard)> {
         let prev_en_passant = self.board.en_passant;
         self.board.en_passant = EMPTY;
+        let mut moves: Vec<(BitBoard, BitBoard)> = Vec::new();
 
         let moving_piece = self.board.get_piece_at(chessmove.from);
         let target_piece = self.board.get_piece_at(chessmove.to);
-        let combined_move = chessmove.from | chessmove.to;
 
-        self.board.combined_bbs[EMPTY_SQUARES_BB] |= chessmove.from;
-        self.board.combined_bbs[EMPTY_SQUARES_BB] &= !chessmove.to;
-        self.board.combined_bbs[ALL_PIECES_BB] ^= chessmove.from;
-        self.board.combined_bbs[ALL_PIECES_BB] |= chessmove.to;
-
+        self.board.move_piece(chessmove.from, chessmove.to);
+        
+        moves.push((chessmove.from, chessmove.to));
+    
         match target_piece {
-            Pieces::WPawn => {
-                self.board.piece_bbs[WHITE][PAWNS_BB] ^= chessmove.to;
-                self.board.color_bbs[WHITE] ^= chessmove.to;
-                self.board.combined_bbs[ALL_PAWNS_BB] ^= chessmove.to;
-            }
-            Pieces::BPawn => {
-                self.board.piece_bbs[BLACK][PAWNS_BB] ^= chessmove.to;
-                self.board.color_bbs[BLACK] ^= chessmove.to;
-                self.board.combined_bbs[ALL_PAWNS_BB] ^= chessmove.to;
-            }
-            Pieces::WKnight => {
-                self.board.piece_bbs[WHITE][KNIGHTS_BB] ^= chessmove.to;
-                self.board.color_bbs[WHITE] ^= chessmove.to;
-                self.board.combined_bbs[ALL_KNIGHTS_BB] ^= chessmove.to;
-            }
-            Pieces::BKnight => {
-                self.board.piece_bbs[BLACK][KNIGHTS_BB] ^= chessmove.to;
-                self.board.color_bbs[BLACK] ^= chessmove.to;
-                self.board.combined_bbs[ALL_KNIGHTS_BB] ^= chessmove.to;
-            }
-            Pieces::WBishop => {
-                self.board.piece_bbs[WHITE][BISHOPS_BB] ^= chessmove.to;
-                self.board.color_bbs[WHITE] ^= chessmove.to;
-                self.board.combined_bbs[ALL_BISHOPS_BB] ^= chessmove.to;
-            }
-            Pieces::BBishop => {
-                self.board.piece_bbs[BLACK][BISHOPS_BB] ^= chessmove.to;
-                self.board.color_bbs[BLACK] ^= chessmove.to;
-                self.board.combined_bbs[ALL_BISHOPS_BB] ^= chessmove.to;
-            }
             Pieces::WRook => {
-                //TODO Update castling rights
-                self.board.piece_bbs[WHITE][ROOKS_BB] ^= chessmove.to;
-                self.board.color_bbs[WHITE] ^= chessmove.to;
-                self.board.combined_bbs[ALL_ROOKS_BB] ^= chessmove.to;
+                if chessmove.to == A1_SQUARE {
+                    self.board.castle_rights &= !C1_SQUARE;
+                } else if chessmove.to == H1_SQUARE {
+                    self.board.castle_rights &= !G1_SQUARE;
+                }
             }
             Pieces::BRook => {
-                //TODO Update castling rights
-                self.board.piece_bbs[BLACK][ROOKS_BB] ^= chessmove.to;
-                self.board.color_bbs[BLACK] ^= chessmove.to;
-                self.board.combined_bbs[ALL_ROOKS_BB] ^= chessmove.to;
-            }
-            Pieces::WQueen => {
-                self.board.piece_bbs[WHITE][QUEENS_BB] ^= chessmove.to;
-                self.board.color_bbs[WHITE] ^= chessmove.to;
-                self.board.combined_bbs[ALL_QUEENS_BB] ^= chessmove.to;
-            }
-            Pieces::BQueen => {
-                self.board.piece_bbs[BLACK][QUEENS_BB] ^= chessmove.to;
-                self.board.color_bbs[BLACK] ^= chessmove.to;
-                self.board.combined_bbs[ALL_QUEENS_BB] ^= chessmove.to;
+                if chessmove.to == A8_SQUARE {
+                    self.board.castle_rights &= !C8_SQUARE;
+                } else if chessmove.to == H8_SQUARE {
+                    self.board.castle_rights &= !G8_SQUARE;
+                }
             }
             Pieces::WKing => {
-                //TODO Update castling rights
-                self.board.piece_bbs[WHITE][KINGS_BB] ^= chessmove.to;
-                self.board.color_bbs[WHITE] ^= chessmove.to;
-                self.board.combined_bbs[ALL_KINGS_BB] ^= chessmove.to;
+                panic!("King invalidly captured");
             }
             Pieces::BKing => {
-                //TODO Update castling rights
-                self.board.piece_bbs[BLACK][KINGS_BB] ^= chessmove.to;
-                self.board.color_bbs[BLACK] ^= chessmove.to;
-                self.board.combined_bbs[ALL_KINGS_BB] ^= chessmove.to;
+                panic!("King invalidly captured");
             }
-            _ => {
-                //TODO Handle error
-            }
+            _ => ()
         }
 
         match moving_piece {
             Pieces::WPawn => {
-                self.board.piece_bbs[WHITE][PAWNS_BB] ^= combined_move;
-                self.board.color_bbs[WHITE] ^= combined_move;
-                self.board.combined_bbs[ALL_PAWNS_BB] ^= combined_move;
-
+                //TODO handle promotion
                 if chessmove.to == prev_en_passant {
                     let piece_to_remove = prev_en_passant.shr(8);
                     self.board.piece_bbs[BLACK][PAWNS_BB] ^= piece_to_remove;
@@ -134,10 +85,7 @@ impl Game {
                 }
             }
             Pieces::BPawn => {
-                self.board.piece_bbs[BLACK][PAWNS_BB] ^= combined_move;
-                self.board.color_bbs[BLACK] ^= combined_move;
-                self.board.combined_bbs[ALL_PAWNS_BB] ^= combined_move;
-
+                //TODO handle promotion
                 if chessmove.to == prev_en_passant {
                     let piece_to_remove = prev_en_passant.shl(8);
                     self.board.piece_bbs[WHITE][PAWNS_BB] ^= piece_to_remove;
@@ -152,63 +100,43 @@ impl Game {
                     self.board.en_passant = chessmove.from.shr(8);
                 }
             }
-            Pieces::WKnight => {
-                self.board.piece_bbs[WHITE][KNIGHTS_BB] ^= combined_move;
-                self.board.color_bbs[WHITE] ^= combined_move;
-                self.board.combined_bbs[ALL_KNIGHTS_BB] ^= combined_move;
-            }
-            Pieces::BKnight => {
-                self.board.piece_bbs[BLACK][KNIGHTS_BB] ^= combined_move;
-                self.board.color_bbs[BLACK] ^= combined_move;
-                self.board.combined_bbs[ALL_KNIGHTS_BB] ^= combined_move;
-            }
-            Pieces::WBishop => {
-                self.board.piece_bbs[WHITE][BISHOPS_BB] ^= combined_move;
-                self.board.color_bbs[WHITE] ^= combined_move;
-                self.board.combined_bbs[ALL_BISHOPS_BB] ^= combined_move;
-            }
-            Pieces::BBishop => {
-                self.board.piece_bbs[BLACK][BISHOPS_BB] ^= combined_move;
-                self.board.color_bbs[BLACK] ^= combined_move;
-                self.board.combined_bbs[ALL_BISHOPS_BB] ^= combined_move;
-            }
             Pieces::WRook => {
-                //TODO Update castling rights
-                self.board.piece_bbs[WHITE][ROOKS_BB] ^= combined_move;
-                self.board.color_bbs[WHITE] ^= combined_move;
-                self.board.combined_bbs[ALL_ROOKS_BB] ^= combined_move;
+                if chessmove.from == A1_SQUARE {
+                    self.board.castle_rights &= !C1_SQUARE;
+                } else if chessmove.from == H1_SQUARE {
+                    self.board.castle_rights &= !G1_SQUARE;
+                }
             }
             Pieces::BRook => {
-                //TODO Update castling rights
-                self.board.piece_bbs[BLACK][ROOKS_BB] ^= combined_move;
-                self.board.color_bbs[BLACK] ^= combined_move;
-                self.board.combined_bbs[ALL_ROOKS_BB] ^= combined_move;
-            }
-            Pieces::WQueen => {
-                self.board.piece_bbs[WHITE][QUEENS_BB] ^= combined_move;
-                self.board.color_bbs[WHITE] ^= combined_move;
-                self.board.combined_bbs[ALL_QUEENS_BB] ^= combined_move;
-            }
-            Pieces::BQueen => {
-                self.board.piece_bbs[BLACK][QUEENS_BB] ^= combined_move;
-                self.board.color_bbs[BLACK] ^= combined_move;
-                self.board.combined_bbs[ALL_QUEENS_BB] ^= combined_move;
+                if chessmove.from == A8_SQUARE {
+                    self.board.castle_rights &= !C8_SQUARE;
+                } else if chessmove.from == H8_SQUARE {
+                    self.board.castle_rights &= !G8_SQUARE;
+                }
             }
             Pieces::WKing => {
-                //TODO Update castling rights
-                self.board.piece_bbs[WHITE][KINGS_BB] ^= combined_move;
-                self.board.color_bbs[WHITE] ^= combined_move;
-                self.board.combined_bbs[ALL_KINGS_BB] ^= combined_move;
+                if chessmove.from == E1_SQUARE && chessmove.to == G1_SQUARE {
+                    self.board.move_piece(H1_SQUARE, F1_SQUARE);
+                    moves.push((H1_SQUARE, F1_SQUARE));
+                } else if chessmove.from == E1_SQUARE && chessmove.to == C1_SQUARE {
+                    self.board.move_piece(A1_SQUARE, D1_SQUARE);
+                    moves.push((A1_SQUARE, D1_SQUARE));
+                }
+
+                self.board.castle_rights &= !(C1_SQUARE | G1_SQUARE);
             }
             Pieces::BKing => {
-                //TODO Update castling rights
-                self.board.piece_bbs[BLACK][KINGS_BB] ^= combined_move;
-                self.board.color_bbs[BLACK] ^= combined_move;
-                self.board.combined_bbs[ALL_KINGS_BB] ^= combined_move;
+                if chessmove.from == E8_SQUARE && chessmove.to == G8_SQUARE {
+                    self.board.move_piece(H8_SQUARE, F8_SQUARE);
+                    moves.push((H8_SQUARE, F8_SQUARE));
+                } else if chessmove.from == E8_SQUARE && chessmove.to == C8_SQUARE {
+                    self.board.move_piece(A8_SQUARE, D8_SQUARE);
+                    moves.push((A8_SQUARE, D8_SQUARE));
+                }
+
+                self.board.castle_rights &= !(C8_SQUARE | G8_SQUARE);
             }
-            _ => {
-                //TODO Handle error
-            }
+            _ => ()
         }
 
         self.board.side_to_move ^= 1;
@@ -216,7 +144,7 @@ impl Game {
         let (checkers, pinned) = MoveGen::find_checkers_and_pinners(&self.board);
         self.board.checkers = checkers;
         self.board.pinned = pinned;
-        self
+        moves
     }
 
     pub fn randomize_board(&mut self) -> &Self {
@@ -353,9 +281,9 @@ mod tests {
         fn it_works() {
             let mut g = Game::new();
 
-            g.make_move(&ChessMove::from_notation("E2", "E4"))
-                .make_move(&ChessMove::from_notation("F7", "F5"))
-                .make_move(&ChessMove::from_notation("D1", "H5"));
+            g.make_move(&ChessMove::from_notation("E2", "E4"));
+            g.make_move(&ChessMove::from_notation("F7", "F5"));
+            g.make_move(&ChessMove::from_notation("D1", "H5"));
 
             assert_eq!(g.board.get_piece_at(F5_SQUARE), Pieces::BPawn);
             assert_eq!(g.board.checkers, H5_SQUARE);
@@ -369,10 +297,10 @@ mod tests {
         fn it_works() {
             let mut g = Game::new();
 
-            g.make_move(&ChessMove::from_notation("E2", "E4"))
-                .make_move(&ChessMove::from_notation("E7", "E5"))
-                .make_move(&ChessMove::from_notation("D1", "F3"))
-                .make_move(&ChessMove::from_notation("C7", "C5"));
+            g.make_move(&ChessMove::from_notation("E2", "E4"));
+            g.make_move(&ChessMove::from_notation("E7", "E5"));
+            g.make_move(&ChessMove::from_notation("D1", "F3"));
+            g.make_move(&ChessMove::from_notation("C7", "C5"));
             
             let valid_queen_moves = MoveGen::valid_queen_moves(&g.board, F3_SQUARE, g.board.color_bbs[WHITE]);
             let is_a5_valid = valid_queen_moves & A4_SQUARE;

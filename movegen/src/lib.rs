@@ -98,7 +98,7 @@ impl MoveGen {
         move_vec
     }
 
-    pub fn valid_king_moves(_board: &Board, squares: BitBoard, own_side: BitBoard) -> BitBoard {
+    pub fn valid_king_moves(board: &Board, squares: BitBoard, own_side: BitBoard) -> BitBoard {
         let clip_h = squares & CLEAR_H_FILE;
         let clip_a = squares & CLEAR_A_FILE;
         let left_up = clip_a.shl(7);
@@ -110,8 +110,28 @@ impl MoveGen {
         let left_down = clip_a.shr(9);
         let left = clip_a.shr(1);
 
-        let moves = left_up | up | right_up | right | down_right | down | left_down | left;
+        let mut kingside_castle_move = EMPTY;
+        let mut queenside_castle_move = EMPTY;
 
+        if board.side_to_move == WHITE && (board.castle_rights & (G1_SQUARE | C1_SQUARE) != EMPTY) {
+            if board.combined_bbs[EMPTY_SQUARES_BB] & WHITE_KINGSIDE_CASTLE_EMPTY_SQUARES == WHITE_KINGSIDE_CASTLE_EMPTY_SQUARES {
+                kingside_castle_move = G1_SQUARE;
+            }
+            if board.combined_bbs[EMPTY_SQUARES_BB] & WHITE_QUEENSIDE_CASTLE_EMPTY_SQUARES == WHITE_QUEENSIDE_CASTLE_EMPTY_SQUARES {
+                queenside_castle_move = D1_SQUARE;
+            }
+        } else if board.side_to_move == BLACK && (board.castle_rights & (G8_SQUARE | C8_SQUARE) != EMPTY) {
+            if board.combined_bbs[EMPTY_SQUARES_BB] & BLACK_KINGSIDE_CASTLE_EMPTY_SQUARES == BLACK_KINGSIDE_CASTLE_EMPTY_SQUARES {
+                kingside_castle_move = G8_SQUARE;
+            }
+            if board.combined_bbs[EMPTY_SQUARES_BB] & BLACK_QUEENSIDE_CASTLE_EMPTY_SQUARES == BLACK_QUEENSIDE_CASTLE_EMPTY_SQUARES {
+                queenside_castle_move = D8_SQUARE;
+            }
+        }
+
+        let moves = left_up | up | right_up | right | down_right | down | left_down | left | kingside_castle_move | queenside_castle_move;
+
+        
         moves & !own_side
     }
 

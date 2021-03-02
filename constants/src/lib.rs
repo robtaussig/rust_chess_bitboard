@@ -146,6 +146,22 @@ pub const F1_SQUARE: BitBoard = BitBoard(F_FILE.0 & RANK_1.0);
 pub const G1_SQUARE: BitBoard = BitBoard(G_FILE.0 & RANK_1.0);
 pub const H1_SQUARE: BitBoard = BitBoard(H_FILE.0 & RANK_1.0);
 
+pub const WHITE_KINGSIDE_CASTLE_EMPTY_SQUARES: BitBoard = BitBoard(
+    F1_SQUARE.0 & G1_SQUARE.0
+);
+
+pub const WHITE_QUEENSIDE_CASTLE_EMPTY_SQUARES: BitBoard = BitBoard(
+    D1_SQUARE.0 & C1_SQUARE.0 & B1_SQUARE.0
+);
+
+pub const BLACK_KINGSIDE_CASTLE_EMPTY_SQUARES: BitBoard = BitBoard(
+    F8_SQUARE.0 & G8_SQUARE.0
+);
+
+pub const BLACK_QUEENSIDE_CASTLE_EMPTY_SQUARES: BitBoard = BitBoard(
+    D8_SQUARE.0 & C8_SQUARE.0 & B8_SQUARE.0
+);
+
 pub const INITIAL_CASTLE_RIGHTS: BitBoard = BitBoard(
     C1_SQUARE.0 | G1_SQUARE.0 | C8_SQUARE.0 | G8_SQUARE.0
 );
