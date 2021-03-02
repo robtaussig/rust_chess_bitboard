@@ -276,6 +276,8 @@ impl MainState {
                         if found_piece != EMPTY {
                             found_pieces[found_piece.row()][found_piece.col()] = true;
                             movers.insert(square.bitboard, found_piece);
+                        } else {
+                            movers.insert(square.bitboard, EMPTY);
                         }
                     }
                 }
@@ -420,6 +422,7 @@ impl EventHandler for MainState {
         if self.needs_draw == false {
             return Ok(());
         }
+
         clear(ctx, Color::new(0.0, 0.0, 0.0, 1.0));
 
         let mut moving_pieces = self.moving_pieces.borrow_mut();
