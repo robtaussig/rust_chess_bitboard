@@ -38,7 +38,7 @@ impl Board {
         black_queens: BitBoard,
         black_kings: BitBoard,
         side_to_move: usize,
-        castle_rights: BitBoard,
+        mut castle_rights: BitBoard,
         en_passant: BitBoard,
         half_moves_since_action: u8,
         full_moves: u16,
@@ -86,6 +86,19 @@ impl Board {
         color_bbs[BLACK] = black_pieces;
         combined_bbs[ALL_PIECES_BB] = pieces;
         combined_bbs[EMPTY_SQUARES_BB] = empty_squares;
+
+        if white_rooks & A1_SQUARE == EMPTY {
+            castle_rights &= !C1_SQUARE;
+        }
+        if white_rooks & H1_SQUARE == EMPTY {
+            castle_rights &= !G1_SQUARE;
+        }
+        if black_rooks & A8_SQUARE == EMPTY {
+            castle_rights &= !C8_SQUARE;
+        }
+        if black_rooks & H8_SQUARE == EMPTY {
+            castle_rights &= !G8_SQUARE;
+        }
 
         Board {
             piece_bbs,

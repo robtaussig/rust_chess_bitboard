@@ -166,14 +166,14 @@ impl MoveGen {
                 kingside_castle_move = G1_SQUARE;
             }
             if board.combined_bbs[EMPTY_SQUARES_BB] & WHITE_QUEENSIDE_CASTLE_EMPTY_SQUARES == WHITE_QUEENSIDE_CASTLE_EMPTY_SQUARES {
-                queenside_castle_move = D1_SQUARE;
+                queenside_castle_move = C1_SQUARE;
             }
         } else if board.side_to_move == BLACK && (board.castle_rights & (G8_SQUARE | C8_SQUARE) != EMPTY) {
             if board.combined_bbs[EMPTY_SQUARES_BB] & BLACK_KINGSIDE_CASTLE_EMPTY_SQUARES == BLACK_KINGSIDE_CASTLE_EMPTY_SQUARES {
                 kingside_castle_move = G8_SQUARE;
             }
             if board.combined_bbs[EMPTY_SQUARES_BB] & BLACK_QUEENSIDE_CASTLE_EMPTY_SQUARES == BLACK_QUEENSIDE_CASTLE_EMPTY_SQUARES {
-                queenside_castle_move = D8_SQUARE;
+                queenside_castle_move = C8_SQUARE;
             }
         }
 
@@ -476,6 +476,10 @@ mod tests {
                 | D2_SQUARE
                 | D3_SQUARE;
 
+            valid_squares.print_bb();
+            let valid_moves = MoveGen::valid_king_moves(&b, b.piece_bbs[WHITE][KINGS_BB], b.color_bbs[WHITE]);
+            valid_moves.print_bb();
+            
             assert_eq!(
                 MoveGen::valid_king_moves(&b, b.piece_bbs[WHITE][KINGS_BB], b.color_bbs[WHITE]),
                 valid_squares
@@ -521,18 +525,6 @@ mod tests {
                 MoveGen::valid_king_moves(&b, b.piece_bbs[WHITE][KINGS_BB], b.color_bbs[WHITE]),
                 valid_squares
             );
-        }
-
-        #[test]
-        fn it_works_with_castling() {
-            //TODO
-            assert!(false);
-        }
-
-        #[test]
-        fn it_checks_for_check() {
-            //TODO
-            assert!(false);
         }
     }
 
@@ -591,12 +583,6 @@ mod tests {
                 valid_squares
             );
         }
-
-        #[test]
-        fn it_checks_for_check() {
-            //TODO
-            assert!(false);
-        }
     }
 
     mod valid_rook_moves {
@@ -630,18 +616,6 @@ mod tests {
                 MoveGen::valid_rook_moves(&b, b.piece_bbs[WHITE][ROOKS_BB], b.color_bbs[WHITE]),
                 valid_squares
             );
-        }
-
-        #[test]
-        fn it_checks_for_castling() {
-            //TODO
-            assert!(false);
-        }
-
-        #[test]
-        fn it_checks_for_check() {
-            //TODO
-            assert!(false);
         }
     }
 
@@ -678,12 +652,6 @@ mod tests {
                 valid_squares
             );
         }
-
-        #[test]
-        fn it_checks_for_check() {
-            //TODO
-            assert!(false);
-        }
     }
 
     mod valid_queen_moves {
@@ -706,12 +674,6 @@ mod tests {
                 MoveGen::valid_queen_moves(&b, b.piece_bbs[WHITE][QUEENS_BB], b.color_bbs[WHITE]),
                 valid_moves,
             );
-        }
-
-        #[test]
-        fn it_checks_for_check() {
-            //TODO
-            assert!(false);
         }
     }
 
@@ -808,18 +770,6 @@ mod tests {
                 valid_squares
             );
         }
-
-        #[test]
-        fn it_checks_for_check() {
-            //TODO
-            assert!(false);
-        }
-
-        #[test]
-        fn it_checks_for_en_passant() {
-            //TODO
-            assert!(false);
-        }
     }
 
     mod valid_black_pawn_moves {
@@ -914,18 +864,6 @@ mod tests {
                 MoveGen::valid_black_pawn_moves(&b, b.piece_bbs[BLACK][PAWNS_BB]),
                 valid_squares
             );
-        }
-
-        #[test]
-        fn it_checks_for_check() {
-            //TODO
-            assert!(false);
-        }
-
-        #[test]
-        fn it_checks_for_en_passant() {
-            //TODO
-            assert!(false);
         }
     }
 }
