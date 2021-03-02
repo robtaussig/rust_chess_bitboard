@@ -13,7 +13,7 @@ use ggez::graphics::{
 
 const SQUARE_SIZE: f32 = SCREEN_HEIGHT / 8.;
 
-const MOVE_FROM_COLOR: Color = Color::new(0.2, 0.4, 0.2, 1.0);
+const MOVE_FROM_BORDER_COLOR: Color = Color::new(0.2, 0.4, 0.2, 1.0);
 const LAST_MOVE_BORDER_COLOR: Color = Color::new(0.6, 0.3, 0.3, 1.0);
 
 const WHITE_SQUARE: Color = Color::new(0.9, 0.9, 0.9, 1.0);
@@ -389,9 +389,18 @@ pub fn draw_destination(
         },
         SQUARE_SIZE * 0.2,
         0.1,
-        Color::new(0.0, 0.0, 0.0, 0.6),
+        Color::new(0.5, 0.5, 0.5, 0.5),
     ).unwrap();
     draw(ctx, &mesh, DrawParam::default())
+}
+
+pub fn rect_from_row_and_col(row: usize, col: usize) -> Rect {
+    Rect::new(
+        col as f32 * SQUARE_SIZE,
+        row as f32 * SQUARE_SIZE,
+        SQUARE_SIZE,
+        SQUARE_SIZE,
+    )
 }
 
 pub fn draw_last_move_border(
@@ -399,14 +408,20 @@ pub fn draw_last_move_border(
     row: usize,
     col: usize,
 ) -> ggez::GameResult {
-    let rect = Rect::new(
-        col as f32 * SQUARE_SIZE,
-        row as f32 * SQUARE_SIZE,
-        SQUARE_SIZE,
-        SQUARE_SIZE,
-    );
+    let rect = rect_from_row_and_col(row, col);
     let mesh =
         Mesh::new_rectangle(ctx, DrawMode::stroke(3f32), rect, LAST_MOVE_BORDER_COLOR).expect("error creating rect");
+    draw(ctx, &mesh, DrawParam::default())
+}
+
+pub fn draw_move_from_border(
+    ctx: &mut ggez::Context,
+    row: usize,
+    col: usize,
+) -> ggez::GameResult {
+    let rect = rect_from_row_and_col(row, col);
+    let mesh =
+        Mesh::new_rectangle(ctx, DrawMode::stroke(3f32), rect, MOVE_FROM_BORDER_COLOR).expect("error creating rect");
     draw(ctx, &mesh, DrawParam::default())
 }
 
@@ -415,19 +430,11 @@ pub fn draw_square(
     row: usize,
     col: usize,
     piece: &Pieces,
-    is_moving_from: bool,
 ) -> ggez::GameResult {
     let is_white = row % 2 == col % 2;
-    let rect = Rect::new(
-        col as f32 * SQUARE_SIZE,
-        row as f32 * SQUARE_SIZE,
-        SQUARE_SIZE,
-        SQUARE_SIZE,
-    );
+    let rect = rect_from_row_and_col(row, col);
     let color: Color;
-    if is_moving_from {
-        color = MOVE_FROM_COLOR;
-    } else if is_white {
+    if is_white {
         color = WHITE_SQUARE;
     } else {
         color = BLACK_SQUARE;
