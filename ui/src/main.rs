@@ -29,14 +29,13 @@ const SCREEN_HEIGHT: f32 = 600.;
 const SCREEN_WIDTH: f32 = 600.;
 
 const SQUARE_SIZE: f32 = SCREEN_HEIGHT / 8.;
-const VALID_DESTINATION_COLOR: Color = Color::new(1.0, 0.0, 1.0, 1.0);
-const MOVE_FROM_COLOR: Color = Color::new(0.0, 0.0, 1.0, 1.0);
-const LAST_MOVE_FROM_COLOR: Color = Color::new(1.0, 0.0, 0.0, 1.0);
-const LAST_MOVE_TO_COLOR: Color = Color::new(0.0, 1.0, 0.0, 1.0);
+const MOVE_FROM_COLOR: Color = Color::new(0.2, 0.4, 0.2, 1.0);
+const LAST_MOVE_BORDER_COLOR: Color = Color::new(0.6, 0.3, 0.3, 1.0);
 const WHITE_SQUARE: Color = Color::new(1.0, 1.0, 1.0, 1.0);
-const BLACK_SQUARE: Color = Color::new(0.0, 0.0, 0.0, 1.0);
+const BLACK_SQUARE: Color = Color::new(0.1, 0.2, 0.4, 1.0);
 const WHITE_PIECE_COLOR: Color = Color::new(0.8, 0.8, 0.8, 1.0);
-const BLACK_PIECE_COLOR: Color = Color::new(0.2, 0.2, 0.2, 1.0);
+const BLACK_PIECE_COLOR: Color = Color::new(0.2, 0.4, 0.6, 1.0);
+const PIECE_BORDER_COLOR: Color = Color::new(0.0, 0.0, 0.0, 1.0);
 const SEARCH_DIRS: [(i8, i8); 8] = [
     (-1, -1),
     (-1, 0),
@@ -112,6 +111,15 @@ impl MainState {
     fn randomize_board(&mut self) {
         let old_board = self.game.board;
         self.game.randomize_board();
+        let new_board = self.game.board;
+        self.move_pieces_between_game_boards(&old_board, &new_board);
+
+        self.restart_game();
+    }
+
+    fn new_game(&mut self) {
+        let old_board = self.game.board;
+        self.game = Game::new();
         let new_board = self.game.board;
         self.move_pieces_between_game_boards(&old_board, &new_board);
 
@@ -195,10 +203,24 @@ pub fn draw_piece(
     col: usize,
     piece: &Pieces,
 ) -> ggez::GameResult {
-    let center_y = (row as f32 * SQUARE_SIZE) + (SQUARE_SIZE / 2f32);
-    let center_x = (col as f32 * SQUARE_SIZE) + (SQUARE_SIZE / 2f32);
+    let (center_x, center_y) = row_and_col_to_coord(row, col);
     
     draw_piece_at(ctx, center_x, center_y, piece)
+}
+
+pub fn draw_border(
+    ctx: &mut ggez::Context,
+    points: &[Point2<f32>],
+) -> ggez::GameResult {
+    let mesh = Mesh::new_polygon(
+        ctx,
+        DrawMode::stroke(2f32),
+        &points,
+        PIECE_BORDER_COLOR,
+    )
+    .expect("error building piece");
+
+    draw(ctx, &mesh, DrawParam::default())
 }
 
 pub fn draw_pawn(ctx: &mut ggez::Context, x: f32, y: f32, color: Color) -> ggez::GameResult {
@@ -229,7 +251,8 @@ pub fn draw_pawn(ctx: &mut ggez::Context, x: f32, y: f32, color: Color) -> ggez:
     )
     .expect("error building piece");
 
-    draw(ctx, &mesh, DrawParam::default())
+    draw(ctx, &mesh, DrawParam::default()).expect("Error drawing piece");
+    draw_border(ctx, &points)
 }
 
 pub fn draw_rook(ctx: &mut ggez::Context, x: f32, y: f32, color: Color) -> ggez::GameResult {
@@ -292,7 +315,8 @@ pub fn draw_rook(ctx: &mut ggez::Context, x: f32, y: f32, color: Color) -> ggez:
     )
     .expect("error building piece");
 
-    draw(ctx, &mesh, DrawParam::default())
+    draw(ctx, &mesh, DrawParam::default()).expect("Error drawing piece");
+    draw_border(ctx, &points)
 }
 
 pub fn draw_knight(ctx: &mut ggez::Context, x: f32, y: f32, color: Color) -> ggez::GameResult {
@@ -343,19 +367,23 @@ pub fn draw_knight(ctx: &mut ggez::Context, x: f32, y: f32, color: Color) -> gge
     )
     .expect("error building piece");
 
-    draw(ctx, &mesh, DrawParam::default())
+    draw(ctx, &mesh, DrawParam::default()).expect("Error drawing piece");
+    draw_border(ctx, &points)
 }
 
-//TODO
 pub fn draw_bishop(ctx: &mut ggez::Context, x: f32, y: f32, color: Color) -> ggez::GameResult {
     let points = [
         Point2 {
             x: x - SQUARE_SIZE * 0.3,
+            y: y - SQUARE_SIZE * 0.06,
+        },
+        Point2 {
+            x,
             y: y - SQUARE_SIZE * 0.3,
         },
         Point2 {
             x: x + SQUARE_SIZE * 0.3,
-            y: y - SQUARE_SIZE * 0.3,
+            y: y - SQUARE_SIZE * 0.06,
         },
         Point2 {
             x: x + SQUARE_SIZE * 0.3,
@@ -375,7 +403,116 @@ pub fn draw_bishop(ctx: &mut ggez::Context, x: f32, y: f32, color: Color) -> gge
     )
     .expect("error building piece");
 
-    draw(ctx, &mesh, DrawParam::default())
+    draw(ctx, &mesh, DrawParam::default()).expect("Error drawing piece");
+    draw_border(ctx, &points)
+}
+
+pub fn draw_king(ctx: &mut ggez::Context, x: f32, y: f32, color: Color) -> ggez::GameResult {
+    let points = [
+        Point2 {
+            x: x - SQUARE_SIZE * 0.14,
+            y: y - SQUARE_SIZE * 0.42,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.14,
+            y: y - SQUARE_SIZE * 0.42,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.14,
+            y: y - SQUARE_SIZE * 0.14,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.42,
+            y: y - SQUARE_SIZE * 0.14,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.42,
+            y: y + SQUARE_SIZE * 0.14,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.14,
+            y: y + SQUARE_SIZE * 0.14,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.14,
+            y: y + SQUARE_SIZE * 0.42,
+        },
+        Point2 {
+            x: x - SQUARE_SIZE * 0.14,
+            y: y + SQUARE_SIZE * 0.42,
+        },
+        Point2 {
+            x: x - SQUARE_SIZE * 0.14,
+            y: y + SQUARE_SIZE * 0.14,
+        },
+        Point2 {
+            x: x - SQUARE_SIZE * 0.42,
+            y: y + SQUARE_SIZE * 0.14,
+        },
+        Point2 {
+            x: x - SQUARE_SIZE * 0.42,
+            y: y - SQUARE_SIZE * 0.14,
+        },
+        Point2 {
+            x: x - SQUARE_SIZE * 0.14,
+            y: y - SQUARE_SIZE * 0.14,
+        },
+    ];
+
+    let mesh = Mesh::new_polygon(
+        ctx,
+        DrawMode::fill(),
+        &points,
+        color,
+    )
+    .expect("error building piece");
+
+    draw(ctx, &mesh, DrawParam::default()).expect("Error drawing piece");
+    draw_border(ctx, &points)
+}
+
+pub fn draw_queen(ctx: &mut ggez::Context, x: f32, y: f32, color: Color) -> ggez::GameResult {
+    let points = [
+        Point2 {
+            x: x - SQUARE_SIZE * 0.42,
+            y: y - SQUARE_SIZE * 0.42,
+        },
+        Point2 {
+            x: x - SQUARE_SIZE * 0.105,
+            y,
+        },
+        Point2 {
+            x: x,
+            y: y - SQUARE_SIZE * 0.42,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.105,
+            y,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.42,
+            y: y - SQUARE_SIZE * 0.42,
+        },
+        Point2 {
+            x: x + SQUARE_SIZE * 0.315,
+            y: y + SQUARE_SIZE * 0.42,
+        },
+        Point2 {
+            x: x - SQUARE_SIZE * 0.315,
+            y: y + SQUARE_SIZE * 0.42,
+        },
+    ];
+
+    let mesh = Mesh::new_polygon(
+        ctx,
+        DrawMode::fill(),
+        &points,
+        color,
+    )
+    .expect("error building piece");
+
+    draw(ctx, &mesh, DrawParam::default()).expect("Error drawing piece");
+    draw_border(ctx, &points)
 }
 
 pub fn draw_piece_at(
@@ -400,12 +537,49 @@ pub fn draw_piece_at(
         Pieces::BBishop => draw_bishop(ctx, x, y, color),
         Pieces::WRook => draw_rook(ctx, x, y, color),
         Pieces::BRook => draw_rook(ctx, x, y, color),
-        Pieces::WQueen => draw_pawn(ctx, x, y, color),
-        Pieces::BQueen => draw_pawn(ctx, x, y, color),
-        Pieces::WKing => draw_pawn(ctx, x, y, color),
-        Pieces::BKing => draw_pawn(ctx, x, y, color),
-        Pieces::Empty => draw_pawn(ctx, x, y, color),
+        Pieces::WQueen => draw_queen(ctx, x, y, color),
+        Pieces::BQueen => draw_queen(ctx, x, y, color),
+        Pieces::WKing => draw_king(ctx, x, y, color),
+        Pieces::BKing => draw_king(ctx, x, y, color),
+        Pieces::Empty => panic!("Cannot draw empty square"),
     }
+}
+
+pub fn draw_destination(
+    ctx: &mut ggez::Context,
+    row: usize,
+    col: usize,
+) -> ggez::GameResult {
+    let (center_x, center_y) = row_and_col_to_coord(row, col);
+
+    let mesh = Mesh::new_circle(
+        ctx,
+        DrawMode::fill(),
+        Point2 {
+            x: center_x,
+            y: center_y,
+        },
+        SQUARE_SIZE * 0.2,
+        0.1,
+        Color::new(0.0, 0.0, 0.0, 0.6),
+    ).unwrap();
+    draw(ctx, &mesh, DrawParam::default())
+}
+
+pub fn draw_last_move_border(
+    ctx: &mut ggez::Context,
+    row: usize,
+    col: usize,
+) -> ggez::GameResult {
+    let rect = Rect::new(
+        col as f32 * SQUARE_SIZE,
+        row as f32 * SQUARE_SIZE,
+        SQUARE_SIZE,
+        SQUARE_SIZE,
+    );
+    let mesh =
+        Mesh::new_rectangle(ctx, DrawMode::stroke(3f32), rect, LAST_MOVE_BORDER_COLOR).expect("error creating rect");
+    draw(ctx, &mesh, DrawParam::default())
 }
 
 pub fn draw_square(
@@ -413,10 +587,7 @@ pub fn draw_square(
     row: usize,
     col: usize,
     piece: &Pieces,
-    is_last_move_from: bool,
-    is_last_move_to: bool,
     is_moving_from: bool,
-    is_valid_destination: bool,
 ) -> ggez::GameResult {
     let is_white = row % 2 == col % 2;
     let rect = Rect::new(
@@ -428,12 +599,6 @@ pub fn draw_square(
     let color: Color;
     if is_moving_from {
         color = MOVE_FROM_COLOR;
-    } else if is_valid_destination {
-        color = VALID_DESTINATION_COLOR;
-    } else if is_last_move_from {
-        color = LAST_MOVE_FROM_COLOR;
-    } else if is_last_move_to {
-        color = LAST_MOVE_TO_COLOR;
     } else if is_white {
         color = WHITE_SQUARE;
     } else {
@@ -462,6 +627,13 @@ pub fn row_and_col_to_square(row: usize, col: usize) -> BitBoard {
 pub fn coord_to_bitboard(x: f32, y: f32) -> BitBoard {
     let (row, col) = coord_to_row_and_square(x, y);
     row_and_col_to_square(row, col)
+}
+
+pub fn row_and_col_to_coord(row: usize, col: usize) -> (f32, f32) {
+    (
+        (col as f32 * SQUARE_SIZE) + (SQUARE_SIZE / 2f32),
+        (row as f32 * SQUARE_SIZE) + (SQUARE_SIZE / 2f32)
+    )
 }
 
 pub fn is_fen(fen: &String) -> bool {
@@ -523,11 +695,15 @@ impl EventHandler for MainState {
                     self.randomize_board();
                 }
             },
+            KeyCode::N => {
+                if keymods.contains(KeyMods::CTRL) {
+                    self.new_game();
+                }
+            },
             _ => (),
         }
     }
 
-    //TODO format cell if valid target
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
         if self.needs_draw == false {
             return Ok(());
@@ -554,14 +730,29 @@ impl EventHandler for MainState {
                         row_idx,
                         col_idx,
                         &piece,
-                        self.last_move.0 == square.bitboard,
-                        self.last_move.1 == square.bitboard,
                         self.move_from == square.bitboard,
-                        self.is_valid_destination(square.bitboard),
                     )
                     .expect("Failed to draw square");
+                    if self.is_valid_destination(square.bitboard) {
+                        draw_destination(
+                            ctx,
+                            row_idx,
+                            col_idx,
+                        ).expect("Failed to draw destination");
+                    }              
                 })
             });
+
+        draw_last_move_border(
+            ctx,
+            self.last_move.0.row(),
+            self.last_move.0.col(),
+        ).expect("Failed to draw destination");
+        draw_last_move_border(
+            ctx,
+            self.last_move.1.row(),
+            self.last_move.1.col(),
+        ).expect("Failed to draw destination");
 
         moving_pieces.iter_mut().for_each(|(_, piece)| {
             draw_piece_at(ctx, piece.pos.0, piece.pos.1, &piece.piece).expect("Error drawing moving piece");
