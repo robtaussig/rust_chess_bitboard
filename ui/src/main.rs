@@ -216,10 +216,6 @@ impl MainState {
         self.record_moment();
     }
 
-    fn handle_drop_piece(&mut self, x: f32, y: f32) {
-        
-    }
-
     fn update_moving_pieces(&mut self) {
         let mut to_remove: Vec<BitBoard> = Vec::new();
         let mut moving_pieces = self.moving_pieces.borrow_mut();
