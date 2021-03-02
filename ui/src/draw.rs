@@ -16,11 +16,14 @@ const SQUARE_SIZE: f32 = SCREEN_HEIGHT / 8.;
 const MOVE_FROM_BORDER_COLOR: Color = Color::new(0.2, 0.4, 0.2, 1.0);
 const LAST_MOVE_BORDER_COLOR: Color = Color::new(0.6, 0.3, 0.3, 1.0);
 
+const VALID_DROP_TARGET_BORDER_COLOR: Color = Color::new(0.2, 0.6, 0.6, 1.0);
+
 const WHITE_SQUARE: Color = Color::new(0.9, 0.9, 0.9, 1.0);
 const BLACK_SQUARE: Color = Color::new(0.1, 0.1, 0.1, 1.0);
 
 const WHITE_PIECE_COLOR: Color = Color::new(0.8, 0.8, 0.8, 1.0);
 const BLACK_PIECE_COLOR: Color = Color::new(0.5, 0.8, 0.45, 1.0);
+const DRAGGING_PIECE_COLOR: Color = Color::new(0.5, 0.5, 0.5, 1.0);
 
 const PIECE_BORDER_COLOR: Color = Color::new(0.0, 0.0, 0.0, 1.0);
 const BORDER_WIDTH: f32 = 2f32;
@@ -30,10 +33,11 @@ pub fn draw_piece(
     row: usize,
     col: usize,
     piece: &Pieces,
+    is_dragging_from: bool,
 ) -> ggez::GameResult {
     let (center_x, center_y) = row_and_col_to_coord(row, col);
     
-    draw_piece_at(ctx, center_x, center_y, piece)
+    draw_piece_at(ctx, center_x, center_y, piece, is_dragging_from)
 }
 
 pub fn draw_border(
@@ -348,9 +352,12 @@ pub fn draw_piece_at(
     x: f32,
     y: f32,
     piece: &Pieces,
+    is_dragging_from: bool,
 ) -> ggez::GameResult {
     let color: Color;
-    if piece.is_white() {
+    if is_dragging_from {
+        color = DRAGGING_PIECE_COLOR;
+    } else if piece.is_white() {
         color = WHITE_PIECE_COLOR;
     } else {
         color = BLACK_PIECE_COLOR;
@@ -425,11 +432,23 @@ pub fn draw_move_from_border(
     draw(ctx, &mesh, DrawParam::default())
 }
 
+pub fn draw_valid_drop_target_border(
+    ctx: &mut ggez::Context,
+    row: usize,
+    col: usize,
+) -> ggez::GameResult {
+    let rect = rect_from_row_and_col(row, col);
+    let mesh =
+        Mesh::new_rectangle(ctx, DrawMode::stroke(3f32), rect, VALID_DROP_TARGET_BORDER_COLOR).expect("error creating rect");
+    draw(ctx, &mesh, DrawParam::default())
+}
+
 pub fn draw_square(
     ctx: &mut ggez::Context,
     row: usize,
     col: usize,
     piece: &Pieces,
+    is_dragging_from: bool,
 ) -> ggez::GameResult {
     let is_white = row % 2 == col % 2;
     let rect = rect_from_row_and_col(row, col);
@@ -445,7 +464,7 @@ pub fn draw_square(
 
     if piece != &Pieces::Empty {
         draw(ctx, &mesh, DrawParam::default()).expect("error drawing square");
-        draw_piece(ctx, row, col, piece)
+        draw_piece(ctx, row, col, piece, is_dragging_from)
     } else {
         draw(ctx, &mesh, DrawParam::default())
     }
