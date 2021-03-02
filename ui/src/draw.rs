@@ -23,6 +23,7 @@ const WHITE_PIECE_COLOR: Color = Color::new(0.8, 0.8, 0.8, 1.0);
 const BLACK_PIECE_COLOR: Color = Color::new(0.5, 0.8, 0.45, 1.0);
 
 const PIECE_BORDER_COLOR: Color = Color::new(0.0, 0.0, 0.0, 1.0);
+const BORDER_WIDTH: f32 = 2f32;
 
 pub fn draw_piece(
     ctx: &mut ggez::Context,
@@ -41,7 +42,7 @@ pub fn draw_border(
 ) -> ggez::GameResult {
     let mesh = Mesh::new_polygon(
         ctx,
-        DrawMode::stroke(2f32),
+        DrawMode::stroke(BORDER_WIDTH),
         &points,
         PIECE_BORDER_COLOR,
     )

@@ -31,6 +31,7 @@ impl Game {
     //TODO test for castling
     //TODO test for en passant
     pub fn make_move(&mut self, chessmove: &ChessMove) -> &mut Self {
+        let prev_en_passant = self.board.en_passant;
         self.board.en_passant = EMPTY;
 
         let moving_piece = self.board.get_piece_at(chessmove.from);
@@ -44,13 +45,11 @@ impl Game {
 
         match target_piece {
             Pieces::WPawn => {
-                //TODO Update enpassant
                 self.board.piece_bbs[WHITE][PAWNS_BB] ^= chessmove.to;
                 self.board.color_bbs[WHITE] ^= chessmove.to;
                 self.board.combined_bbs[ALL_PAWNS_BB] ^= chessmove.to;
             }
             Pieces::BPawn => {
-                //TODO Update enpassant
                 self.board.piece_bbs[BLACK][PAWNS_BB] ^= chessmove.to;
                 self.board.color_bbs[BLACK] ^= chessmove.to;
                 self.board.combined_bbs[ALL_PAWNS_BB] ^= chessmove.to;
@@ -116,16 +115,42 @@ impl Game {
 
         match moving_piece {
             Pieces::WPawn => {
-                //TODO Update enpassant
                 self.board.piece_bbs[WHITE][PAWNS_BB] ^= combined_move;
                 self.board.color_bbs[WHITE] ^= combined_move;
                 self.board.combined_bbs[ALL_PAWNS_BB] ^= combined_move;
+
+                if chessmove.to == prev_en_passant {
+                    let piece_to_remove = prev_en_passant.shr(8);
+                    self.board.piece_bbs[BLACK][PAWNS_BB] ^= piece_to_remove;
+                    self.board.color_bbs[BLACK] ^= piece_to_remove;
+                    self.board.combined_bbs[ALL_PAWNS_BB] ^= piece_to_remove;
+
+                    self.board.combined_bbs[EMPTY_SQUARES_BB] |= piece_to_remove;
+                    self.board.combined_bbs[ALL_PIECES_BB] ^= piece_to_remove;
+                }
+
+                if chessmove.from.shl(16) == chessmove.to {
+                    self.board.en_passant = chessmove.from.shl(8);
+                }
             }
             Pieces::BPawn => {
-                //TODO Update enpassant
                 self.board.piece_bbs[BLACK][PAWNS_BB] ^= combined_move;
                 self.board.color_bbs[BLACK] ^= combined_move;
                 self.board.combined_bbs[ALL_PAWNS_BB] ^= combined_move;
+
+                if chessmove.to == prev_en_passant {
+                    let piece_to_remove = prev_en_passant.shl(8);
+                    self.board.piece_bbs[WHITE][PAWNS_BB] ^= piece_to_remove;
+                    self.board.color_bbs[WHITE] ^= piece_to_remove;
+                    self.board.combined_bbs[ALL_PAWNS_BB] ^= piece_to_remove;
+
+                    self.board.combined_bbs[EMPTY_SQUARES_BB] |= piece_to_remove;
+                    self.board.combined_bbs[ALL_PIECES_BB] ^= piece_to_remove;
+                }
+
+                if chessmove.from.shr(16) == chessmove.to {
+                    self.board.en_passant = chessmove.from.shr(8);
+                }
             }
             Pieces::WKnight => {
                 self.board.piece_bbs[WHITE][KNIGHTS_BB] ^= combined_move;

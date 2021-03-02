@@ -157,7 +157,7 @@ impl MoveGen {
         let left_attack = (squares & CLEAR_A_FILE).shl(7);
         let right_attack = (squares & CLEAR_H_FILE).shl(9);
         let attacks = left_attack | right_attack;
-        let valid_attacks = attacks & board.color_bbs[BLACK];
+        let valid_attacks = attacks & (board.color_bbs[BLACK] | board.en_passant);
 
         valid_steps | valid_attacks
     }
