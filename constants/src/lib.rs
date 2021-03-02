@@ -228,6 +228,21 @@ pub const SQUARES: [BitBoard; 64] = [
     A8_SQUARE, B8_SQUARE, C8_SQUARE, D8_SQUARE, E8_SQUARE, F8_SQUARE, G8_SQUARE, H8_SQUARE,
 ];
 
+pub const SCREEN_HEIGHT: f32 = 600.;
+pub const SCREEN_WIDTH: f32 = 600.;
+
+pub const SQUARE_SIZE: f32 = SCREEN_HEIGHT / 8.;
+pub const SEARCH_DIRS: [(i8, i8); 8] = [
+    (-1, -1),
+    (-1, 0),
+    (-1, 1),
+    (0, -1),
+    (0, 1),
+    (1, -1),
+    (1, 0),
+    (1, 1),
+];
+
 #[cfg(test)]
 mod tests {
     use super::*;
