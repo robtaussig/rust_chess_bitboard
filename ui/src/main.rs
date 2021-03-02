@@ -25,6 +25,8 @@ mod moving_piece;
 use moving_piece::*;
 mod draw;
 use draw::*;
+mod moment;
+use moment::*;
 
 struct MainState {
     game: Game,
@@ -33,12 +35,15 @@ struct MainState {
     needs_draw: bool,
     valid_moves: Vec<ChessMove>,
     moving_pieces: Rc<RefCell<HashMap<BitBoard, MovingPiece>>>,
+    history: Vec<Moment>,
+    future: Vec<Moment>,
 }
 
 impl MainState {
     fn new() -> Self {
         let game = Game::new();
         let valid_moves = MoveGen::gen_legal_moves(&game.board);
+        let board_fen = game.board.to_fen();
 
         MainState {
             game,
@@ -47,6 +52,8 @@ impl MainState {
             needs_draw: true,
             valid_moves,
             moving_pieces: Rc::new(RefCell::new(HashMap::new())),
+            history: vec![Moment::new(board_fen, (EMPTY, EMPTY))],
+            future: Vec::new(),
         }
     }
 
@@ -54,6 +61,46 @@ impl MainState {
         self.valid_moves.iter().any(|chessmove| {
             ((chessmove.from & self.move_from) != EMPTY) && ((chessmove.to & to) != EMPTY)
         })
+    }
+
+    fn record_moment(&mut self) {
+        let board_fen = self.game.board.to_fen();
+        self.history.push(Moment::new(board_fen, self.last_move));
+        self.future = Vec::new();
+    }
+
+    fn go_back(&mut self) {
+        if self.history.len() > 1 {
+            self.future.push(self.history.pop().unwrap());
+            let moment = self.history.last().unwrap();
+
+            let game = Game::from_fen(&moment.fen);
+        
+            self.move_pieces_between_game_boards(&self.game.board, &game.board);
+            self.game = game;
+            let valid_moves = MoveGen::gen_legal_moves(&self.game.board);
+            self.move_from = EMPTY;
+            self.valid_moves = valid_moves;
+            self.needs_draw = true;
+            self.last_move = moment.last_move;
+        }
+    }
+
+    fn go_forward(&mut self) {
+        if self.future.len() > 0 {
+            self.history.push(self.future.pop().unwrap());
+            let moment = self.history.last().unwrap();
+
+            let game = Game::from_fen(&moment.fen);
+        
+            self.move_pieces_between_game_boards(&self.game.board, &game.board);
+            self.game = game;
+            let valid_moves = MoveGen::gen_legal_moves(&self.game.board);
+            self.move_from = EMPTY;
+            self.valid_moves = valid_moves;
+            self.needs_draw = true;
+            self.last_move = moment.last_move;
+        }
     }
 
     fn commit_move(&mut self, from: BitBoard, to: BitBoard) {
@@ -76,6 +123,7 @@ impl MainState {
         self.move_pieces_between_game_boards(&self.game.board, &game.board);
         self.game = game;
         self.restart_game();
+        self.record_moment();
     }
 
     fn restart_game(&mut self) {
@@ -101,6 +149,7 @@ impl MainState {
         self.move_pieces_between_game_boards(&old_board, &new_board);
 
         self.restart_game();
+        self.record_moment();
     }
 
     fn new_game(&mut self) {
@@ -110,6 +159,7 @@ impl MainState {
         self.move_pieces_between_game_boards(&old_board, &new_board);
 
         self.restart_game();
+        self.record_moment();
     }
 
     fn move_pieces_between_game_boards(&self, old_game_board: &Board, new_game_board: &Board) {
@@ -220,6 +270,7 @@ impl EventHandler for MainState {
         self.needs_draw = true;
         if self.move_from != EMPTY && self.is_valid_destination(destination) {
             self.commit_move(self.move_from, destination);
+            self.record_moment();
             self.move_from = EMPTY;
         } else {
             self.move_from = destination;
@@ -228,6 +279,13 @@ impl EventHandler for MainState {
 
     fn key_up_event(&mut self, _ctx: &mut ggez::Context, keycode: KeyCode, keymods: KeyMods) {
         match keycode {
+            KeyCode::C => {
+                if keymods.contains(KeyMods::CTRL) {
+                    let mut cp: ClipboardContext = ClipboardProvider::new().unwrap();
+                    let fen = self.game.board.to_fen();
+                    cp.set_contents(fen).expect("Failed to set fen contents");
+                }
+            },
             KeyCode::V => {
                 if keymods.contains(KeyMods::CTRL) {
                     let mut cp: ClipboardContext = ClipboardProvider::new().unwrap();
@@ -245,6 +303,16 @@ impl EventHandler for MainState {
             KeyCode::N => {
                 if keymods.contains(KeyMods::CTRL) {
                     self.new_game();
+                }
+            },
+            KeyCode::Z => {
+                if keymods.contains(KeyMods::CTRL) {
+                    self.go_back();
+                }
+            },
+            KeyCode::Y => {
+                if keymods.contains(KeyMods::CTRL) {
+                    self.go_forward();
                 }
             },
             _ => (),
@@ -277,7 +345,6 @@ impl EventHandler for MainState {
                         row_idx,
                         col_idx,
                         &piece,
-                        self.move_from == square.bitboard,
                     )
                     .expect("Failed to draw square");
                     if self.is_valid_destination(square.bitboard) {
@@ -300,6 +367,13 @@ impl EventHandler for MainState {
             self.last_move.1.row(),
             self.last_move.1.col(),
         ).expect("Failed to draw destination");
+        if self.move_from != EMPTY {
+            draw_move_from_border(
+                ctx,
+                self.move_from.row(),
+                self.move_from.col(),
+            ).expect("Failed to draw destination");
+        }
 
         moving_pieces.iter_mut().for_each(|(_, piece)| {
             draw_piece_at(ctx, piece.pos.0, piece.pos.1, &piece.piece).expect("Error drawing moving piece");
