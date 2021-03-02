@@ -12,13 +12,62 @@ pub struct MoveGen {}
 impl MoveGen {
     //TODO test
     pub fn gen_legal_moves(board: &Board) -> Vec<ChessMove> {
+        //TODO handle pin
         if board.checkers != EMPTY {
+            let ksq = board.piece_bbs[board.side_to_move][KINGS_BB];
+            let valid_king_moves = MoveGen::valid_king_moves(board, ksq, board.color_bbs[board.side_to_move]);
+            let attacked_squares = valid_king_moves.bits().fold(EMPTY, |acc, bit| {
+                let square = SQUARES[bit];
+                let attackers = MoveGen::find_attackers(board, square);
+                if attackers != EMPTY {
+                    return acc | square;
+                }
+                return acc;
+            });
+            let safe_squares = valid_king_moves ^ attacked_squares;
+            let safe_square_moves = MoveGen::gen_psuedo_legal_moves(board)
+                .into_iter()
+                .map(|chessmove| {
+                    if chessmove.from != ksq {
+                        return chessmove;
+                    }
+                    return ChessMove::new(
+                        chessmove.from,
+                        safe_squares,
+                    );
+                })
+                .filter(|chessmove| chessmove.to != EMPTY)
+                .collect::<Vec<ChessMove>>();
+
             if board.checkers.popcnt() > 1 {
-                //TODO only generate moves that involve moving king
-                Vec::new()
+                if safe_squares == EMPTY {
+                    return Vec::new();
+                }
+                return safe_square_moves
+                    .into_iter()
+                    .filter(|chessmove| {
+                        if chessmove.from != ksq {
+                            return false;
+                        }
+                        return true;
+                    })
+                    .collect::<Vec<ChessMove>>();
             } else {
-                //TODO only generate moves that involve moving king, blocking check, or capturing checker
-                Vec::new()
+                let attack_rays = MoveGen::find_attack_rays(board, ksq);
+
+                return safe_square_moves
+                    .into_iter()
+                    .map(|chessmove| {
+                        if chessmove.from == ksq {
+                            return chessmove;
+                        }
+                        return ChessMove::new(
+                            chessmove.from,
+                            chessmove.to & (board.checkers | attack_rays)
+                        );
+                    })
+                    .filter(|chessmove| chessmove.to != EMPTY)
+                    .collect::<Vec<ChessMove>>();
             }
         } else if board.pinned != EMPTY {
             //TODO filter pseudo legal moves for any moves that involve a pinned piece that does not move along pinned line
@@ -29,7 +78,6 @@ impl MoveGen {
     }
 
     //TODO test
-    //TODO determine castling
     pub fn gen_psuedo_legal_moves(board: &Board) -> Vec<ChessMove> {
         let mut move_vec: Vec<ChessMove> = Vec::new();
         let pawns = board.piece_bbs[board.side_to_move][PAWNS_BB];
@@ -308,12 +356,42 @@ impl MoveGen {
         attacks.shl(7) & !own_pieces & CLEAR_H_FILE
     }
 
-    //TODO test
-    //TODO implement pinned
-    pub fn find_checkers_and_pinners(board: &Board) -> (BitBoard, BitBoard) {
-        let mut checkers = EMPTY;
+    pub fn find_attack_rays(board: &Board, test_square: BitBoard) -> BitBoard {
+        let (other_pieces_collection, other_pieces) = match board.side_to_move {
+            WHITE => (board.piece_bbs[BLACK], board.color_bbs[BLACK]),
+            BLACK=> (board.piece_bbs[WHITE], board.color_bbs[WHITE]),
+            _ => ([EMPTY; 6], EMPTY),
+        };
 
-        let ksq = board.piece_bbs[board.side_to_move][KINGS_BB];
+        let mut bishop_attacks =
+            MoveGen::valid_bishop_moves(board, test_square, board.color_bbs[board.side_to_move]);
+        let mut rook_attacks =
+            MoveGen::valid_rook_moves(board, test_square, board.color_bbs[board.side_to_move]);
+
+        let bishop_like_attackers = bishop_attacks
+            & (other_pieces_collection[BISHOPS_BB] | other_pieces_collection[QUEENS_BB]);
+
+        if bishop_like_attackers == EMPTY {
+            bishop_attacks = EMPTY;
+        } else {
+            bishop_attacks &= MoveGen::valid_bishop_moves(board, bishop_like_attackers, other_pieces);
+        }
+
+        let rook_like_attackers = rook_attacks
+            & (other_pieces_collection[ROOKS_BB] | other_pieces_collection[QUEENS_BB]);
+
+        if rook_like_attackers == EMPTY {
+            rook_attacks = EMPTY;
+        } else {
+            rook_attacks &= MoveGen::valid_rook_moves(board, rook_like_attackers, other_pieces);
+        }
+
+        bishop_attacks | rook_attacks
+    }
+
+    pub fn find_attackers(board: &Board, test_square: BitBoard) -> BitBoard {
+        let mut attackers = EMPTY;
+
         let other_pieces_collection: [BitBoard; 6];
         if board.side_to_move == WHITE {
             other_pieces_collection = board.piece_bbs[BLACK];
@@ -322,24 +400,34 @@ impl MoveGen {
         }
 
         let bishop_attackers =
-            MoveGen::valid_bishop_moves(board, ksq, board.color_bbs[board.side_to_move]);
+            MoveGen::valid_bishop_moves(board, test_square, board.color_bbs[board.side_to_move]);
         let rook_attackers =
-            MoveGen::valid_rook_moves(board, ksq, board.color_bbs[board.side_to_move]);
+            MoveGen::valid_rook_moves(board, test_square, board.color_bbs[board.side_to_move]);
         let knight_attackers =
-            MoveGen::valid_knight_moves(board, ksq, board.color_bbs[board.side_to_move]);
+            MoveGen::valid_knight_moves(board, test_square, board.color_bbs[board.side_to_move]);
         let pawn_attackers: BitBoard;
         if board.side_to_move == WHITE {
-            pawn_attackers = MoveGen::valid_white_pawn_moves(board, ksq);
+            pawn_attackers = MoveGen::valid_white_pawn_moves(board, test_square);
         } else {
-            pawn_attackers = MoveGen::valid_black_pawn_moves(board, ksq);
+            pawn_attackers = MoveGen::valid_black_pawn_moves(board, test_square);
         }
 
-        checkers ^= bishop_attackers
+        attackers ^= bishop_attackers
             & (other_pieces_collection[BISHOPS_BB] | other_pieces_collection[QUEENS_BB]);
-        checkers ^= rook_attackers
+        attackers ^= rook_attackers
             & (other_pieces_collection[ROOKS_BB] | other_pieces_collection[QUEENS_BB]);
-        checkers ^= knight_attackers & other_pieces_collection[KNIGHTS_BB];
-        checkers ^= pawn_attackers & other_pieces_collection[PAWNS_BB];
+        attackers ^= knight_attackers & other_pieces_collection[KNIGHTS_BB];
+        attackers ^= pawn_attackers & other_pieces_collection[PAWNS_BB];
+
+        attackers
+    }
+
+    //TODO test
+    //TODO implement pinned
+    pub fn find_checkers_and_pinners(board: &Board) -> (BitBoard, BitBoard) {
+
+        let ksq = board.piece_bbs[board.side_to_move][KINGS_BB];
+        let checkers = MoveGen::find_attackers(board, ksq);
 
         (checkers, EMPTY)
     }
