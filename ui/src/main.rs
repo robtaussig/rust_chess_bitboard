@@ -28,6 +28,8 @@ mod draw;
 use draw::*;
 mod moment;
 use moment::*;
+mod promotion;
+use promotion::*;
 
 struct MainState {
     game: Game,
@@ -39,6 +41,7 @@ struct MainState {
     dragged_piece: Option<(BitBoard, Pieces, (f32, f32))>,
     history: Vec<Moment>,
     future: Vec<Moment>,
+    promotion_panel: Option<PromotionUI>,
 }
 
 impl MainState {
@@ -57,6 +60,7 @@ impl MainState {
             history: vec![Moment::new(board_fen, (EMPTY, EMPTY))],
             future: Vec::new(),
             dragged_piece: None,
+            promotion_panel: None,
         }
     }
 
@@ -136,8 +140,11 @@ impl MainState {
     }
 
     fn handle_white_promotion(&mut self, from: BitBoard, to: BitBoard) {
-        //TODO allow player input
-        let moves = self.game.make_move(&ChessMove::promote(from, to, Pieces::WQueen));
+        self.promotion_panel = Some(PromotionUI::new(from, to, true));
+    }
+
+    fn commit_promotion(&mut self, from: BitBoard, to: BitBoard, piece: Pieces) {
+        let moves = self.game.make_move(&ChessMove::promote(from, to, piece));
         self.valid_moves = MoveGen::gen_legal_moves(&self.game.board);
         self.last_move = (from, to);
         self.record_moment();
@@ -154,21 +161,7 @@ impl MainState {
     }
 
     fn handle_black_promotion(&mut self, from: BitBoard, to: BitBoard) {
-        //TODO allow player input
-        let moves = self.game.make_move(&ChessMove::promote(from, to, Pieces::BQueen));
-        self.valid_moves = MoveGen::gen_legal_moves(&self.game.board);
-        self.last_move = (from, to);
-        self.record_moment();
-        let mut moving_pieces = self.moving_pieces.borrow_mut();
-        moves.iter().for_each(|move_tuple| {
-            moving_pieces.insert(move_tuple.1, MovingPiece::new(
-                self.game.board.get_piece_at(move_tuple.1),
-                move_tuple.0,
-                move_tuple.1,
-                SQUARE_SIZE,
-                20,
-            ));
-        });
+        self.promotion_panel = Some(PromotionUI::new(from, to, false));
     }
 
     fn restart_from_fen(&mut self, fen: &str) {
@@ -191,6 +184,8 @@ impl MainState {
                 self.last_move = (self.game.board.en_passant.shr(8), self.game.board.en_passant.shl(8));
             }
         }
+        self.promotion_panel = None;
+        self.dragged_piece = None;
         self.move_from = EMPTY;
         self.valid_moves = valid_moves;
         self.needs_draw = true;
@@ -329,16 +324,39 @@ impl EventHandler for MainState {
 
         self.update_moving_pieces();
 
+        let mut to_promote_from: BitBoard = EMPTY;
+        let mut to_promote_to: BitBoard = EMPTY;
+        let mut to_promote: Pieces = Pieces::Empty;
+
+        if let Some(ref mut promotion_panel) = self.promotion_panel {
+            promotion_panel.update(ctx).expect("Error updating promotion panel");
+            if promotion_panel.done {
+                if let Some(promotion_piece) = promotion_panel.selected {
+                    to_promote_from = promotion_panel.from;
+                    to_promote_to = promotion_panel.to;
+                    to_promote = promotion_piece;
+                }
+                self.promotion_panel = None;
+            }
+        }
+
+        if to_promote != Pieces::Empty {
+            self.commit_promotion(to_promote_from, to_promote_to, to_promote);
+        }
+
         Ok(())
     }
 
     fn mouse_button_down_event(
         &mut self,
-        _ctx: &mut ggez::Context,
-        _button: ggez::event::MouseButton,
+        ctx: &mut ggez::Context,
+        button: ggez::event::MouseButton,
         x: f32,
         y: f32,
     ) {
+        if let Some(ref mut promotion_panel) = self.promotion_panel {
+            return promotion_panel.mouse_button_down_event(ctx, button, x, y);
+        }
         let destination = coord_to_bitboard(x, y);
         if self.move_from != EMPTY && self.is_valid_destination(destination) {
             self.make_move(self.move_from, destination);
@@ -481,11 +499,14 @@ impl EventHandler for MainState {
             ).expect("Error drawing dragged piece");
         }
 
-        present(ctx).expect("error presenting");
-
-        if moving_pieces.len() == 0 && self.dragged_piece == None {
+        if let Some(ref mut promotion_panel) = self.promotion_panel {
+            promotion_panel.draw(ctx).expect("Error drawing promotion panel");
+        } else if moving_pieces.len() == 0 && self.dragged_piece == None {
             self.needs_draw = false;
         }
+
+        present(ctx).expect("error presenting");
+
         Ok(())
     }
 }

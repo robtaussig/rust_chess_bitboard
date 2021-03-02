@@ -421,6 +421,27 @@ pub fn draw_last_move_border(
     draw(ctx, &mesh, DrawParam::default())
 }
 
+pub fn draw_arbitrary_rectangle(
+    ctx: &mut ggez::Context,
+    x: f32,
+    y: f32,
+    w: f32,
+    h: f32,
+    color: Color,
+    draw_mode: Option<DrawMode>,
+    draw_params: Option<DrawParam>,
+) -> ggez::GameResult {
+    let rect = Rect::new(
+        x,
+        y,
+        w,
+        h,
+    );
+    let mesh =
+        Mesh::new_rectangle(ctx, draw_mode.unwrap_or(DrawMode::fill()), rect, color).expect("error creating rect");
+    draw(ctx, &mesh, draw_params.unwrap_or(DrawParam::default()))
+}
+
 pub fn draw_move_from_border(
     ctx: &mut ggez::Context,
     row: usize,
