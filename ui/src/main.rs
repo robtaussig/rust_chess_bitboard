@@ -359,14 +359,14 @@ impl EventHandler for MainState {
     fn key_up_event(&mut self, _ctx: &mut ggez::Context, keycode: KeyCode, keymods: KeyMods) {
         match keycode {
             KeyCode::C => {
-                if keymods.contains(KeyMods::CTRL) {
+                if keymods.contains(KeyMods::CTRL) || keymods.contains(KeyMods::LOGO) {
                     let mut cp: ClipboardContext = ClipboardProvider::new().unwrap();
                     let fen = self.game.board.to_fen();
                     cp.set_contents(fen).expect("Failed to set fen contents");
                 }
             },
             KeyCode::V => {
-                if keymods.contains(KeyMods::CTRL) {
+                if keymods.contains(KeyMods::CTRL) || keymods.contains(KeyMods::LOGO) {
                     let mut cp: ClipboardContext = ClipboardProvider::new().unwrap();
                     let contents = cp.get_contents().unwrap();
                     if is_fen(&contents) {
@@ -375,22 +375,22 @@ impl EventHandler for MainState {
                 }
             },
             KeyCode::R => {
-                if keymods.contains(KeyMods::CTRL) {
+                if keymods.contains(KeyMods::CTRL) || keymods.contains(KeyMods::LOGO) {
                     self.randomize_board();
                 }
             },
             KeyCode::N => {
-                if keymods.contains(KeyMods::CTRL) {
+                if keymods.contains(KeyMods::CTRL) || keymods.contains(KeyMods::LOGO) {
                     self.new_game();
                 }
             },
             KeyCode::Z => {
-                if keymods.contains(KeyMods::CTRL) {
+                if keymods.contains(KeyMods::CTRL) || keymods.contains(KeyMods::LOGO) {
                     self.go_back();
                 }
             },
             KeyCode::Y => {
-                if keymods.contains(KeyMods::CTRL) {
+                if keymods.contains(KeyMods::CTRL) || keymods.contains(KeyMods::LOGO) {
                     self.go_forward();
                 }
             },
