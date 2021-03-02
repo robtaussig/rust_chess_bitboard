@@ -1,4 +1,6 @@
 use std::fmt;
+extern crate constants;
+use crate::constants::*;
 
 pub enum PieceType {
     Pawn,
@@ -67,6 +69,48 @@ impl Pieces {
             Pieces::BQueen => PieceType::Queen,
             Pieces::BKing => PieceType::King,
             _ => PieceType::Empty,
+        }
+    }
+
+    pub fn color_bb_index(&self) -> usize {
+        match self {
+            Pieces::WPawn => WHITE,
+            Pieces::WKnight => WHITE,
+            Pieces::WBishop => WHITE,
+            Pieces::WRook => WHITE,
+            Pieces::WQueen => WHITE,
+            Pieces::WKing => WHITE,
+            Pieces::BPawn => BLACK,
+            Pieces::BKnight => BLACK,
+            Pieces::BBishop => BLACK,
+            Pieces::BRook => BLACK,
+            Pieces::BQueen => BLACK,
+            Pieces::BKing => BLACK,
+            Pieces::Empty => EMPTY_SQUARES_BB,
+        }
+    }
+
+    pub fn piece_by_color_bb_index(&self) -> usize {
+        match self.piece_type() {
+            PieceType::Pawn => PAWNS_BB,
+            PieceType::Knight => KNIGHTS_BB,
+            PieceType::Bishop => BISHOPS_BB,
+            PieceType::Rook => ROOKS_BB,
+            PieceType::Queen => QUEENS_BB,
+            PieceType::King => KINGS_BB,
+            PieceType::Empty => EMPTY_SQUARES_BB,
+        }
+    }
+
+    pub fn combined_color_bb_index(&self) -> usize {
+        match self.piece_type() {
+            PieceType::Pawn => ALL_PAWNS_BB,
+            PieceType::Knight => ALL_KNIGHTS_BB,
+            PieceType::Bishop => ALL_BISHOPS_BB,
+            PieceType::Rook => ALL_ROOKS_BB,
+            PieceType::Queen => ALL_QUEENS_BB,
+            PieceType::King => ALL_KINGS_BB,
+            PieceType::Empty => EMPTY_SQUARES_BB,
         }
     }
 }

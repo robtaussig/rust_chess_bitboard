@@ -22,6 +22,14 @@ impl ChessMove {
         }
     }
 
+    pub fn promote(from: BitBoard, to: BitBoard, promotion: Pieces) -> Self {
+        ChessMove {
+            from,
+            to,
+            promotion: Some(promotion),
+        }
+    }
+
     //TODO test
     pub fn from_notation(from: &str, to: &str) -> Self {
         //TODO implement

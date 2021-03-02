@@ -7,7 +7,7 @@ use board::Board;
 use clipboard::{ClipboardProvider, ClipboardContext};
 use game::Game;
 extern crate piece;
-use piece::Pieces;
+use piece::{Pieces};
 extern crate bitboard;
 use bitboard::BitBoard;
 extern crate chessmove;
@@ -107,6 +107,42 @@ impl MainState {
         let moves = self.game.make_move(&ChessMove::new(from, to));
         self.valid_moves = MoveGen::gen_legal_moves(&self.game.board);
         self.last_move = (from, to);
+        let mut moving_pieces = self.moving_pieces.borrow_mut();
+        moves.iter().for_each(|move_tuple| {
+            moving_pieces.insert(move_tuple.1, MovingPiece::new(
+                self.game.board.get_piece_at(move_tuple.1),
+                move_tuple.0,
+                move_tuple.1,
+                SQUARE_SIZE,
+                20,
+            ));
+        });
+    }
+
+    fn handle_white_promotion(&mut self, from: BitBoard, to: BitBoard) {
+        //TODO allow player input
+        let moves = self.game.make_move(&ChessMove::promote(from, to, Pieces::WQueen));
+        self.valid_moves = MoveGen::gen_legal_moves(&self.game.board);
+        self.last_move = (from, to);
+        self.record_moment();
+        let mut moving_pieces = self.moving_pieces.borrow_mut();
+        moves.iter().for_each(|move_tuple| {
+            moving_pieces.insert(move_tuple.1, MovingPiece::new(
+                self.game.board.get_piece_at(move_tuple.1),
+                move_tuple.0,
+                move_tuple.1,
+                SQUARE_SIZE,
+                20,
+            ));
+        });
+    }
+
+    fn handle_black_promotion(&mut self, from: BitBoard, to: BitBoard) {
+        //TODO allow player input
+        let moves = self.game.make_move(&ChessMove::promote(from, to, Pieces::BQueen));
+        self.valid_moves = MoveGen::gen_legal_moves(&self.game.board);
+        self.last_move = (from, to);
+        self.record_moment();
         let mut moving_pieces = self.moving_pieces.borrow_mut();
         moves.iter().for_each(|move_tuple| {
             moving_pieces.insert(move_tuple.1, MovingPiece::new(
@@ -269,10 +305,18 @@ impl EventHandler for MainState {
         y: f32,
     ) {
         let destination = coord_to_bitboard(x, y);
-        self.needs_draw = true;
+        self.needs_draw = true;        
+
         if self.move_from != EMPTY && self.is_valid_destination(destination) {
-            self.commit_move(self.move_from, destination);
-            self.record_moment();
+            let moving_piece = self.game.board.get_piece_at(self.move_from);
+            if moving_piece == Pieces::WPawn && destination & RANK_8 != EMPTY {
+                self.handle_white_promotion(self.move_from, destination);
+            } else if moving_piece == Pieces::BPawn && destination & RANK_1 != EMPTY {
+                self.handle_black_promotion(self.move_from, destination);
+            } else {
+                self.commit_move(self.move_from, destination);
+                self.record_moment();
+            }
             self.move_from = EMPTY;
         } else {
             self.move_from = destination;

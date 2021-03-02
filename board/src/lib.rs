@@ -1,7 +1,7 @@
 extern crate bitboard;
 use crate::bitboard::BitBoard;
 extern crate piece;
-use piece::{Pieces, PieceType};
+use piece::{Pieces};
 extern crate square;
 use square::Square;
 extern crate constants;
@@ -157,41 +157,13 @@ impl Board {
         let target_piece = self.get_piece_at(to);
         let combined_move = from | to;
 
-        let piece_color_bb_index = match moving_piece.is_white() {
-            true => WHITE,
-            false => match moving_piece.is_black() {
-                true => BLACK,
-                false => EMPTY_SQUARES_BB,
-            },
-        };
-
-        let (piece_piece_color_bb_index, piece_piece_combined_bb_index) = match moving_piece.piece_type() {
-            PieceType::Pawn => (PAWNS_BB, ALL_PAWNS_BB),
-            PieceType::Knight => (KNIGHTS_BB, ALL_KNIGHTS_BB),
-            PieceType::Bishop => (BISHOPS_BB, ALL_BISHOPS_BB),
-            PieceType::Rook => (ROOKS_BB, ALL_ROOKS_BB),
-            PieceType::King => (KINGS_BB, ALL_KINGS_BB),
-            PieceType::Queen => (QUEENS_BB, ALL_QUEENS_BB),
-            _ => (EMPTY_SQUARES_BB, EMPTY_SQUARES_BB),
-        };
-
-        let target_color_bb_index = match target_piece.is_white() {
-            true => WHITE,
-            false => match target_piece.is_black() {
-                true => BLACK,
-                false => EMPTY_SQUARES_BB,
-            },
-        };
-
-        let (target_piece_color_bb_index, target_piece_combined_bb_index) = match target_piece.piece_type() {
-            PieceType::Pawn => (PAWNS_BB, ALL_PAWNS_BB),
-            PieceType::Knight => (KNIGHTS_BB, ALL_KNIGHTS_BB),
-            PieceType::Bishop => (BISHOPS_BB, ALL_BISHOPS_BB),
-            PieceType::Rook => (ROOKS_BB, ALL_ROOKS_BB),
-            PieceType::King => (KINGS_BB, ALL_KINGS_BB),
-            PieceType::Queen => (QUEENS_BB, ALL_QUEENS_BB),
-            _ => (EMPTY_SQUARES_BB, EMPTY_SQUARES_BB),
-        };
+        let moving_piece_color_bb_index = moving_piece.color_bb_index();
+        let moving_piece_by_color_bb_index = moving_piece.piece_by_color_bb_index();
+        let moving_piece_combined_bb_index = moving_piece.combined_color_bb_index();
+        
+        let target_color_bb_index = target_piece.color_bb_index();
+        let target_piece_color_bb_index = target_piece.piece_by_color_bb_index();
+        let target_piece_combined_bb_index = target_piece.combined_color_bb_index();
 
         if target_color_bb_index != EMPTY_SQUARES_BB {
             self.piece_bbs[target_color_bb_index][target_piece_color_bb_index] ^= to;
@@ -199,9 +171,9 @@ impl Board {
             self.combined_bbs[target_piece_combined_bb_index] ^= to;
         }
         
-        self.piece_bbs[piece_color_bb_index][piece_piece_color_bb_index] ^= combined_move;
-        self.color_bbs[piece_color_bb_index] ^= combined_move;
-        self.combined_bbs[piece_piece_combined_bb_index] ^= combined_move;
+        self.piece_bbs[moving_piece_color_bb_index][moving_piece_by_color_bb_index] ^= combined_move;
+        self.color_bbs[moving_piece_color_bb_index] ^= combined_move;
+        self.combined_bbs[moving_piece_combined_bb_index] ^= combined_move;
 
         self.combined_bbs[EMPTY_SQUARES_BB] |= from;
         self.combined_bbs[EMPTY_SQUARES_BB] &= !to;

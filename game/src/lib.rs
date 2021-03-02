@@ -29,7 +29,6 @@ impl Game {
     }
 
     //TODO test
-    //TODO handle promotion
     //Returns list of all moved pieces, including castling rook
     pub fn make_move(&mut self, chessmove: &ChessMove) -> Vec<(BitBoard, BitBoard)> {
         let prev_en_passant = self.board.en_passant;
@@ -69,7 +68,6 @@ impl Game {
 
         match moving_piece {
             Pieces::WPawn => {
-                //TODO handle promotion
                 if chessmove.to == prev_en_passant {
                     let piece_to_remove = prev_en_passant.shr(8);
                     self.board.piece_bbs[BLACK][PAWNS_BB] ^= piece_to_remove;
@@ -85,7 +83,6 @@ impl Game {
                 }
             }
             Pieces::BPawn => {
-                //TODO handle promotion
                 if chessmove.to == prev_en_passant {
                     let piece_to_remove = prev_en_passant.shl(8);
                     self.board.piece_bbs[WHITE][PAWNS_BB] ^= piece_to_remove;
@@ -137,6 +134,15 @@ impl Game {
                 self.board.castle_rights &= !(C8_SQUARE | G8_SQUARE);
             }
             _ => ()
+        }
+
+        if let Some(promotion) = chessmove.promotion {
+            self.board.piece_bbs[moving_piece.color_bb_index()][moving_piece.piece_by_color_bb_index()] ^= chessmove.to;
+            self.board.combined_bbs[moving_piece.combined_color_bb_index()] ^= chessmove.to;
+
+            self.board.piece_bbs[promotion.color_bb_index()][promotion.piece_by_color_bb_index()] |= chessmove.to;
+            self.board.combined_bbs[promotion.combined_color_bb_index()] |= chessmove.to;
+            moves.push((EMPTY, chessmove.to));
         }
 
         self.board.side_to_move ^= 1;
