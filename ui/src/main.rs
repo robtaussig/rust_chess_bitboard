@@ -82,6 +82,13 @@ impl MainState {
         let valid_moves = MoveGen::gen_legal_moves(&self.game.board);
         
         self.last_move = (EMPTY, EMPTY);
+        if self.game.board.en_passant != EMPTY {
+            if self.game.board.en_passant & RANK_6 != EMPTY {
+                self.last_move = (self.game.board.en_passant.shl(8), self.game.board.en_passant.shr(8));
+            } else {
+                self.last_move = (self.game.board.en_passant.shr(8), self.game.board.en_passant.shl(8));
+            }
+        }
         self.move_from = EMPTY;
         self.valid_moves = valid_moves;
         self.needs_draw = true;
