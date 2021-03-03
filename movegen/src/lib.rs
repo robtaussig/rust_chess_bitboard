@@ -553,8 +553,6 @@ mod tests {
                 | E2_SQUARE
                 | D2_SQUARE
                 | D3_SQUARE;
-
-            let valid_moves = MoveGen::valid_king_moves(&b, b.piece_bbs[WHITE][KINGS_BB], b.color_bbs[WHITE]);
             
             assert_eq!(
                 MoveGen::valid_king_moves(&b, b.piece_bbs[WHITE][KINGS_BB], b.color_bbs[WHITE]),
