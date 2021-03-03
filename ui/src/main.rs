@@ -9,7 +9,7 @@ use game::Game;
 extern crate piece;
 use piece::{Pieces};
 extern crate bitboard;
-use bitboard::BitBoard;
+use bitboard::*;
 extern crate chessmove;
 use chessmove::ChessMove;
 extern crate movegen;
@@ -516,7 +516,19 @@ impl EventHandler for MainState {
 
 fn main() -> ggez::GameResult {
     let (ctx, event_loop) = &mut ggez::ContextBuilder::new("Chess", "Rob Taussig")
-        .window_mode(ggez::conf::WindowMode::default().dimensions(SCREEN_WIDTH, SCREEN_HEIGHT))
+        .window_mode(
+            ggez::conf::WindowMode::default()
+            .dimensions(SCREEN_WIDTH, SCREEN_HEIGHT)
+        )
+        .window_setup(
+            ggez::conf::WindowSetup {
+                title: "Rusty Chess".into(),
+                samples: ggez::conf::NumSamples::Zero,
+                vsync: true,
+                icon: "".into(),
+                srgb: true,
+            }
+        )
         .build()
         .unwrap();
     let main_state = &mut MainState::new();

@@ -1346,6 +1346,10 @@ dependencies = [
 [[package]]
 name = "magic"
 version = "0.1.0"
+dependencies = [
+ "bitboard",
+ "constants",
+]
 
 [[package]]
 name = "malloc_buf"
@@ -1448,6 +1452,7 @@ dependencies = [
  "board",
  "chessmove",
  "constants",
+ "magic",
 ]
 
 [[package]]

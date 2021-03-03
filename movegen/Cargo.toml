@@ -11,3 +11,4 @@ board = { path = "../board" }
 constants = { path = "../constants" }
 chessmove = { path = "../chessmove" }
 bitboard = { path = "../bitboard" }
+magic = { path = "../magic" }

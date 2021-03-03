@@ -1,5 +1,5 @@
 extern crate bitboard;
-use crate::bitboard::BitBoard;
+use crate::bitboard::*;
 extern crate piece;
 use piece::{Pieces};
 extern crate square;

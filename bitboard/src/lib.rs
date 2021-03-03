@@ -3,6 +3,46 @@ use std::{
     ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not},
 };
 
+pub const RANK_1: BitBoard = BitBoard(255);
+pub const RANK_2: BitBoard = BitBoard(65280);
+pub const RANK_3: BitBoard = BitBoard(16711680);
+pub const RANK_4: BitBoard = BitBoard(4278190080);
+pub const RANK_5: BitBoard = BitBoard(1095216660480);
+pub const RANK_6: BitBoard = BitBoard(280375465082880);
+pub const RANK_7: BitBoard = BitBoard(71776119061217280);
+pub const RANK_8: BitBoard = BitBoard(18374686479671623680);
+
+pub const RANKS: [BitBoard; 8] = [
+    RANK_1,
+    RANK_2,
+    RANK_3,
+    RANK_4,
+    RANK_5,
+    RANK_6,
+    RANK_7,
+    RANK_8,
+];
+
+pub const A_FILE: BitBoard = BitBoard(72340172838076673);
+pub const B_FILE: BitBoard = BitBoard(144680345676153346);
+pub const C_FILE: BitBoard = BitBoard(289360691352306692);
+pub const D_FILE: BitBoard = BitBoard(578721382704613384);
+pub const E_FILE: BitBoard = BitBoard(1157442765409226768);
+pub const F_FILE: BitBoard = BitBoard(2314885530818453536);
+pub const G_FILE: BitBoard = BitBoard(4629771061636907072);
+pub const H_FILE: BitBoard = BitBoard(9259542123273814144);
+
+pub const FILES: [BitBoard; 8] = [
+    A_FILE,
+    B_FILE,
+    C_FILE,
+    D_FILE,
+    E_FILE,
+    F_FILE,
+    G_FILE,
+    H_FILE,
+];
+
 #[derive(PartialEq, PartialOrd, Clone, Copy, Debug, Default, Eq, Hash)]
 pub struct BitBoard(pub u64);
 
@@ -71,7 +111,8 @@ impl BitBoard {
         BitBoard(u64::from_str_radix(str, 2).unwrap())
     }
 
-    pub fn print_bb(&self) {
+    pub fn print_bb(&self, label: &str) {
+        println!("{}", label);
         println!("{}", VisualBinaryString::new(self));
     }
 
@@ -99,6 +140,18 @@ impl BitBoard {
     //Returns col index of first positive bit
     pub fn col(&self) -> usize {
         (7 - self.0.leading_zeros() % 8) as usize
+    }
+
+    pub fn get_rank(&self) -> BitBoard {
+        RANKS[self.row()]
+    }
+
+    pub fn get_file(&self) -> BitBoard {
+        RANKS[self.row()]
+    }
+
+    pub fn index(&self) -> usize {
+        self.0.trailing_zeros() as usize
     }
 }
 
