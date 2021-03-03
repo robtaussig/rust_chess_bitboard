@@ -148,8 +148,10 @@ impl Game {
         self.board.side_to_move ^= 1;
 
         let (checkers, pinned) = MoveGen::find_checkers_and_pinned_pieces(&self.board);
+        let attacked_squares = MoveGen::find_attacked_squares(&self.board);
         self.board.checkers = checkers;
         self.board.pinned = pinned;
+        self.board.attacked_squares =attacked_squares;
         moves
     }
 

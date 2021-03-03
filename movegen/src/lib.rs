@@ -18,38 +18,29 @@ pub struct MoveGen {}
 impl MoveGen {
     //TODO test
     pub fn gen_legal_moves(board: &Board) -> Vec<ChessMove> {
-        //TODO handle pin
-        if board.checkers != EMPTY {
-            let ksq = board.piece_bbs[board.side_to_move][KINGS_BB];
-            let valid_king_moves = MoveGen::valid_king_moves(board, ksq, board.color_bbs[board.side_to_move]);
-            let attacked_squares = valid_king_moves.bits().fold(EMPTY, |acc, bit| {
-                let square = SQUARES[bit];
-                let attackers = MoveGen::find_attackers(board, square, board.color_bbs[board.side_to_move]);
-                if attackers != EMPTY {
-                    return acc | square;
+        let ksq = board.piece_bbs[board.side_to_move][KINGS_BB];
+        let valid_king_moves = MoveGen::valid_king_moves(board, ksq, board.color_bbs[board.side_to_move]);
+        let safe_squares = valid_king_moves & !board.attacked_squares;
+        let safe_king_moves = MoveGen::gen_psuedo_legal_moves(board)
+            .into_iter()
+            .map(|chessmove| {
+                if chessmove.from != ksq {
+                    return chessmove;
                 }
-                return acc;
-            });
-            let safe_squares = valid_king_moves ^ attacked_squares;
-            let safe_square_moves = MoveGen::gen_psuedo_legal_moves(board)
-                .into_iter()
-                .map(|chessmove| {
-                    if chessmove.from != ksq {
-                        return chessmove;
-                    }
-                    return ChessMove::new(
-                        chessmove.from,
-                        safe_squares,
-                    );
-                })
-                .filter(|chessmove| chessmove.to != EMPTY)
-                .collect::<Vec<ChessMove>>();
+                return ChessMove::new(
+                    chessmove.from,
+                    safe_squares,
+                );
+            })
+            .filter(|chessmove| chessmove.to != EMPTY)
+            .collect::<Vec<ChessMove>>();
 
+        if board.checkers != EMPTY {
             if board.checkers.popcnt() > 1 {
                 if safe_squares == EMPTY {
                     return Vec::new();
                 }
-                return safe_square_moves
+                return safe_king_moves
                     .into_iter()
                     .filter(|chessmove| {
                         if chessmove.from != ksq {
@@ -61,7 +52,7 @@ impl MoveGen {
             } else {
                 let attack_ray = between_bb(board.checkers, ksq);
                 
-                return safe_square_moves
+                return safe_king_moves
                     .into_iter()
                     .map(|chessmove| {
                         if chessmove.from == ksq {
@@ -87,11 +78,17 @@ impl MoveGen {
                     .filter(|chessmove| chessmove.to != EMPTY)
                     .collect::<Vec<ChessMove>>();
             }
-        } else if board.pinned != EMPTY {
-            let ksq = board.piece_bbs[board.side_to_move][KINGS_BB];
+        } else {
             MoveGen::gen_psuedo_legal_moves(board)
                 .into_iter()
                     .map(|chessmove| {
+                        if chessmove.from == ksq {
+                            return ChessMove::new(
+                                chessmove.from,
+                                chessmove.to & safe_squares,
+                            );
+                        }
+
                         if chessmove.from & board.pinned == EMPTY {
                             return chessmove;
                         }
@@ -112,8 +109,6 @@ impl MoveGen {
                     })
                     .filter(|chessmove| chessmove.to != EMPTY)
                     .collect::<Vec<ChessMove>>()
-        } else {
-            MoveGen::gen_psuedo_legal_moves(board)
         }
     }
 
@@ -523,6 +518,25 @@ impl MoveGen {
         let pinned = MoveGen::find_pinned_pieces(board);
 
         (checkers, pinned)
+    }
+
+    //TODO test
+    pub fn find_attacked_squares(board: &Board) -> BitBoard {
+        let other_pieces = board.other_pieces();
+        let mut attacked_squares = EMPTY;
+
+        attacked_squares |= MoveGen::valid_queen_moves(board, other_pieces[QUEENS_BB], EMPTY);
+        attacked_squares |= MoveGen::valid_bishop_moves(board, other_pieces[BISHOPS_BB], EMPTY);
+        attacked_squares |= MoveGen::valid_rook_moves(board, other_pieces[ROOKS_BB], EMPTY);
+        attacked_squares |= MoveGen::valid_knight_moves(board, other_pieces[KNIGHTS_BB], EMPTY);
+        attacked_squares |= MoveGen::valid_king_moves(board, other_pieces[KINGS_BB], EMPTY);
+        let (left_pawn_attacks, right_pawn_attacks) = match board.side_to_move {
+            WHITE => ((other_pieces[PAWNS_BB] & CLEAR_A_FILE).shr(9), (other_pieces[PAWNS_BB] & CLEAR_H_FILE).shr(7)),
+            BLACK => ((other_pieces[PAWNS_BB] & CLEAR_A_FILE).shl(7), (other_pieces[PAWNS_BB] & CLEAR_H_FILE).shl(9)),
+            _ => panic!("Invalid side to move"),
+        };
+        attacked_squares |= left_pawn_attacks | right_pawn_attacks;
+        attacked_squares
     }
 }
 

@@ -21,6 +21,7 @@ pub struct Board {
     pub castle_rights: BitBoard,
     pub half_moves_since_action: u8,
     pub full_moves: u16,
+    pub attacked_squares: BitBoard,
 }
 
 impl Board {
@@ -111,6 +112,7 @@ impl Board {
             castle_rights,
             half_moves_since_action,
             full_moves,
+            attacked_squares: EMPTY,
         }
     }
 
@@ -483,6 +485,30 @@ impl Board {
 
     pub fn print_board(&self) {
         println!("{}", self);
+    }
+
+    pub fn current_pieces(&self) -> [BitBoard; 6] {
+        self.piece_bbs[self.side_to_move]
+    }
+
+    pub fn other_pieces(&self) -> [BitBoard; 6] {
+        match self.side_to_move {
+            WHITE => self.piece_bbs[BLACK],
+            BLACK => self.piece_bbs[WHITE],
+            _ => panic!("Invalid side to move"),
+        }
+    }
+
+    pub fn current_pieces_by_color(&self) -> BitBoard {
+        self.color_bbs[self.side_to_move]
+    }
+
+    pub fn other_pieces_by_color(&self) -> BitBoard {
+        match self.side_to_move {
+            WHITE => self.color_bbs[BLACK],
+            BLACK => self.color_bbs[WHITE],
+            _ => panic!("Invalid side to move"),
+        }
     }
 }
 
