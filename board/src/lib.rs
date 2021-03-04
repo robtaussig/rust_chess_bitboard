@@ -510,6 +510,36 @@ impl Board {
             _ => panic!("Invalid side to move"),
         }
     }
+
+    pub fn get_material_eval_by_color(&self, color: usize) -> u32 {
+        let (
+            pawns,
+            bishops,
+            knights,
+            rooks,
+            queens,
+        ) = (
+            self.piece_bbs[color][PAWNS_BB].popcnt(),
+            self.piece_bbs[color][BISHOPS_BB].popcnt(),
+            self.piece_bbs[color][KNIGHTS_BB].popcnt(),
+            self.piece_bbs[color][ROOKS_BB].popcnt(),
+            self.piece_bbs[color][QUEENS_BB].popcnt(),
+        );
+
+            pawns * PAWN_VALUE
+            + bishops * BISHOP_VALUE
+            + knights * KNIGHT_VALUE
+            + rooks * ROOK_VALUE
+            + queens * QUEEN_VALUE
+    }
+
+    //TODO test
+    pub fn get_material_eval(&self) -> (u32, u32) {
+        (
+            self.get_material_eval_by_color(WHITE),
+            self.get_material_eval_by_color(BLACK),
+        )
+    }
 }
 
 impl Default for Board {
@@ -700,6 +730,17 @@ mod tests {
             assert_eq!(Board::square_from_notation("a8"), A8_SQUARE);
             assert_eq!(Board::square_from_notation("c5"), C5_SQUARE);
             assert_eq!(Board::square_from_notation("f3"), F3_SQUARE);
+        }
+    }
+
+    mod eval {
+        use super::*;
+
+        #[test]
+        fn it_evaluates_material_correctly() {
+            let b = Board::from_fen("b7/1PPP1pq1/1npn1pNP/R1P1p3/Pr5p/1pp3kB/P1R2N1p/3KB3 w  - 0 1");
+            let adv = b.get_material_eval();
+            assert_eq!(adv, (3000, 3150));
         }
     }
 

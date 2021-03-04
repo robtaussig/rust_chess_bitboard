@@ -219,6 +219,12 @@ pub const SEARCH_DIRS: [(i8, i8); 8] = [
     (1, 1),
 ];
 
+pub const PAWN_VALUE: u32 = 100;
+pub const BISHOP_VALUE: u32 = 350;
+pub const KNIGHT_VALUE: u32 = 300;
+pub const ROOK_VALUE: u32 = 500;
+pub const QUEEN_VALUE: u32 = 900;
+
 #[cfg(test)]
 mod tests {
     use super::*;

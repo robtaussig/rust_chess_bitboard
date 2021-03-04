@@ -1,5 +1,4 @@
 use bitboard::BitBoard;
-
 pub struct Moment {
     pub last_move: (BitBoard, BitBoard),
     pub fen: String,

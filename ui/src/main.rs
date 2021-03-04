@@ -26,8 +26,6 @@ mod moving_piece;
 use moving_piece::*;
 mod draw;
 use draw::*;
-mod moment;
-use moment::*;
 mod promotion;
 use promotion::*;
 
@@ -39,8 +37,6 @@ struct MainState {
     valid_moves: Vec<ChessMove>,
     moving_pieces: Rc<RefCell<HashMap<BitBoard, MovingPiece>>>,
     dragged_piece: Option<(BitBoard, Pieces, (f32, f32))>,
-    history: Vec<Moment>,
-    future: Vec<Moment>,
     promotion_panel: Option<PromotionUI>,
 }
 
@@ -48,7 +44,6 @@ impl MainState {
     fn new() -> Self {
         let game = Game::new();
         let valid_moves = MoveGen::gen_legal_moves(&game.board);
-        let board_fen = game.board.to_fen();
 
         MainState {
             game,
@@ -56,9 +51,7 @@ impl MainState {
             last_move: (EMPTY, EMPTY),
             needs_draw: true,
             valid_moves,
-            moving_pieces: Rc::new(RefCell::new(HashMap::new())),
-            history: vec![Moment::new(board_fen, (EMPTY, EMPTY))],
-            future: Vec::new(),
+            moving_pieces: Rc::new(RefCell::new(HashMap::new())),            
             dragged_piece: None,
             promotion_panel: None,
         }
@@ -70,43 +63,31 @@ impl MainState {
         })
     }
 
-    fn record_moment(&mut self) {
-        let board_fen = self.game.board.to_fen();
-        self.history.push(Moment::new(board_fen, self.last_move));
-        self.future = Vec::new();
-    }
-
     fn go_back(&mut self) {
-        if self.history.len() > 1 {
-            self.future.push(self.history.pop().unwrap());
-            let moment = self.history.last().unwrap();
-
-            let game = Game::from_fen(&moment.fen);
+        if self.game.history.len() > 1 {
+            let prev_board = self.game.board;
+            let last_move = self.game.go_back();
         
-            self.move_pieces_between_game_boards(&self.game.board, &game.board);
-            self.game = game;
+            self.move_pieces_between_game_boards(&prev_board, &self.game.board);
             let valid_moves = MoveGen::gen_legal_moves(&self.game.board);
             self.move_from = EMPTY;
             self.valid_moves = valid_moves;
             self.needs_draw = true;
-            self.last_move = moment.last_move;
+            self.last_move = last_move;
         }
     }
 
     fn go_forward(&mut self) {
-        if self.future.len() > 0 {
-            self.history.push(self.future.pop().unwrap());
-            let moment = self.history.last().unwrap();
+        if self.game.future.len() > 0 {
+            let prev_board = self.game.board;
+            let last_move = self.game.go_forward();
 
-            let game = Game::from_fen(&moment.fen);
-        
-            self.move_pieces_between_game_boards(&self.game.board, &game.board);
-            self.game = game;
+            self.move_pieces_between_game_boards(&prev_board, &self.game.board);
             let valid_moves = MoveGen::gen_legal_moves(&self.game.board);
             self.move_from = EMPTY;
             self.valid_moves = valid_moves;
             self.needs_draw = true;
-            self.last_move = moment.last_move;
+            self.last_move = last_move;
         }
     }
 
@@ -118,7 +99,6 @@ impl MainState {
             self.handle_black_promotion(from, to);
         } else {
             self.commit_move(from, to);
-            self.record_moment();
         }
         self.move_from = EMPTY;
     }
@@ -147,7 +127,6 @@ impl MainState {
         let moves = self.game.make_move(&ChessMove::promote(from, to, piece));
         self.valid_moves = MoveGen::gen_legal_moves(&self.game.board);
         self.last_move = (from, to);
-        self.record_moment();
         let mut moving_pieces = self.moving_pieces.borrow_mut();
         moves.iter().for_each(|move_tuple| {
             moving_pieces.insert(move_tuple.1, MovingPiece::new(
@@ -165,12 +144,10 @@ impl MainState {
     }
 
     fn restart_from_fen(&mut self, fen: &str) {
-        let game = Game::from_fen(fen);
-        
-        self.move_pieces_between_game_boards(&self.game.board, &game.board);
-        self.game = game;
+        let prev_board = self.game.board;
+        self.game.restart_from_fen(fen);
+        self.move_pieces_between_game_boards(&prev_board, &self.game.board);
         self.restart_game();
-        self.record_moment();
     }
 
     fn restart_game(&mut self) {
@@ -198,17 +175,15 @@ impl MainState {
         self.move_pieces_between_game_boards(&old_board, &new_board);
 
         self.restart_game();
-        self.record_moment();
     }
 
     fn new_game(&mut self) {
         let old_board = self.game.board;
-        self.game = Game::new();
+        self.game.restart_game();
         let new_board = self.game.board;
         self.move_pieces_between_game_boards(&old_board, &new_board);
 
         self.restart_game();
-        self.record_moment();
     }
 
     fn update_moving_pieces(&mut self) {

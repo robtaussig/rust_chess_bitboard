@@ -10,22 +10,67 @@ extern crate constants;
 use crate::constants::*;
 extern crate bitboard;
 use crate::bitboard::*;
+mod moment;
+use moment::*;
 
 pub struct Game {
     pub board: Board,
+    pub history: Vec<Moment>,
+    pub future: Vec<Moment>,
 }
 
 impl Game {
     pub fn new() -> Self {
+        let board = Board::default();
         Game {
-            board: Board::default(),
+            board,
+            history: vec![Moment::new(board.to_fen(), (EMPTY, EMPTY))],
+            future: Vec::new(),
         }
     }
 
     pub fn from_fen(fen: &str) -> Self {
         Game {
             board: Board::from_fen(fen),
+            history: vec![Moment::new(fen.into(), (EMPTY, EMPTY))],
+            future: Vec::new(),
         }
+    }
+
+    pub fn restart_game(&mut self) {
+        self.board = Board::default();
+        self.record_moment((EMPTY, EMPTY));
+    }
+
+    pub fn restart_from_fen(&mut self, fen: &str) {
+        self.board = Board::from_fen(fen);
+        self.record_moment((EMPTY, EMPTY));
+    }
+
+    pub fn go_back(&mut self) -> (BitBoard, BitBoard) {
+        self.future.push(self.history.pop().unwrap());
+        let moment = self.history.last().unwrap();
+        self.board = Board::from_fen(moment.fen.as_str());
+        moment.last_move
+    }
+
+    pub fn go_forward(&mut self) -> (BitBoard, BitBoard) {
+        self.history.push(self.future.pop().unwrap());
+        let moment = self.history.last().unwrap();
+        self.board = Board::from_fen(moment.fen.as_str());
+        moment.last_move
+    }
+
+    pub fn record_moment(&mut self, last_move: (BitBoard, BitBoard)) {
+        let board_fen = self.board.to_fen();
+        self.history.push(Moment::new(board_fen, last_move));
+        self.future = Vec::new();
+    }
+
+    pub fn calculate_derived_bitboards(board: &Board) -> (BitBoard, BitBoard, BitBoard) {
+        let (checkers, pinned) = MoveGen::find_checkers_and_pinned_pieces(&board);
+        let attacked_squares = MoveGen::find_attacked_squares(&board);
+        (checkers, pinned, attacked_squares)
     }
 
     //TODO test
@@ -147,11 +192,11 @@ impl Game {
 
         self.board.side_to_move ^= 1;
 
-        let (checkers, pinned) = MoveGen::find_checkers_and_pinned_pieces(&self.board);
-        let attacked_squares = MoveGen::find_attacked_squares(&self.board);
+        let (checkers, pinned, attacked_squares) = Game::calculate_derived_bitboards(&self.board);
         self.board.checkers = checkers;
         self.board.pinned = pinned;
-        self.board.attacked_squares =attacked_squares;
+        self.board.attacked_squares = attacked_squares;
+        self.record_moment((chessmove.from, chessmove.to));
         moves
     }
 
@@ -271,6 +316,7 @@ impl Game {
             WHITE,
         );
 
+        self.record_moment((EMPTY, EMPTY));
         self
     }
 }
