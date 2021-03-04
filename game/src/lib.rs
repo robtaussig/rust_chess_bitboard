@@ -13,28 +13,34 @@ use crate::bitboard::*;
 mod moment;
 use moment::*;
 
+#[derive(Clone)]
 pub struct Game {
     pub board: Board,
+    pub prev_board: Option<Board>,
     pub history: Vec<Moment>,
     pub future: Vec<Moment>,
+    record_history: bool,
 }
 
 impl Game {
-    pub fn new() -> Self {
-        let board = Board::default();
+    pub fn new(mut board: Board) -> Self {
+        let (checkers, pinned, attacked_squares) = Game::calculate_derived_bitboards(&board);
+        board.checkers = checkers;
+        board.pinned = pinned;
+        board.attacked_squares = attacked_squares;
+
         Game {
             board,
+            prev_board: None,
             history: vec![Moment::new(board.to_fen(), (EMPTY, EMPTY))],
             future: Vec::new(),
+            record_history: true,
         }
     }
 
     pub fn from_fen(fen: &str) -> Self {
-        Game {
-            board: Board::from_fen(fen),
-            history: vec![Moment::new(fen.into(), (EMPTY, EMPTY))],
-            future: Vec::new(),
-        }
+        let board = Board::from_fen(fen);
+        Game::new(board)
     }
 
     pub fn restart_game(&mut self) {
@@ -62,9 +68,11 @@ impl Game {
     }
 
     pub fn record_moment(&mut self, last_move: (BitBoard, BitBoard)) {
-        let board_fen = self.board.to_fen();
-        self.history.push(Moment::new(board_fen, last_move));
-        self.future = Vec::new();
+        if self.record_history {
+            let board_fen = self.board.to_fen();
+            self.history.push(Moment::new(board_fen, last_move));
+            self.future = Vec::new();
+        }
     }
 
     pub fn calculate_derived_bitboards(board: &Board) -> (BitBoard, BitBoard, BitBoard) {
@@ -76,6 +84,7 @@ impl Game {
     //TODO test
     //Returns list of all moved pieces, including castling rook
     pub fn make_move(&mut self, chessmove: &ChessMove) -> Vec<(BitBoard, BitBoard)> {
+        self.prev_board = Some(self.board.clone());
         let prev_en_passant = self.board.en_passant;
         self.board.en_passant = EMPTY;
         let mut moves: Vec<(BitBoard, BitBoard)> = Vec::new();
@@ -189,15 +198,148 @@ impl Game {
             self.board.combined_bbs[promotion.combined_color_bb_index()] |= chessmove.to;
             moves.push((EMPTY, chessmove.to));
         }
-
-        self.board.side_to_move ^= 1;
-
+        self.board.switch_side_to_move();
         let (checkers, pinned, attacked_squares) = Game::calculate_derived_bitboards(&self.board);
         self.board.checkers = checkers;
         self.board.pinned = pinned;
         self.board.attacked_squares = attacked_squares;
+        
         self.record_moment((chessmove.from, chessmove.to));
         moves
+    }
+
+    pub fn undo(&mut self) {
+        if let Some(prev_board) = self.prev_board {
+            self.history.pop();
+            self.board = prev_board;
+        }
+    }
+
+    //TODO test
+    pub fn get_strategic_eval(_board: &Board) -> i32 {
+        //Consider phase of game
+        //Consider board openness
+        0
+    }
+
+    //TODO test
+    pub fn get_positional_eval(_board: &Board) -> i32 {
+        //Consider #attacked squares
+        //Consider castle rights
+        //Consider strong positions by pieces
+        //Consdier #attacked pieces
+        //Consider #
+        0
+    }
+
+    //TODO test
+    pub fn get_material_eval(board: &Board) -> i32 {
+        let (white, black) = board.get_material_eval();
+        
+        if board.side_to_move == WHITE {
+            white as i32 - black as i32
+        } else {
+            black as i32 - white as i32
+        }
+    }
+
+    //Always from white perspective
+    //TODO test
+    pub fn get_full_eval(board: &Board) -> i32 {
+        let material = Game::get_material_eval(board);
+        let positional = Game::get_positional_eval(board);
+        let strategic = Game::get_strategic_eval(board);
+        material + positional + strategic
+    }
+
+    //TODO test
+    pub fn get_best_move(&mut self, depth: u8) -> Option<(BitBoard, BitBoard)> {
+        let mut g = self.clone();
+
+        g.record_history = false;
+
+        let (_eval_score, chessmove) = g.get_best_move_recursive(
+            depth,
+            true,
+            i32::MIN,
+            i32::MAX,
+        );
+    
+        println!("{}", _eval_score);
+
+        chessmove
+    }
+
+    pub fn get_best_move_recursive(
+        &mut self,
+        depth: u8,
+        is_maximizer: bool,
+        mut alpha: i32,
+        mut beta: i32,
+    ) -> (i32, Option<(BitBoard, BitBoard)>) {
+        if depth == 0 {
+            let eval_score = Game::get_full_eval(&self.board);
+            if is_maximizer {
+                return (eval_score, None);
+            } else {
+                return (-eval_score, None);
+            }
+        }
+
+        let mut best_move: Option<(BitBoard, BitBoard)> = None;
+        let mut best_move_value = match is_maximizer {
+            true => i32::MIN,
+            false => i32::MAX,
+        };
+        let mut value: i32;
+
+        let valid_moves = ChessMove::broken_up(
+            MoveGen::gen_legal_moves(&self.board)
+        );
+
+        let mut valid_moves_with_eval: Vec<(&ChessMove, i32, Board)> = valid_moves
+        .iter()
+        .map(|chessmove| {
+            self.make_move(chessmove);
+            let board = self.board;
+            let eval = Game::get_material_eval(&board);
+            self.undo();
+            (chessmove, eval, board)
+        })
+        .collect();
+
+        valid_moves_with_eval
+            .sort_by(|l, r| l.1.partial_cmp(&r.1).unwrap());
+
+        for valid_move in valid_moves_with_eval {
+            self.board = valid_move.2;
+            value = self.get_best_move_recursive(
+                depth - 1,
+                !is_maximizer,
+                alpha,
+                beta,
+            ).0;
+            
+            if is_maximizer {
+                if value > best_move_value {
+                    best_move_value = value;
+                    best_move = Some((valid_move.0.from, valid_move.0.to));
+                }
+                alpha = std::cmp::max(alpha, value);
+            } else {
+                if value < best_move_value {
+                    best_move_value = value;
+                    best_move = Some((valid_move.0.from, valid_move.0.to));
+                }
+                beta = std::cmp::min(beta, value);
+            }
+
+            if beta <= alpha {
+                break;
+            }
+        }
+
+        (best_move_value, best_move)
     }
 
     pub fn randomize_board(&mut self) -> &Self {
@@ -321,6 +463,13 @@ impl Game {
     }
 }
 
+impl Default for Game {
+    fn default() -> Self {
+        let b = Board::default();
+        Game::new(b)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -333,7 +482,7 @@ mod tests {
         use super::*;
         #[test]
         fn it_works() {
-            let mut g = Game::new();
+            let mut g = Game::default();
 
             g.make_move(&ChessMove::from_notation("E2", "E4"));
             g.make_move(&ChessMove::from_notation("F7", "F5"));
@@ -349,7 +498,7 @@ mod tests {
 
         #[test]
         fn it_works() {
-            let mut g = Game::new();
+            let mut g = Game::default();
 
             g.make_move(&ChessMove::from_notation("E2", "E4"));
             g.make_move(&ChessMove::from_notation("E7", "E5"));
@@ -359,6 +508,35 @@ mod tests {
             let valid_queen_moves = MoveGen::valid_queen_moves(&g.board, F3_SQUARE, g.board.color_bbs[WHITE]);
             let is_a5_valid = valid_queen_moves & A4_SQUARE;
             println!("{}", is_a5_valid);
+        }
+    }
+
+    mod get_best_move {
+        use super::*;
+
+        #[test]
+        fn sandbox() {
+            let g = Game::from_fen("rn1qkbnr/1pp2ppp/p7/3pp3/4P1b1/3P4/PPP2PPP/RNB1KBNR w kq - 0 1");
+            let moves = MoveGen::gen_legal_moves(&g.board);
+
+            g.board.attacked_squares.print_bb("Attackers");
+            g.board.print_board();
+            for chessmove in moves {
+                if chessmove.from == E1_SQUARE {
+                    chessmove.from.print_bb("From");
+                    chessmove.to.print_bb("To");
+                } 
+            }
+        }
+
+        #[test]
+        fn it_works() {
+            let mut g = Game::from_fen("rnbqkbnr/1ppp1ppp/p7/4p1B1/4P3/3P4/PPP2PPP/RN1QKBNR b KQkq - 0 1");
+            let best_move = g.get_best_move(4);
+            if let Some(chessmove) = best_move {
+                chessmove.0.print_bb("From");
+                chessmove.1.print_bb("To");
+            }
         }
     }
 }

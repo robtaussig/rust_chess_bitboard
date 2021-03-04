@@ -1,4 +1,6 @@
 use bitboard::BitBoard;
+
+#[derive(Clone)]
 pub struct Moment {
     pub last_move: (BitBoard, BitBoard),
     pub fen: String,

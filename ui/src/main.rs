@@ -42,7 +42,7 @@ struct MainState {
 
 impl MainState {
     fn new() -> Self {
-        let game = Game::new();
+        let game = Game::default();
         let valid_moves = MoveGen::gen_legal_moves(&game.board);
 
         MainState {
@@ -116,7 +116,7 @@ impl MainState {
                 SQUARE_SIZE,
                 20,
             ));
-        });
+        });        
     }
 
     fn handle_white_promotion(&mut self, from: BitBoard, to: BitBoard) {

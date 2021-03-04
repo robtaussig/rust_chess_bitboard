@@ -511,6 +511,10 @@ impl Board {
         }
     }
 
+    pub fn switch_side_to_move(&mut self) {
+        self.side_to_move ^= 1;
+    }
+
     pub fn get_material_eval_by_color(&self, color: usize) -> u32 {
         let (
             pawns,
