@@ -530,8 +530,8 @@ mod tests {
         #[test]
         fn it_works() {
             let mut g =
-                Game::from_fen("rnbqkbnr/1ppp1ppp/p7/4p1B1/4P3/3P4/PPP2PPP/RN1QKBNR b KQkq - 0 1");
-            let best_move = g.get_best_move(4);
+                Game::from_fen("rn1qkbnr/1pp2ppp/p7/3pp3/4P1b1/3P4/PPP2PPP/RNB1KBNR w kq - 0 1");
+            let best_move = g.get_best_move(6);
             if let Some(chessmove) = best_move {
                 chessmove.0.print_bb("From");
                 chessmove.1.print_bb("To");

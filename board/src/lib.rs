@@ -265,8 +265,11 @@ impl Board {
                                     white_pawns |= square;
                                 }
                                 _ => {
-                                    let empties = char.to_digit(10).unwrap() as usize;
-                                    empty_cols += empties - 1;
+                                    if let Some(empties) = char.to_digit(10) {
+                                        empty_cols += empties as usize - 1;
+                                    } else {
+                                        println!("{}", char);
+                                    }
                                 }
                             }
                         });
