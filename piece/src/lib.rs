@@ -31,11 +31,27 @@ pub enum Pieces {
 
 impl Pieces {
     pub fn is_white(&self) -> bool {
-        matches!(self, Pieces::WPawn | Pieces::WKnight | Pieces::WBishop | Pieces::WRook | Pieces::WQueen | Pieces::WKing)
+        matches!(
+            self,
+            Pieces::WPawn
+                | Pieces::WKnight
+                | Pieces::WBishop
+                | Pieces::WRook
+                | Pieces::WQueen
+                | Pieces::WKing
+        )
     }
 
     pub fn is_black(&self) -> bool {
-        matches!(self, Pieces::BPawn | Pieces::BKnight | Pieces::BBishop | Pieces::BRook | Pieces::BQueen | Pieces::BKing)
+        matches!(
+            self,
+            Pieces::BPawn
+                | Pieces::BKnight
+                | Pieces::BBishop
+                | Pieces::BRook
+                | Pieces::BQueen
+                | Pieces::BKing
+        )
     }
 
     pub fn piece_type(&self) -> PieceType {

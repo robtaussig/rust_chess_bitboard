@@ -6,10 +6,8 @@ use bitboard::BitBoard;
 extern crate constants;
 use constants::*;
 use ggez;
-use ggez::mint::{Point2};
-use ggez::graphics::{
-    draw, Color, DrawMode, DrawParam, Mesh, Rect,
-};
+use ggez::graphics::{draw, Color, DrawMode, DrawParam, Mesh, Rect};
+use ggez::mint::Point2;
 
 const SQUARE_SIZE: f32 = SCREEN_HEIGHT / 8.;
 
@@ -36,14 +34,11 @@ pub fn draw_piece(
     is_dragging_from: bool,
 ) -> ggez::GameResult {
     let (center_x, center_y) = row_and_col_to_coord(row, col);
-    
+
     draw_piece_at(ctx, center_x, center_y, piece, is_dragging_from)
 }
 
-pub fn draw_border(
-    ctx: &mut ggez::Context,
-    points: &[Point2<f32>],
-) -> ggez::GameResult {
+pub fn draw_border(ctx: &mut ggez::Context, points: &[Point2<f32>]) -> ggez::GameResult {
     let mesh = Mesh::new_polygon(
         ctx,
         DrawMode::stroke(BORDER_WIDTH),
@@ -75,13 +70,8 @@ pub fn draw_pawn(ctx: &mut ggez::Context, x: f32, y: f32, color: Color) -> ggez:
         },
     ];
 
-    let mesh = Mesh::new_polygon(
-        ctx,
-        DrawMode::fill(),
-        &points,
-        color,
-    )
-    .expect("error building piece");
+    let mesh =
+        Mesh::new_polygon(ctx, DrawMode::fill(), &points, color).expect("error building piece");
 
     draw(ctx, &mesh, DrawParam::default()).expect("Error drawing piece");
     draw_border(ctx, &points)
@@ -139,13 +129,8 @@ pub fn draw_rook(ctx: &mut ggez::Context, x: f32, y: f32, color: Color) -> ggez:
         },
     ];
 
-    let mesh = Mesh::new_polygon(
-        ctx,
-        DrawMode::fill(),
-        &points,
-        color,
-    )
-    .expect("error building piece");
+    let mesh =
+        Mesh::new_polygon(ctx, DrawMode::fill(), &points, color).expect("error building piece");
 
     draw(ctx, &mesh, DrawParam::default()).expect("Error drawing piece");
     draw_border(ctx, &points)
@@ -191,13 +176,8 @@ pub fn draw_knight(ctx: &mut ggez::Context, x: f32, y: f32, color: Color) -> gge
         },
     ];
 
-    let mesh = Mesh::new_polygon(
-        ctx,
-        DrawMode::fill(),
-        &points,
-        color,
-    )
-    .expect("error building piece");
+    let mesh =
+        Mesh::new_polygon(ctx, DrawMode::fill(), &points, color).expect("error building piece");
 
     draw(ctx, &mesh, DrawParam::default()).expect("Error drawing piece");
     draw_border(ctx, &points)
@@ -227,13 +207,8 @@ pub fn draw_bishop(ctx: &mut ggez::Context, x: f32, y: f32, color: Color) -> gge
         },
     ];
 
-    let mesh = Mesh::new_polygon(
-        ctx,
-        DrawMode::fill(),
-        &points,
-        color,
-    )
-    .expect("error building piece");
+    let mesh =
+        Mesh::new_polygon(ctx, DrawMode::fill(), &points, color).expect("error building piece");
 
     draw(ctx, &mesh, DrawParam::default()).expect("Error drawing piece");
     draw_border(ctx, &points)
@@ -291,13 +266,8 @@ pub fn draw_king(ctx: &mut ggez::Context, x: f32, y: f32, color: Color) -> ggez:
         },
     ];
 
-    let mesh = Mesh::new_polygon(
-        ctx,
-        DrawMode::fill(),
-        &points,
-        color,
-    )
-    .expect("error building piece");
+    let mesh =
+        Mesh::new_polygon(ctx, DrawMode::fill(), &points, color).expect("error building piece");
 
     draw(ctx, &mesh, DrawParam::default()).expect("Error drawing piece");
     draw_border(ctx, &points)
@@ -335,13 +305,8 @@ pub fn draw_queen(ctx: &mut ggez::Context, x: f32, y: f32, color: Color) -> ggez
         },
     ];
 
-    let mesh = Mesh::new_polygon(
-        ctx,
-        DrawMode::fill(),
-        &points,
-        color,
-    )
-    .expect("error building piece");
+    let mesh =
+        Mesh::new_polygon(ctx, DrawMode::fill(), &points, color).expect("error building piece");
 
     draw(ctx, &mesh, DrawParam::default()).expect("Error drawing piece");
     draw_border(ctx, &points)
@@ -380,11 +345,7 @@ pub fn draw_piece_at(
     }
 }
 
-pub fn draw_destination(
-    ctx: &mut ggez::Context,
-    row: usize,
-    col: usize,
-) -> ggez::GameResult {
+pub fn draw_destination(ctx: &mut ggez::Context, row: usize, col: usize) -> ggez::GameResult {
     let (center_x, center_y) = row_and_col_to_coord(row, col);
 
     let mesh = Mesh::new_circle(
@@ -397,7 +358,8 @@ pub fn draw_destination(
         SQUARE_SIZE * 0.2,
         0.1,
         Color::new(0.5, 0.5, 0.5, 0.5),
-    ).unwrap();
+    )
+    .unwrap();
     draw(ctx, &mesh, DrawParam::default())
 }
 
@@ -410,14 +372,10 @@ pub fn rect_from_row_and_col(row: usize, col: usize) -> Rect {
     )
 }
 
-pub fn draw_last_move_border(
-    ctx: &mut ggez::Context,
-    row: usize,
-    col: usize,
-) -> ggez::GameResult {
+pub fn draw_last_move_border(ctx: &mut ggez::Context, row: usize, col: usize) -> ggez::GameResult {
     let rect = rect_from_row_and_col(row, col);
-    let mesh =
-        Mesh::new_rectangle(ctx, DrawMode::stroke(3f32), rect, LAST_MOVE_BORDER_COLOR).expect("error creating rect");
+    let mesh = Mesh::new_rectangle(ctx, DrawMode::stroke(3f32), rect, LAST_MOVE_BORDER_COLOR)
+        .expect("error creating rect");
     draw(ctx, &mesh, DrawParam::default())
 }
 
@@ -431,25 +389,16 @@ pub fn draw_arbitrary_rectangle(
     draw_mode: Option<DrawMode>,
     draw_params: Option<DrawParam>,
 ) -> ggez::GameResult {
-    let rect = Rect::new(
-        x,
-        y,
-        w,
-        h,
-    );
-    let mesh =
-        Mesh::new_rectangle(ctx, draw_mode.unwrap_or(DrawMode::fill()), rect, color).expect("error creating rect");
+    let rect = Rect::new(x, y, w, h);
+    let mesh = Mesh::new_rectangle(ctx, draw_mode.unwrap_or(DrawMode::fill()), rect, color)
+        .expect("error creating rect");
     draw(ctx, &mesh, draw_params.unwrap_or(DrawParam::default()))
 }
 
-pub fn draw_move_from_border(
-    ctx: &mut ggez::Context,
-    row: usize,
-    col: usize,
-) -> ggez::GameResult {
+pub fn draw_move_from_border(ctx: &mut ggez::Context, row: usize, col: usize) -> ggez::GameResult {
     let rect = rect_from_row_and_col(row, col);
-    let mesh =
-        Mesh::new_rectangle(ctx, DrawMode::stroke(3f32), rect, MOVE_FROM_BORDER_COLOR).expect("error creating rect");
+    let mesh = Mesh::new_rectangle(ctx, DrawMode::stroke(3f32), rect, MOVE_FROM_BORDER_COLOR)
+        .expect("error creating rect");
     draw(ctx, &mesh, DrawParam::default())
 }
 
@@ -459,8 +408,13 @@ pub fn draw_valid_drop_target_border(
     col: usize,
 ) -> ggez::GameResult {
     let rect = rect_from_row_and_col(row, col);
-    let mesh =
-        Mesh::new_rectangle(ctx, DrawMode::stroke(3f32), rect, VALID_DROP_TARGET_BORDER_COLOR).expect("error creating rect");
+    let mesh = Mesh::new_rectangle(
+        ctx,
+        DrawMode::stroke(3f32),
+        rect,
+        VALID_DROP_TARGET_BORDER_COLOR,
+    )
+    .expect("error creating rect");
     draw(ctx, &mesh, DrawParam::default())
 }
 
@@ -507,6 +461,6 @@ pub fn coord_to_bitboard(x: f32, y: f32) -> BitBoard {
 pub fn row_and_col_to_coord(row: usize, col: usize) -> (f32, f32) {
     (
         (col as f32 * SQUARE_SIZE) + (SQUARE_SIZE / 2f32),
-        (row as f32 * SQUARE_SIZE) + (SQUARE_SIZE / 2f32)
+        (row as f32 * SQUARE_SIZE) + (SQUARE_SIZE / 2f32),
     )
 }

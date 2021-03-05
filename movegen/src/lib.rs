@@ -19,7 +19,8 @@ impl MoveGen {
     //TODO test
     pub fn gen_legal_moves(board: &Board) -> Vec<ChessMove> {
         let ksq = board.piece_bbs[board.side_to_move][KINGS_BB];
-        let valid_king_moves = MoveGen::valid_king_moves(board, ksq, board.color_bbs[board.side_to_move]);
+        let valid_king_moves =
+            MoveGen::valid_king_moves(board, ksq, board.color_bbs[board.side_to_move]);
         let safe_squares = valid_king_moves & !board.attacked_squares;
         let safe_king_moves = MoveGen::gen_psuedo_legal_moves(board)
             .into_iter()
@@ -27,10 +28,7 @@ impl MoveGen {
                 if chessmove.from != ksq {
                     return chessmove;
                 }
-                ChessMove::new(
-                    chessmove.from,
-                    safe_squares,
-                )
+                ChessMove::new(chessmove.from, safe_squares)
             })
             .filter(|chessmove| chessmove.to != EMPTY)
             .collect::<Vec<ChessMove>>();
@@ -51,7 +49,7 @@ impl MoveGen {
                     .collect::<Vec<ChessMove>>()
             } else {
                 let attack_ray = between_bb(board.checkers, ksq);
-                
+
                 safe_king_moves
                     .into_iter()
                     .map(|chessmove| {
@@ -63,18 +61,18 @@ impl MoveGen {
                             false => chessmove.to.bits().fold(EMPTY, |acc, bit| {
                                 let square = SQUARES[bit];
                                 if between_bb(ksq, square) & chessmove.from != EMPTY
-                                    || between_bb(ksq, chessmove.from) & square != EMPTY {
+                                    || between_bb(ksq, chessmove.from) & square != EMPTY
+                                {
                                     acc | square
                                 } else {
                                     acc
                                 }
-                                
                             }),
                         };
-                    
+
                         ChessMove::new(
                             chessmove.from,
-                            allowed_squares & (board.checkers | attack_ray)
+                            allowed_squares & (board.checkers | attack_ray),
                         )
                     })
                     .filter(|chessmove| chessmove.to != EMPTY)
@@ -83,35 +81,30 @@ impl MoveGen {
         } else {
             MoveGen::gen_psuedo_legal_moves(board)
                 .into_iter()
-                    .map(|chessmove| {
-                        if chessmove.from == ksq {
-                            return ChessMove::new(
-                                chessmove.from,
-                                chessmove.to & safe_squares,
-                            );
+                .map(|chessmove| {
+                    if chessmove.from == ksq {
+                        return ChessMove::new(chessmove.from, chessmove.to & safe_squares);
+                    }
+
+                    if chessmove.from & board.pinned == EMPTY {
+                        return chessmove;
+                    }
+
+                    let allowed_squares = chessmove.to.bits().fold(EMPTY, |acc, bit| {
+                        let square = SQUARES[bit];
+                        if between_bb(ksq, square) & chessmove.from != EMPTY
+                            || between_bb(ksq, chessmove.from) & square != EMPTY
+                        {
+                            acc | square
+                        } else {
+                            acc
                         }
+                    });
 
-                        if chessmove.from & board.pinned == EMPTY {
-                            return chessmove;
-                        }
-
-                        let allowed_squares = chessmove.to.bits().fold(EMPTY, |acc, bit| {
-                            let square = SQUARES[bit];
-                            if between_bb(ksq, square) & chessmove.from != EMPTY
-                                || between_bb(ksq, chessmove.from) & square != EMPTY {
-                                acc | square
-                            } else {
-                                acc
-                            }
-                        });
-
-                        ChessMove::new(
-                            chessmove.from,
-                            allowed_squares,
-                        )
-                    })
-                    .filter(|chessmove| chessmove.to != EMPTY)
-                    .collect::<Vec<ChessMove>>()
+                    ChessMove::new(chessmove.from, allowed_squares)
+                })
+                .filter(|chessmove| chessmove.to != EMPTY)
+                .collect::<Vec<ChessMove>>()
         }
     }
 
@@ -200,24 +193,42 @@ impl MoveGen {
         let mut queenside_castle_move = EMPTY;
 
         if board.side_to_move == WHITE && (board.castle_rights & (G1_SQUARE | C1_SQUARE) != EMPTY) {
-            if board.combined_bbs[EMPTY_SQUARES_BB] & WHITE_KINGSIDE_CASTLE_EMPTY_SQUARES == WHITE_KINGSIDE_CASTLE_EMPTY_SQUARES {
+            if board.combined_bbs[EMPTY_SQUARES_BB] & WHITE_KINGSIDE_CASTLE_EMPTY_SQUARES
+                == WHITE_KINGSIDE_CASTLE_EMPTY_SQUARES
+            {
                 kingside_castle_move = G1_SQUARE;
             }
-            if board.combined_bbs[EMPTY_SQUARES_BB] & WHITE_QUEENSIDE_CASTLE_EMPTY_SQUARES == WHITE_QUEENSIDE_CASTLE_EMPTY_SQUARES {
+            if board.combined_bbs[EMPTY_SQUARES_BB] & WHITE_QUEENSIDE_CASTLE_EMPTY_SQUARES
+                == WHITE_QUEENSIDE_CASTLE_EMPTY_SQUARES
+            {
                 queenside_castle_move = C1_SQUARE;
             }
-        } else if board.side_to_move == BLACK && (board.castle_rights & (G8_SQUARE | C8_SQUARE) != EMPTY) {
-            if board.combined_bbs[EMPTY_SQUARES_BB] & BLACK_KINGSIDE_CASTLE_EMPTY_SQUARES == BLACK_KINGSIDE_CASTLE_EMPTY_SQUARES {
+        } else if board.side_to_move == BLACK
+            && (board.castle_rights & (G8_SQUARE | C8_SQUARE) != EMPTY)
+        {
+            if board.combined_bbs[EMPTY_SQUARES_BB] & BLACK_KINGSIDE_CASTLE_EMPTY_SQUARES
+                == BLACK_KINGSIDE_CASTLE_EMPTY_SQUARES
+            {
                 kingside_castle_move = G8_SQUARE;
             }
-            if board.combined_bbs[EMPTY_SQUARES_BB] & BLACK_QUEENSIDE_CASTLE_EMPTY_SQUARES == BLACK_QUEENSIDE_CASTLE_EMPTY_SQUARES {
+            if board.combined_bbs[EMPTY_SQUARES_BB] & BLACK_QUEENSIDE_CASTLE_EMPTY_SQUARES
+                == BLACK_QUEENSIDE_CASTLE_EMPTY_SQUARES
+            {
                 queenside_castle_move = C8_SQUARE;
             }
         }
 
-        let moves = left_up | up | right_up | right | down_right | down | left_down | left | kingside_castle_move | queenside_castle_move;
+        let moves = left_up
+            | up
+            | right_up
+            | right
+            | down_right
+            | down
+            | left_down
+            | left
+            | kingside_castle_move
+            | queenside_castle_move;
 
-        
         moves & !own_side
     }
 
@@ -302,7 +313,8 @@ impl MoveGen {
 
     pub fn south_attacks(board: &Board, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
         attacks |= board.combined_bbs[EMPTY_SQUARES_BB] & (attacks.shr(8));
-        let mut empty = board.combined_bbs[EMPTY_SQUARES_BB] & (board.combined_bbs[EMPTY_SQUARES_BB].shr(8));
+        let mut empty =
+            board.combined_bbs[EMPTY_SQUARES_BB] & (board.combined_bbs[EMPTY_SQUARES_BB].shr(8));
         attacks |= empty & (attacks.shr(16));
         empty &= empty.shr(16);
         attacks |= empty & (attacks.shr(32));
@@ -311,7 +323,8 @@ impl MoveGen {
 
     pub fn north_attacks(board: &Board, mut attacks: BitBoard, own_pieces: BitBoard) -> BitBoard {
         attacks |= board.combined_bbs[EMPTY_SQUARES_BB] & (attacks.shl(8));
-        let mut empty = board.combined_bbs[EMPTY_SQUARES_BB] & (board.combined_bbs[EMPTY_SQUARES_BB].shl(8));
+        let mut empty =
+            board.combined_bbs[EMPTY_SQUARES_BB] & (board.combined_bbs[EMPTY_SQUARES_BB].shl(8));
         attacks |= empty & (attacks.shl(16));
         empty &= empty.shl(16);
         attacks |= empty & (attacks.shl(32));
@@ -397,14 +410,12 @@ impl MoveGen {
     pub fn find_attack_rays(board: &Board, test_square: BitBoard, own_board: BitBoard) -> BitBoard {
         let (other_pieces_collection, other_pieces) = match board.side_to_move {
             WHITE => (board.piece_bbs[BLACK], board.color_bbs[BLACK]),
-            BLACK=> (board.piece_bbs[WHITE], board.color_bbs[WHITE]),
+            BLACK => (board.piece_bbs[WHITE], board.color_bbs[WHITE]),
             _ => ([EMPTY; 6], EMPTY),
         };
 
-        let mut bishop_attacks =
-            MoveGen::valid_bishop_moves(board, test_square, own_board);
-        let mut rook_attacks =
-            MoveGen::valid_rook_moves(board, test_square, own_board);
+        let mut bishop_attacks = MoveGen::valid_bishop_moves(board, test_square, own_board);
+        let mut rook_attacks = MoveGen::valid_rook_moves(board, test_square, own_board);
 
         let bishop_like_attackers = bishop_attacks
             & (other_pieces_collection[BISHOPS_BB] | other_pieces_collection[QUEENS_BB]);
@@ -412,11 +423,12 @@ impl MoveGen {
         if bishop_like_attackers == EMPTY {
             bishop_attacks = EMPTY;
         } else {
-            bishop_attacks &= MoveGen::valid_bishop_moves(board, bishop_like_attackers, other_pieces);
+            bishop_attacks &=
+                MoveGen::valid_bishop_moves(board, bishop_like_attackers, other_pieces);
         }
 
-        let rook_like_attackers = rook_attacks
-            & (other_pieces_collection[ROOKS_BB] | other_pieces_collection[QUEENS_BB]);
+        let rook_like_attackers =
+            rook_attacks & (other_pieces_collection[ROOKS_BB] | other_pieces_collection[QUEENS_BB]);
 
         if rook_like_attackers == EMPTY {
             rook_attacks = EMPTY;
@@ -429,36 +441,46 @@ impl MoveGen {
 
     pub fn find_pinned_pieces(board: &Board) -> BitBoard {
         let ksq = board.piece_bbs[board.side_to_move][KINGS_BB];
-        
+
         let other_pieces_collection = match board.side_to_move {
             WHITE => board.piece_bbs[BLACK],
             BLACK => board.piece_bbs[WHITE],
             _ => panic!("Invalid side to move"),
         };
 
-        let bishop_like_attackers = other_pieces_collection[BISHOPS_BB] | other_pieces_collection[QUEENS_BB];
-        let rook_like_attackers = other_pieces_collection[ROOKS_BB] | other_pieces_collection[QUEENS_BB];
+        let bishop_like_attackers =
+            other_pieces_collection[BISHOPS_BB] | other_pieces_collection[QUEENS_BB];
+        let rook_like_attackers =
+            other_pieces_collection[ROOKS_BB] | other_pieces_collection[QUEENS_BB];
 
-        let bishop_like_attackers_without_blockers = bishop_like_attackers.bits().fold(EMPTY, |acc, bit| {
-            let square = SQUARES[bit];
-            if between_bb(square, ksq) != EMPTY && ksq.row() != square.row() && ksq.col() != square.col() {
-                acc | square
-            } else {
-                acc
-            }
-        });
+        let bishop_like_attackers_without_blockers =
+            bishop_like_attackers.bits().fold(EMPTY, |acc, bit| {
+                let square = SQUARES[bit];
+                if between_bb(square, ksq) != EMPTY
+                    && ksq.row() != square.row()
+                    && ksq.col() != square.col()
+                {
+                    acc | square
+                } else {
+                    acc
+                }
+            });
 
-        let rook_like_attackers_without_blockers = rook_like_attackers.bits().fold(EMPTY, |acc, bit| {
-            let square = SQUARES[bit];
-            if between_bb(square, ksq) != EMPTY && (ksq.row() == square.row() || ksq.col() == square.col()) {
-                acc | square
-            } else {
-                acc
-            }
-        });
+        let rook_like_attackers_without_blockers =
+            rook_like_attackers.bits().fold(EMPTY, |acc, bit| {
+                let square = SQUARES[bit];
+                if between_bb(square, ksq) != EMPTY
+                    && (ksq.row() == square.row() || ksq.col() == square.col())
+                {
+                    acc | square
+                } else {
+                    acc
+                }
+            });
 
-        let attackers_without_blockers = bishop_like_attackers_without_blockers | rook_like_attackers_without_blockers;
-        
+        let attackers_without_blockers =
+            bishop_like_attackers_without_blockers | rook_like_attackers_without_blockers;
+
         let mut pinned = EMPTY;
         attackers_without_blockers.bits().for_each(|attacker_bit| {
             let attacker_square = SQUARES[attacker_bit];
@@ -466,18 +488,19 @@ impl MoveGen {
             let mut num_blockers = 0;
             let mut blocker = EMPTY;
             if king_to_attacker != EMPTY {
-                board.color_bbs[board.side_to_move].bits().for_each(|blocker_bit| {
-                    let test_blocker = SQUARES[blocker_bit];
-                    if king_to_attacker & test_blocker != EMPTY {
-                        blocker = test_blocker;
-                        num_blockers += 1;
-                    }
-                });
+                board.color_bbs[board.side_to_move]
+                    .bits()
+                    .for_each(|blocker_bit| {
+                        let test_blocker = SQUARES[blocker_bit];
+                        if king_to_attacker & test_blocker != EMPTY {
+                            blocker = test_blocker;
+                            num_blockers += 1;
+                        }
+                    });
                 if num_blockers == 1 {
                     pinned |= blocker;
                 }
             }
-            
         });
         pinned
     }
@@ -491,13 +514,10 @@ impl MoveGen {
         } else {
             other_pieces_collection = board.piece_bbs[WHITE];
         }
-        
-        let bishop_attackers =
-            MoveGen::valid_bishop_moves(board, test_square, own_pieces);
-        let rook_attackers =
-            MoveGen::valid_rook_moves(board, test_square, own_pieces);
-        let knight_attackers =
-            MoveGen::valid_knight_moves(board, test_square, own_pieces);
+
+        let bishop_attackers = MoveGen::valid_bishop_moves(board, test_square, own_pieces);
+        let rook_attackers = MoveGen::valid_rook_moves(board, test_square, own_pieces);
+        let knight_attackers = MoveGen::valid_knight_moves(board, test_square, own_pieces);
         let pawn_attackers: BitBoard;
         if board.side_to_move == WHITE {
             pawn_attackers = MoveGen::valid_white_pawn_moves(board, test_square);
@@ -517,7 +537,6 @@ impl MoveGen {
 
     //TODO test
     pub fn find_checkers_and_pinned_pieces(board: &Board) -> (BitBoard, BitBoard) {
-
         let ksq = board.piece_bbs[board.side_to_move][KINGS_BB];
         let checkers = MoveGen::find_attackers(board, ksq, board.color_bbs[board.side_to_move]);
         let pinned = MoveGen::find_pinned_pieces(board);
@@ -536,8 +555,14 @@ impl MoveGen {
         attacked_squares |= MoveGen::valid_knight_moves(board, other_pieces[KNIGHTS_BB], EMPTY);
         attacked_squares |= MoveGen::valid_king_moves(board, other_pieces[KINGS_BB], EMPTY);
         let (left_pawn_attacks, right_pawn_attacks) = match board.side_to_move {
-            WHITE => ((other_pieces[PAWNS_BB] & CLEAR_A_FILE).shr(9), (other_pieces[PAWNS_BB] & CLEAR_H_FILE).shr(7)),
-            BLACK => ((other_pieces[PAWNS_BB] & CLEAR_A_FILE).shl(7), (other_pieces[PAWNS_BB] & CLEAR_H_FILE).shl(9)),
+            WHITE => (
+                (other_pieces[PAWNS_BB] & CLEAR_A_FILE).shr(9),
+                (other_pieces[PAWNS_BB] & CLEAR_H_FILE).shr(7),
+            ),
+            BLACK => (
+                (other_pieces[PAWNS_BB] & CLEAR_A_FILE).shl(7),
+                (other_pieces[PAWNS_BB] & CLEAR_H_FILE).shl(9),
+            ),
             _ => panic!("Invalid side to move"),
         };
         attacked_squares |= left_pawn_attacks | right_pawn_attacks;
@@ -559,9 +584,10 @@ mod tests {
 
         #[test]
         fn it_works() {
-            let b = Board::from_fen("rnbqkbnr/pppp1ppp/8/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR b KQkq - 0 1");
+            let b =
+                Board::from_fen("rnbqkbnr/pppp1ppp/8/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR b KQkq - 0 1");
             let pinned = MoveGen::find_pinned_pieces(&b);
-            
+
             assert_eq!(pinned, F7_SQUARE);
         }
     }

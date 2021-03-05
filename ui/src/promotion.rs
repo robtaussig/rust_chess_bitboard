@@ -1,10 +1,13 @@
-use bitboard::BitBoard;
-use piece::Pieces;
-use constants::*;
-use ggez::{self, graphics::{Color, DrawMode}};
-use ggez::input::mouse;
-use ggez::event::{EventHandler};
 use crate::draw::{coord_to_bitboard, draw_arbitrary_rectangle, draw_piece};
+use bitboard::BitBoard;
+use constants::*;
+use ggez::event::EventHandler;
+use ggez::input::mouse;
+use ggez::{
+    self,
+    graphics::{Color, DrawMode},
+};
+use piece::Pieces;
 
 pub struct PromotionUI {
     pub from: BitBoard,
@@ -37,7 +40,7 @@ impl PromotionUI {
                 to.row() as f32 * SQUARE_SIZE + SQUARE_SIZE,
                 to.row() as f32 * SQUARE_SIZE + SQUARE_SIZE,
                 -30f32,
-                0f32
+                0f32,
             ),
         };
 
@@ -72,13 +75,14 @@ impl EventHandler for PromotionUI {
         let mouse_pos = mouse::position(ctx);
         let destination = coord_to_bitboard(mouse_pos.x, mouse_pos.y);
         if destination.col() == self.to.col() {
-            let distance = absolute_difference(self.to.row(),destination.row());
+            let distance = absolute_difference(self.to.row(), destination.row());
             if distance <= 3 {
                 self.highlighted_square = Some(destination);
             }
         }
 
-        if (self.y_bottom + self.y_bottom_vel) - (self.y_top + self.y_top_vel) >= SQUARE_SIZE * 4f32 {
+        if (self.y_bottom + self.y_bottom_vel) - (self.y_top + self.y_top_vel) >= SQUARE_SIZE * 4f32
+        {
             self.panel_expanded = true;
             if self.is_white {
                 self.y_bottom = self.y_top + SQUARE_SIZE * 4f32;
@@ -100,7 +104,7 @@ impl EventHandler for PromotionUI {
                 }
             }
         }
-        
+
         Ok(())
     }
 
@@ -114,7 +118,7 @@ impl EventHandler for PromotionUI {
         if self.panel_expanded && button == ggez::event::MouseButton::Left {
             let destination = coord_to_bitboard(x, y);
             if destination.col() == self.to.col() {
-                let distance = absolute_difference(self.to.row(),destination.row());
+                let distance = absolute_difference(self.to.row(), destination.row());
                 let promotion_piece = match distance {
                     0 => match self.is_white {
                         true => Pieces::WQueen,
@@ -140,7 +144,7 @@ impl EventHandler for PromotionUI {
                     _ => {
                         self.selected = Some(promotion_piece);
                         self.done = true;
-                    },
+                    }
                 }
             }
         }
@@ -153,16 +157,8 @@ impl EventHandler for PromotionUI {
         let width = SQUARE_SIZE;
         let height = self.y_bottom - self.y_top;
 
-        draw_arbitrary_rectangle(
-            ctx,
-            x,
-            y,
-            width,
-            height,
-            PANEL_COLOR,
-            None,
-            None,
-        ).expect("Error drawing panel");
+        draw_arbitrary_rectangle(ctx, x, y, width, height, PANEL_COLOR, None, None)
+            .expect("Error drawing panel");
 
         if self.panel_expanded {
             if let Some(highlighted_square) = self.highlighted_square {
@@ -175,7 +171,8 @@ impl EventHandler for PromotionUI {
                     HIGHLIGHTED_PANEL_COLOR,
                     None,
                     None,
-                ).expect("Error drawing panel");
+                )
+                .expect("Error drawing panel");
             }
             let (queen, rook, bishop, knight) = match self.is_white {
                 true => (
@@ -192,10 +189,12 @@ impl EventHandler for PromotionUI {
                 ),
             };
 
-            draw_piece(ctx, queen.1.0, queen.1.1, &queen.0, false).expect("Error drawing queen");
-            draw_piece(ctx, rook.1.0, rook.1.1, &rook.0, false).expect("Error drawing rook");
-            draw_piece(ctx, bishop.1.0, bishop.1.1, &bishop.0, false).expect("Error drawing bishop");
-            draw_piece(ctx, knight.1.0, knight.1.1, &knight.0, false).expect("Error drawing knight");
+            draw_piece(ctx, queen.1 .0, queen.1 .1, &queen.0, false).expect("Error drawing queen");
+            draw_piece(ctx, rook.1 .0, rook.1 .1, &rook.0, false).expect("Error drawing rook");
+            draw_piece(ctx, bishop.1 .0, bishop.1 .1, &bishop.0, false)
+                .expect("Error drawing bishop");
+            draw_piece(ctx, knight.1 .0, knight.1 .1, &knight.0, false)
+                .expect("Error drawing knight");
         }
 
         draw_arbitrary_rectangle(
@@ -207,8 +206,9 @@ impl EventHandler for PromotionUI {
             PANEL_BORDER_COLOR,
             Some(DrawMode::stroke(3f32)),
             None,
-        ).expect("Error drawing panel");
-    
+        )
+        .expect("Error drawing panel");
+
         Ok(())
     }
 }

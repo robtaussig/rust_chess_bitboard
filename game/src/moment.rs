@@ -8,9 +8,6 @@ pub struct Moment {
 
 impl Moment {
     pub fn new(fen: String, last_move: (BitBoard, BitBoard)) -> Moment {
-        Moment {
-            fen,
-            last_move,
-        }
+        Moment { fen, last_move }
     }
 }

@@ -1,7 +1,7 @@
 extern crate bitboard;
 use crate::bitboard::*;
 extern crate piece;
-use piece::{Pieces};
+use piece::Pieces;
 extern crate square;
 use square::Square;
 extern crate constants;
@@ -63,15 +63,13 @@ impl Default for BoardParams {
             castle_rights: Some(INITIAL_CASTLE_RIGHTS),
             en_passant: Some(EMPTY),
             half_moves_since_action: Some(0),
-            full_moves: Some(1),            
+            full_moves: Some(1),
         }
     }
 }
 
 impl Board {
-    pub fn new(
-        params: BoardParams,
-    ) -> Board {
+    pub fn new(params: BoardParams) -> Board {
         let mut piece_bbs = [[EMPTY; 6]; 2];
         let mut combined_bbs = [EMPTY; 8];
         let mut color_bbs = [EMPTY; 2];
@@ -90,16 +88,14 @@ impl Board {
         piece_bbs[BLACK][QUEENS_BB] = params.black_queens;
         piece_bbs[BLACK][KINGS_BB] = params.black_kings;
 
-        let white_pieces =
-            params.white_pawns
+        let white_pieces = params.white_pawns
             | params.white_knights
             | params.white_bishops
             | params.white_rooks
             | params.white_queens
             | params.white_kings;
 
-        let black_pieces =
-            params.black_pawns
+        let black_pieces = params.black_pawns
             | params.black_knights
             | params.black_bishops
             | params.black_rooks
@@ -176,7 +172,7 @@ impl Board {
         let moving_piece_color_bb_index = moving_piece.color_bb_index();
         let moving_piece_by_color_bb_index = moving_piece.piece_by_color_bb_index();
         let moving_piece_combined_bb_index = moving_piece.combined_color_bb_index();
-        
+
         let target_color_bb_index = target_piece.color_bb_index();
         let target_piece_color_bb_index = target_piece.piece_by_color_bb_index();
         let target_piece_combined_bb_index = target_piece.combined_color_bb_index();
@@ -186,8 +182,9 @@ impl Board {
             self.color_bbs[target_color_bb_index] ^= to;
             self.combined_bbs[target_piece_combined_bb_index] ^= to;
         }
-        
-        self.piece_bbs[moving_piece_color_bb_index][moving_piece_by_color_bb_index] ^= combined_move;
+
+        self.piece_bbs[moving_piece_color_bb_index][moving_piece_by_color_bb_index] ^=
+            combined_move;
         self.color_bbs[moving_piece_color_bb_index] ^= combined_move;
         self.combined_bbs[moving_piece_combined_bb_index] ^= combined_move;
 
@@ -218,8 +215,9 @@ impl Board {
         let mut castle_rights: BitBoard = EMPTY;
         let mut half_moves_since_action: u8 = 0;
         let mut full_moves: u16 = 0;
-        res.iter().enumerate().for_each(|(part_idx, part)| {
-            match part_idx {
+        res.iter()
+            .enumerate()
+            .for_each(|(part_idx, part)| match part_idx {
                 0 => {
                     let rows: Vec<String> = part.split('/').map(String::from).collect();
                     rows.iter().enumerate().for_each(|(row_idx, row)| {
@@ -232,105 +230,100 @@ impl Board {
                             match char {
                                 'r' => {
                                     black_rooks |= square;
-                                },
+                                }
                                 'b' => {
                                     black_bishops |= square;
-                                },
+                                }
                                 'n' => {
                                     black_knights |= square;
-                                },
+                                }
                                 'q' => {
                                     black_queens |= square;
-                                },
+                                }
                                 'k' => {
                                     black_kings |= square;
-                                },
+                                }
                                 'p' => {
                                     black_pawns |= square;
-                                },
+                                }
                                 'R' => {
                                     white_rooks |= square;
-                                },
+                                }
                                 'B' => {
                                     white_bishops |= square;
-                                },
+                                }
                                 'N' => {
                                     white_knights |= square;
-                                },
+                                }
                                 'Q' => {
                                     white_queens |= square;
-                                },
+                                }
                                 'K' => {
                                     white_kings |= square;
-                                },
+                                }
                                 'P' => {
                                     white_pawns |= square;
-                                },
+                                }
                                 _ => {
                                     let empties = char.to_digit(10).unwrap() as usize;
                                     empty_cols += empties - 1;
-                                },
+                                }
                             }
                         });
                     });
-                },
+                }
                 1 => {
                     if part == "w" {
                         side_to_move = WHITE;
                     } else {
                         side_to_move = BLACK;
                     }
-                },
+                }
                 2 => {
-                    castle_rights = part.chars().fold(
-                        castle_rights, 
-                        |acc, piece| acc | match piece.to_string().as_str() {
+                    castle_rights = part.chars().fold(castle_rights, |acc, piece| {
+                        acc | match piece.to_string().as_str() {
                             "K" => G1_SQUARE,
                             "Q" => C1_SQUARE,
                             "k" => G8_SQUARE,
                             "q" => C8_SQUARE,
                             _ => EMPTY,
-                        });
-                },
+                        }
+                    });
+                }
                 3 => {
                     en_passant = match part.as_str() {
                         "-" => EMPTY,
                         _ => Board::square_from_notation(part),
                     };
-                },
+                }
                 4 => {
                     half_moves_since_action = part.parse::<u8>().unwrap();
-                },
+                }
                 5 => {
                     full_moves = part.parse::<u16>().unwrap();
-                },
-                _ => {
+                }
+                _ => {}
+            });
 
-                },
-            }
-        });
-        
-        Board::new(
-            BoardParams {
-                white_pawns,
-                white_knights,
-                white_bishops,
-                white_rooks,
-                white_queens,
-                white_kings,
-                black_pawns,
-                black_knights,
-                black_bishops,
-                black_rooks,
-                black_queens,
-                black_kings,
-                side_to_move: Some(side_to_move),
-                castle_rights: Some(castle_rights),
-                en_passant: Some(en_passant),
-                half_moves_since_action: Some(half_moves_since_action),
-                full_moves: Some(full_moves),
-            }
-        )
+        Board::new(BoardParams {
+            white_pawns,
+            white_knights,
+            white_bishops,
+            white_rooks,
+            white_queens,
+            white_kings,
+            black_pawns,
+            black_knights,
+            black_bishops,
+            black_rooks,
+            black_queens,
+            black_kings,
+            side_to_move: Some(side_to_move),
+            castle_rights: Some(castle_rights),
+            en_passant: Some(en_passant),
+            half_moves_since_action: Some(half_moves_since_action),
+            full_moves: Some(full_moves),
+        })
     }
 
     pub fn to_fen(&self) -> String {
@@ -379,19 +372,27 @@ impl Board {
         if self.castle_rights & C8_SQUARE != EMPTY {
             castle_rights.push("q");
         }
-        
-        let castle_rights_str= castle_rights.join("");
+
+        let castle_rights_str = castle_rights.join("");
         let en_passant_str: String;
         if self.en_passant == EMPTY {
             en_passant_str = String::from("-");
         } else {
             en_passant_str = Board::square_to_notation(self.en_passant);
         }
-        
+
         let half_moves_since_capture_promotion = self.half_moves_since_action.to_string();
         let full_moves = self.full_moves.to_string();
 
-        format!("{} {} {} {} {} {}", board_str, side_to_move_str, castle_rights_str, en_passant_str, half_moves_since_capture_promotion, full_moves)
+        format!(
+            "{} {} {} {} {} {}",
+            board_str,
+            side_to_move_str,
+            castle_rights_str,
+            en_passant_str,
+            half_moves_since_capture_promotion,
+            full_moves
+        )
     }
 
     pub fn get_piece_at(&self, square: BitBoard) -> Pieces {
@@ -452,12 +453,7 @@ impl Board {
     }
 
     pub fn square_from_notation(notation: &str) -> BitBoard {
-        let file: usize = match notation
-            .chars()
-            .next()
-            .unwrap()
-            .to_string()
-            .as_str() {
+        let file: usize = match notation.chars().next().unwrap().to_string().as_str() {
             "a" => 0,
             "b" => 1,
             "c" => 2,
@@ -475,7 +471,8 @@ impl Board {
             .unwrap()
             .to_string()
             .parse::<usize>()
-            .unwrap() - 1;
+            .unwrap()
+            - 1;
 
         let square_pos = rank * 8 + file;
         SQUARES[square_pos]
@@ -514,13 +511,7 @@ impl Board {
     }
 
     pub fn get_material_eval_by_color(&self, color: usize) -> u32 {
-        let (
-            pawns,
-            bishops,
-            knights,
-            rooks,
-            queens,
-        ) = (
+        let (pawns, bishops, knights, rooks, queens) = (
             self.piece_bbs[color][PAWNS_BB].popcnt(),
             self.piece_bbs[color][BISHOPS_BB].popcnt(),
             self.piece_bbs[color][KNIGHTS_BB].popcnt(),
@@ -528,7 +519,7 @@ impl Board {
             self.piece_bbs[color][QUEENS_BB].popcnt(),
         );
 
-            pawns * PAWN_VALUE
+        pawns * PAWN_VALUE
             + bishops * BISHOP_VALUE
             + knights * KNIGHT_VALUE
             + rooks * ROOK_VALUE
@@ -658,21 +649,29 @@ mod tests {
 
         #[test]
         fn it_works_with_initial_board() {
-            let fen_board = Board::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            let fen_board =
+                Board::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
             let default_board = Board::default();
 
-            fen_board.piece_bbs[WHITE].iter().enumerate().for_each(|(idx, bb)| {
-                assert_eq!(&default_board.piece_bbs[WHITE][idx], bb);
-            });
+            fen_board.piece_bbs[WHITE]
+                .iter()
+                .enumerate()
+                .for_each(|(idx, bb)| {
+                    assert_eq!(&default_board.piece_bbs[WHITE][idx], bb);
+                });
 
-            fen_board.piece_bbs[BLACK].iter().enumerate().for_each(|(idx, bb)| {
-                assert_eq!(&default_board.piece_bbs[BLACK][idx], bb);
-            });
+            fen_board.piece_bbs[BLACK]
+                .iter()
+                .enumerate()
+                .for_each(|(idx, bb)| {
+                    assert_eq!(&default_board.piece_bbs[BLACK][idx], bb);
+                });
         }
-        
+
         #[test]
         fn it_works_after_move_1_e4() {
-            let fen_board = Board::from_fen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1");
+            let fen_board =
+                Board::from_fen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1");
             let white_pawns = fen_board.piece_bbs[WHITE][PAWNS_BB];
             assert_eq!(white_pawns, RANK_2 ^ E2_SQUARE | E4_SQUARE);
         }
@@ -685,7 +684,10 @@ mod tests {
         fn it_works() {
             let default_board = Board::default();
 
-            assert_eq!(default_board.to_fen(), "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            assert_eq!(
+                default_board.to_fen(),
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+            );
         }
     }
 
@@ -722,7 +724,8 @@ mod tests {
 
         #[test]
         fn it_evaluates_material_correctly() {
-            let b = Board::from_fen("b7/1PPP1pq1/1npn1pNP/R1P1p3/Pr5p/1pp3kB/P1R2N1p/3KB3 w  - 0 1");
+            let b =
+                Board::from_fen("b7/1PPP1pq1/1npn1pNP/R1P1p3/Pr5p/1pp3kB/P1R2N1p/3KB3 w  - 0 1");
             let adv = b.get_material_eval();
             assert_eq!(adv, (3000, 3150));
         }

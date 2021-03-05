@@ -1,13 +1,14 @@
-#[macro_use] extern crate lazy_static;
+#[macro_use]
+extern crate lazy_static;
 extern crate game;
-use std::cell::{RefCell};
+use board::Board;
+use clipboard::{ClipboardContext, ClipboardProvider};
+use game::Game;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
-use board::Board;
-use clipboard::{ClipboardProvider, ClipboardContext};
-use game::Game;
 extern crate piece;
-use piece::{Pieces};
+use piece::Pieces;
 extern crate bitboard;
 use bitboard::*;
 extern crate chessmove;
@@ -18,10 +19,8 @@ extern crate constants;
 use constants::*;
 use ggez;
 use ggez::event::{run, EventHandler, KeyCode, KeyMods};
+use ggez::graphics::{clear, present, Color};
 use ggez::input::mouse;
-use ggez::graphics::{
-    clear, present, Color
-};
 mod moving_piece;
 use moving_piece::*;
 mod draw;
@@ -51,7 +50,7 @@ impl MainState {
             last_move: (EMPTY, EMPTY),
             needs_draw: true,
             valid_moves,
-            moving_pieces: Rc::new(RefCell::new(HashMap::new())),            
+            moving_pieces: Rc::new(RefCell::new(HashMap::new())),
             dragged_piece: None,
             promotion_panel: None,
         }
@@ -67,7 +66,7 @@ impl MainState {
         if self.game.history.len() > 1 {
             let prev_board = self.game.board;
             let last_move = self.game.go_back();
-        
+
             self.move_pieces_between_game_boards(&prev_board, &self.game.board);
             let valid_moves = MoveGen::gen_legal_moves(&self.game.board);
             self.move_from = EMPTY;
@@ -109,14 +108,17 @@ impl MainState {
         self.last_move = (from, to);
         let mut moving_pieces = self.moving_pieces.borrow_mut();
         moves.iter().for_each(|move_tuple| {
-            moving_pieces.insert(move_tuple.1, MovingPiece::new(
-                self.game.board.get_piece_at(move_tuple.1),
-                move_tuple.0,
+            moving_pieces.insert(
                 move_tuple.1,
-                SQUARE_SIZE,
-                20,
-            ));
-        });        
+                MovingPiece::new(
+                    self.game.board.get_piece_at(move_tuple.1),
+                    move_tuple.0,
+                    move_tuple.1,
+                    SQUARE_SIZE,
+                    20,
+                ),
+            );
+        });
     }
 
     fn handle_white_promotion(&mut self, from: BitBoard, to: BitBoard) {
@@ -129,13 +131,16 @@ impl MainState {
         self.last_move = (from, to);
         let mut moving_pieces = self.moving_pieces.borrow_mut();
         moves.iter().for_each(|move_tuple| {
-            moving_pieces.insert(move_tuple.1, MovingPiece::new(
-                self.game.board.get_piece_at(move_tuple.1),
-                move_tuple.0,
+            moving_pieces.insert(
                 move_tuple.1,
-                SQUARE_SIZE,
-                20,
-            ));
+                MovingPiece::new(
+                    self.game.board.get_piece_at(move_tuple.1),
+                    move_tuple.0,
+                    move_tuple.1,
+                    SQUARE_SIZE,
+                    20,
+                ),
+            );
         });
     }
 
@@ -152,13 +157,19 @@ impl MainState {
 
     fn restart_game(&mut self) {
         let valid_moves = MoveGen::gen_legal_moves(&self.game.board);
-        
+
         self.last_move = (EMPTY, EMPTY);
         if self.game.board.en_passant != EMPTY {
             if self.game.board.en_passant & RANK_6 != EMPTY {
-                self.last_move = (self.game.board.en_passant.shl(8), self.game.board.en_passant.shr(8));
+                self.last_move = (
+                    self.game.board.en_passant.shl(8),
+                    self.game.board.en_passant.shr(8),
+                );
             } else {
-                self.last_move = (self.game.board.en_passant.shr(8), self.game.board.en_passant.shl(8));
+                self.last_move = (
+                    self.game.board.en_passant.shr(8),
+                    self.game.board.en_passant.shl(8),
+                );
             }
         }
         self.promotion_panel = None;
@@ -233,7 +244,9 @@ impl MainState {
                             let (x, y) = to_search.remove(0);
                             if searched[y][x] == false {
                                 searched[y][x] = true;
-                                if found_pieces[y][x] == false && old_pieces[y][x].piece == square.piece {
+                                if found_pieces[y][x] == false
+                                    && old_pieces[y][x].piece == square.piece
+                                {
                                     found_piece = old_pieces[y][x].bitboard;
                                     break;
                                 }
@@ -256,20 +269,22 @@ impl MainState {
                         }
                     }
                 }
-                
             });
         });
 
         let mut moving_pieces = self.moving_pieces.borrow_mut();
-        
+
         movers.iter().for_each(|(to, from)| {
-            moving_pieces.insert(*to, MovingPiece::new(
-                new_game_board.get_piece_at(*to),
-                *from,
+            moving_pieces.insert(
                 *to,
-                SQUARE_SIZE,
-                20,
-            ));
+                MovingPiece::new(
+                    new_game_board.get_piece_at(*to),
+                    *from,
+                    *to,
+                    SQUARE_SIZE,
+                    20,
+                ),
+            );
         });
     }
 }
@@ -287,8 +302,8 @@ impl EventHandler for MainState {
         if let Some(ref mut dragged_piece) = self.dragged_piece {
             let pos = mouse::position(ctx);
             if mouse::button_pressed(ctx, mouse::MouseButton::Left) {
-                dragged_piece.2.0 = pos.x;
-                dragged_piece.2.1 = pos.y;
+                dragged_piece.2 .0 = pos.x;
+                dragged_piece.2 .1 = pos.y;
             } else {
                 let destination = coord_to_bitboard(pos.x, pos.y);
                 if self.move_from != EMPTY && self.is_valid_destination(destination) {
@@ -306,7 +321,9 @@ impl EventHandler for MainState {
         let mut to_promote: Pieces = Pieces::Empty;
 
         if let Some(ref mut promotion_panel) = self.promotion_panel {
-            promotion_panel.update(ctx).expect("Error updating promotion panel");
+            promotion_panel
+                .update(ctx)
+                .expect("Error updating promotion panel");
             if promotion_panel.done {
                 if let Some(promotion_piece) = promotion_panel.selected {
                     to_promote_from = promotion_panel.from;
@@ -341,11 +358,7 @@ impl EventHandler for MainState {
             self.move_from = destination;
             let moving_piece = self.game.board.get_piece_at(self.move_from);
             if moving_piece != Pieces::Empty {
-                self.dragged_piece = Some((
-                    destination,
-                    moving_piece,
-                    (x, y)
-                ));
+                self.dragged_piece = Some((destination, moving_piece, (x, y)));
             }
         }
         self.needs_draw = true;
@@ -359,7 +372,7 @@ impl EventHandler for MainState {
                     let fen = self.game.board.to_fen();
                     cp.set_contents(fen).expect("Failed to set fen contents");
                 }
-            },
+            }
             KeyCode::V => {
                 if keymods.contains(KeyMods::CTRL) || keymods.contains(KeyMods::LOGO) {
                     let mut cp: ClipboardContext = ClipboardProvider::new().unwrap();
@@ -368,27 +381,27 @@ impl EventHandler for MainState {
                         self.restart_from_fen(contents.as_str());
                     }
                 }
-            },
+            }
             KeyCode::R => {
                 if keymods.contains(KeyMods::CTRL) || keymods.contains(KeyMods::LOGO) {
                     self.randomize_board();
                 }
-            },
+            }
             KeyCode::N => {
                 if keymods.contains(KeyMods::CTRL) || keymods.contains(KeyMods::LOGO) {
                     self.new_game();
                 }
-            },
+            }
             KeyCode::Z => {
                 if keymods.contains(KeyMods::CTRL) || keymods.contains(KeyMods::LOGO) {
                     self.go_back();
                 }
-            },
+            }
             KeyCode::Y => {
                 if keymods.contains(KeyMods::CTRL) || keymods.contains(KeyMods::LOGO) {
                     self.go_forward();
                 }
-            },
+            }
             _ => (),
         }
     }
@@ -428,57 +441,46 @@ impl EventHandler for MainState {
                     )
                     .expect("Failed to draw square");
                     if self.is_valid_destination(square.bitboard) {
-                        draw_destination(
-                            ctx,
-                            row_idx,
-                            col_idx,
-                        ).expect("Failed to draw destination");
-                    }              
+                        draw_destination(ctx, row_idx, col_idx)
+                            .expect("Failed to draw destination");
+                    }
                 })
             });
 
-        draw_last_move_border(
-            ctx,
-            self.last_move.0.row(),
-            self.last_move.0.col(),
-        ).expect("Failed to draw destination");
-        draw_last_move_border(
-            ctx,
-            self.last_move.1.row(),
-            self.last_move.1.col(),
-        ).expect("Failed to draw destination");
+        draw_last_move_border(ctx, self.last_move.0.row(), self.last_move.0.col())
+            .expect("Failed to draw destination");
+        draw_last_move_border(ctx, self.last_move.1.row(), self.last_move.1.col())
+            .expect("Failed to draw destination");
         if self.move_from != EMPTY {
-            draw_move_from_border(
-                ctx,
-                self.move_from.row(),
-                self.move_from.col(),
-            ).expect("Failed to draw destination");
+            draw_move_from_border(ctx, self.move_from.row(), self.move_from.col())
+                .expect("Failed to draw destination");
         }
 
         moving_pieces.iter_mut().for_each(|(_, piece)| {
-            draw_piece_at(ctx, piece.pos.0, piece.pos.1, &piece.piece, false).expect("Error drawing moving piece");
+            draw_piece_at(ctx, piece.pos.0, piece.pos.1, &piece.piece, false)
+                .expect("Error drawing moving piece");
         });
 
         if let Some(dragged_piece) = self.dragged_piece {
-            let destination = coord_to_bitboard(dragged_piece.2.0, dragged_piece.2.1);
+            let destination = coord_to_bitboard(dragged_piece.2 .0, dragged_piece.2 .1);
             if self.is_valid_destination(destination) {
-                draw_valid_drop_target_border(
-                    ctx,
-                    destination.row(),
-                    destination.col(),
-                ).expect("Failed to draw destination drop border");
+                draw_valid_drop_target_border(ctx, destination.row(), destination.col())
+                    .expect("Failed to draw destination drop border");
             }
             draw_piece_at(
                 ctx,
-                dragged_piece.2.0,
-                dragged_piece.2.1,
+                dragged_piece.2 .0,
+                dragged_piece.2 .1,
                 &dragged_piece.1,
                 false,
-            ).expect("Error drawing dragged piece");
+            )
+            .expect("Error drawing dragged piece");
         }
 
         if let Some(ref mut promotion_panel) = self.promotion_panel {
-            promotion_panel.draw(ctx).expect("Error drawing promotion panel");
+            promotion_panel
+                .draw(ctx)
+                .expect("Error drawing promotion panel");
         } else if moving_pieces.len() == 0 && self.dragged_piece == None {
             self.needs_draw = false;
         }
@@ -491,19 +493,14 @@ impl EventHandler for MainState {
 
 fn main() -> ggez::GameResult {
     let (ctx, event_loop) = &mut ggez::ContextBuilder::new("Chess", "Rob Taussig")
-        .window_mode(
-            ggez::conf::WindowMode::default()
-            .dimensions(SCREEN_WIDTH, SCREEN_HEIGHT)
-        )
-        .window_setup(
-            ggez::conf::WindowSetup {
-                title: "Rusty Chess".into(),
-                samples: ggez::conf::NumSamples::Zero,
-                vsync: true,
-                icon: "".into(),
-                srgb: true,
-            }
-        )
+        .window_mode(ggez::conf::WindowMode::default().dimensions(SCREEN_WIDTH, SCREEN_HEIGHT))
+        .window_setup(ggez::conf::WindowSetup {
+            title: "Rusty Chess".into(),
+            samples: ggez::conf::NumSamples::Zero,
+            vsync: true,
+            icon: "".into(),
+            srgb: true,
+        })
         .build()
         .unwrap();
     let main_state = &mut MainState::new();
