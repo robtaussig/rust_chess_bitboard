@@ -24,58 +24,97 @@ pub struct Board {
     pub attacked_squares: BitBoard,
 }
 
+pub struct BoardParams {
+    pub white_pawns: BitBoard,
+    pub white_knights: BitBoard,
+    pub white_bishops: BitBoard,
+    pub white_rooks: BitBoard,
+    pub white_queens: BitBoard,
+    pub white_kings: BitBoard,
+    pub black_pawns: BitBoard,
+    pub black_knights: BitBoard,
+    pub black_bishops: BitBoard,
+    pub black_rooks: BitBoard,
+    pub black_queens: BitBoard,
+    pub black_kings: BitBoard,
+    pub side_to_move: Option<usize>,
+    pub castle_rights: Option<BitBoard>,
+    pub en_passant: Option<BitBoard>,
+    pub half_moves_since_action: Option<u8>,
+    pub full_moves: Option<u16>,
+}
+
+impl Default for BoardParams {
+    fn default() -> Self {
+        BoardParams {
+            white_pawns: INITIAL_WHITE_PAWNS,
+            white_knights: INITIAL_WHITE_KNIGHTS,
+            white_bishops: INITIAL_WHITE_BISHOPS,
+            white_rooks: INITIAL_WHITE_ROOKS,
+            white_queens: INITIAL_WHITE_QUEENS,
+            white_kings: INITIAL_WHITE_KINGS,
+            black_pawns: INITIAL_BLACK_PAWNS,
+            black_knights: INITIAL_BLACK_KNIGHTS,
+            black_bishops: INITIAL_BLACK_BISHOPS,
+            black_rooks: INITIAL_BLACK_ROOKS,
+            black_queens: INITIAL_BLACK_QUEENS,
+            black_kings: INITIAL_BLACK_KINGS,
+            side_to_move: Some(WHITE),
+            castle_rights: Some(INITIAL_CASTLE_RIGHTS),
+            en_passant: Some(EMPTY),
+            half_moves_since_action: Some(0),
+            full_moves: Some(1),            
+        }
+    }
+}
+
 impl Board {
     pub fn new(
-        white_pawns: BitBoard,
-        white_knights: BitBoard,
-        white_bishops: BitBoard,
-        white_rooks: BitBoard,
-        white_queens: BitBoard,
-        white_kings: BitBoard,
-        black_pawns: BitBoard,
-        black_knights: BitBoard,
-        black_bishops: BitBoard,
-        black_rooks: BitBoard,
-        black_queens: BitBoard,
-        black_kings: BitBoard,
-        side_to_move: usize,
-        mut castle_rights: BitBoard,
-        en_passant: BitBoard,
-        half_moves_since_action: u8,
-        full_moves: u16,
+        params: BoardParams,
     ) -> Board {
         let mut piece_bbs = [[EMPTY; 6]; 2];
         let mut combined_bbs = [EMPTY; 8];
         let mut color_bbs = [EMPTY; 2];
+        let mut castle_rights = params.castle_rights.unwrap_or(EMPTY);
 
-        piece_bbs[WHITE][PAWNS_BB] = white_pawns;
-        piece_bbs[WHITE][KNIGHTS_BB] = white_knights;
-        piece_bbs[WHITE][BISHOPS_BB] = white_bishops;
-        piece_bbs[WHITE][ROOKS_BB] = white_rooks;
-        piece_bbs[WHITE][QUEENS_BB] = white_queens;
-        piece_bbs[WHITE][KINGS_BB] = white_kings;
-        piece_bbs[BLACK][PAWNS_BB] = black_pawns;
-        piece_bbs[BLACK][KNIGHTS_BB] = black_knights;
-        piece_bbs[BLACK][BISHOPS_BB] = black_bishops;
-        piece_bbs[BLACK][ROOKS_BB] = black_rooks;
-        piece_bbs[BLACK][QUEENS_BB] = black_queens;
-        piece_bbs[BLACK][KINGS_BB] = black_kings;
+        piece_bbs[WHITE][PAWNS_BB] = params.white_pawns;
+        piece_bbs[WHITE][KNIGHTS_BB] = params.white_knights;
+        piece_bbs[WHITE][BISHOPS_BB] = params.white_bishops;
+        piece_bbs[WHITE][ROOKS_BB] = params.white_rooks;
+        piece_bbs[WHITE][QUEENS_BB] = params.white_queens;
+        piece_bbs[WHITE][KINGS_BB] = params.white_kings;
+        piece_bbs[BLACK][PAWNS_BB] = params.black_pawns;
+        piece_bbs[BLACK][KNIGHTS_BB] = params.black_knights;
+        piece_bbs[BLACK][BISHOPS_BB] = params.black_bishops;
+        piece_bbs[BLACK][ROOKS_BB] = params.black_rooks;
+        piece_bbs[BLACK][QUEENS_BB] = params.black_queens;
+        piece_bbs[BLACK][KINGS_BB] = params.black_kings;
 
         let white_pieces =
-            white_pawns | white_knights | white_bishops | white_rooks | white_queens | white_kings;
+            params.white_pawns
+            | params.white_knights
+            | params.white_bishops
+            | params.white_rooks
+            | params.white_queens
+            | params.white_kings;
 
         let black_pieces =
-            black_pawns | black_knights | black_bishops | black_rooks | black_queens | black_kings;
+            params.black_pawns
+            | params.black_knights
+            | params.black_bishops
+            | params.black_rooks
+            | params.black_queens
+            | params.black_kings;
 
         let pieces = white_pieces | black_pieces;
         let empty_squares = !pieces;
 
-        let pawns = white_pawns | black_pawns;
-        let knights = white_knights | black_knights;
-        let bishops = white_bishops | black_bishops;
-        let rooks = white_rooks | black_rooks;
-        let queens = white_queens | black_queens;
-        let kings = white_kings | black_kings;
+        let pawns = params.white_pawns | params.black_pawns;
+        let knights = params.white_knights | params.black_knights;
+        let bishops = params.white_bishops | params.black_bishops;
+        let rooks = params.white_rooks | params.black_rooks;
+        let queens = params.white_queens | params.black_queens;
+        let kings = params.white_kings | params.black_kings;
 
         combined_bbs[ALL_PAWNS_BB] = pawns;
         combined_bbs[ALL_KNIGHTS_BB] = knights;
@@ -88,16 +127,16 @@ impl Board {
         combined_bbs[ALL_PIECES_BB] = pieces;
         combined_bbs[EMPTY_SQUARES_BB] = empty_squares;
 
-        if white_rooks & A1_SQUARE == EMPTY {
+        if params.white_rooks & A1_SQUARE == EMPTY {
             castle_rights &= !C1_SQUARE;
         }
-        if white_rooks & H1_SQUARE == EMPTY {
+        if params.white_rooks & H1_SQUARE == EMPTY {
             castle_rights &= !G1_SQUARE;
         }
-        if black_rooks & A8_SQUARE == EMPTY {
+        if params.black_rooks & A8_SQUARE == EMPTY {
             castle_rights &= !C8_SQUARE;
         }
-        if black_rooks & H8_SQUARE == EMPTY {
+        if params.black_rooks & H8_SQUARE == EMPTY {
             castle_rights &= !G8_SQUARE;
         }
 
@@ -105,63 +144,25 @@ impl Board {
             piece_bbs,
             color_bbs,
             combined_bbs,
-            side_to_move,
+            side_to_move: params.side_to_move.unwrap_or(WHITE),
             pinned: EMPTY,
             checkers: EMPTY,
-            en_passant,
+            en_passant: params.en_passant.unwrap_or(EMPTY),
             castle_rights,
-            half_moves_since_action,
-            full_moves,
+            half_moves_since_action: params.half_moves_since_action.unwrap_or(0),
+            full_moves: params.full_moves.unwrap_or(1),
             attacked_squares: EMPTY,
         }
     }
 
-    pub fn new_from_pieces(
-        white_pawns: BitBoard,
-        white_knights: BitBoard,
-        white_bishops: BitBoard,
-        white_rooks: BitBoard,
-        white_queens: BitBoard,
-        white_kings: BitBoard,
-        black_pawns: BitBoard,
-        black_knights: BitBoard,
-        black_bishops: BitBoard,
-        black_rooks: BitBoard,
-        black_queens: BitBoard,
-        black_kings: BitBoard,
-        side_to_move: usize,
-    ) -> Board {
-        
-        Board::new(
-            white_pawns,
-            white_knights,
-            white_bishops,
-            white_rooks,
-            white_queens,
-            white_kings,
-            black_pawns,
-            black_knights,
-            black_bishops,
-            black_rooks,
-            black_queens,
-            black_kings,
-            side_to_move,
-            INITIAL_CASTLE_RIGHTS,
-            EMPTY,
-            0,
-            1,
-        )
-    }
-
     pub fn to_array(&self) -> [[Square; 8]; 8] {
         let mut board_array: [[Square; 8]; 8] = [[Square::default(); 8]; 8];
-        for pos in 0..64 {
+        for (pos, square) in SQUARES.iter().enumerate() {
             let rank = 7 - (pos / 8);
             let file = pos % 8;
-            let square = SQUARES[pos];
 
-            let piece = self.get_piece_at(square);
-            board_array[rank][file] = Square::new(square, piece);
+            let piece = self.get_piece_at(*square);
+            board_array[rank][file] = Square::new(*square, piece);
         }
 
         board_array
@@ -199,8 +200,7 @@ impl Board {
     }
 
     pub fn from_fen(fen: &str) -> Board {
-        use std::iter::FromIterator;
-        let res = Vec::from_iter(fen.split(" ").map(String::from));
+        let res: Vec<String> = fen.split(' ').map(String::from).collect();
         let mut white_pawns: BitBoard = EMPTY;
         let mut white_knights: BitBoard = EMPTY;
         let mut white_bishops: BitBoard = EMPTY;
@@ -221,53 +221,53 @@ impl Board {
         res.iter().enumerate().for_each(|(part_idx, part)| {
             match part_idx {
                 0 => {
-                    let rows = Vec::from_iter(part.split("/").map(String::from));
+                    let rows: Vec<String> = part.split('/').map(String::from).collect();
                     rows.iter().enumerate().for_each(|(row_idx, row)| {
                         let mut empty_cols: usize = 0;
-                        row.chars().map(String::from).enumerate().for_each(|(col_idx, char)| {
+                        row.chars().enumerate().for_each(|(col_idx, char)| {
                             let rank = 7 - row_idx;
                             let square_idx = (rank * 8) + col_idx + empty_cols;
                             let square = SQUARES[square_idx];
 
-                            match char.as_str() {
-                                "r" => {
+                            match char {
+                                'r' => {
                                     black_rooks |= square;
                                 },
-                                "b" => {
+                                'b' => {
                                     black_bishops |= square;
                                 },
-                                "n" => {
+                                'n' => {
                                     black_knights |= square;
                                 },
-                                "q" => {
+                                'q' => {
                                     black_queens |= square;
                                 },
-                                "k" => {
+                                'k' => {
                                     black_kings |= square;
                                 },
-                                "p" => {
+                                'p' => {
                                     black_pawns |= square;
                                 },
-                                "R" => {
+                                'R' => {
                                     white_rooks |= square;
                                 },
-                                "B" => {
+                                'B' => {
                                     white_bishops |= square;
                                 },
-                                "N" => {
+                                'N' => {
                                     white_knights |= square;
                                 },
-                                "Q" => {
+                                'Q' => {
                                     white_queens |= square;
                                 },
-                                "K" => {
+                                'K' => {
                                     white_kings |= square;
                                 },
-                                "P" => {
+                                'P' => {
                                     white_pawns |= square;
                                 },
                                 _ => {
-                                    let empties = char.parse::<usize>().unwrap();
+                                    let empties = char.to_digit(10).unwrap() as usize;
                                     empty_cols += empties - 1;
                                 },
                             }
@@ -311,23 +311,25 @@ impl Board {
         });
         
         Board::new(
-            white_pawns,
-            white_knights,
-            white_bishops,
-            white_rooks,
-            white_queens,
-            white_kings,
-            black_pawns,
-            black_knights,
-            black_bishops,
-            black_rooks,
-            black_queens,
-            black_kings,
-            side_to_move,
-            castle_rights,
-            en_passant,
-            half_moves_since_action,
-            full_moves,
+            BoardParams {
+                white_pawns,
+                white_knights,
+                white_bishops,
+                white_rooks,
+                white_queens,
+                white_kings,
+                black_pawns,
+                black_knights,
+                black_bishops,
+                black_rooks,
+                black_queens,
+                black_kings,
+                side_to_move: Some(side_to_move),
+                castle_rights: Some(castle_rights),
+                en_passant: Some(en_passant),
+                half_moves_since_action: Some(half_moves_since_action),
+                full_moves: Some(full_moves),
+            }
         )
     }
 
@@ -395,44 +397,40 @@ impl Board {
     pub fn get_piece_at(&self, square: BitBoard) -> Pieces {
         if self.combined_bbs[EMPTY_SQUARES_BB] & square != EMPTY {
             Pieces::Empty
-        } else {
-            if self.combined_bbs[ALL_PAWNS_BB] & square != EMPTY {
-                if self.color_bbs[BLACK] & square != EMPTY {
-                    Pieces::BPawn
-                } else {
-                    Pieces::WPawn
-                }
-            } else if self.combined_bbs[ALL_KNIGHTS_BB] & square != EMPTY {
-                if self.color_bbs[BLACK] & square != EMPTY {
-                    Pieces::BKnight
-                } else {
-                    Pieces::WKnight
-                }
-            } else if self.combined_bbs[ALL_BISHOPS_BB] & square != EMPTY {
-                if self.color_bbs[BLACK] & square != EMPTY {
-                    Pieces::BBishop
-                } else {
-                    Pieces::WBishop
-                }
-            } else if self.combined_bbs[ALL_ROOKS_BB] & square != EMPTY {
-                if self.color_bbs[BLACK] & square != EMPTY {
-                    Pieces::BRook
-                } else {
-                    Pieces::WRook
-                }
-            } else if self.combined_bbs[ALL_QUEENS_BB] & square != EMPTY {
-                if self.color_bbs[BLACK] & square != EMPTY {
-                    Pieces::BQueen
-                } else {
-                    Pieces::WQueen
-                }
+        } else if self.combined_bbs[ALL_PAWNS_BB] & square != EMPTY {
+            if self.color_bbs[BLACK] & square != EMPTY {
+                Pieces::BPawn
             } else {
-                if self.color_bbs[BLACK] & square != EMPTY {
-                    Pieces::BKing
-                } else {
-                    Pieces::WKing
-                }
+                Pieces::WPawn
             }
+        } else if self.combined_bbs[ALL_KNIGHTS_BB] & square != EMPTY {
+            if self.color_bbs[BLACK] & square != EMPTY {
+                Pieces::BKnight
+            } else {
+                Pieces::WKnight
+            }
+        } else if self.combined_bbs[ALL_BISHOPS_BB] & square != EMPTY {
+            if self.color_bbs[BLACK] & square != EMPTY {
+                Pieces::BBishop
+            } else {
+                Pieces::WBishop
+            }
+        } else if self.combined_bbs[ALL_ROOKS_BB] & square != EMPTY {
+            if self.color_bbs[BLACK] & square != EMPTY {
+                Pieces::BRook
+            } else {
+                Pieces::WRook
+            }
+        } else if self.combined_bbs[ALL_QUEENS_BB] & square != EMPTY {
+            if self.color_bbs[BLACK] & square != EMPTY {
+                Pieces::BQueen
+            } else {
+                Pieces::WQueen
+            }
+        } else if self.color_bbs[BLACK] & square != EMPTY {
+            Pieces::BKing
+        } else {
+            Pieces::WKing
         }
     }
 
@@ -456,7 +454,7 @@ impl Board {
     pub fn square_from_notation(notation: &str) -> BitBoard {
         let file: usize = match notation
             .chars()
-            .nth(0)
+            .next()
             .unwrap()
             .to_string()
             .as_str() {
@@ -548,25 +546,7 @@ impl Board {
 
 impl Default for Board {
     fn default() -> Self {
-        Board::new(
-            INITIAL_WHITE_PAWNS,
-            INITIAL_WHITE_KNIGHTS,
-            INITIAL_WHITE_BISHOPS,
-            INITIAL_WHITE_ROOKS,
-            INITIAL_WHITE_QUEENS,
-            INITIAL_WHITE_KINGS,
-            INITIAL_BLACK_PAWNS,
-            INITIAL_BLACK_KNIGHTS,
-            INITIAL_BLACK_BISHOPS,
-            INITIAL_BLACK_ROOKS,
-            INITIAL_BLACK_QUEENS,
-            INITIAL_BLACK_KINGS,
-            WHITE,
-            INITIAL_CASTLE_RIGHTS,
-            EMPTY,
-            0,
-            1,
-        )
+        Board::new(BoardParams::default())
     }
 }
 

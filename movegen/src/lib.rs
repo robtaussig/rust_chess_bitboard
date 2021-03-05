@@ -27,10 +27,10 @@ impl MoveGen {
                 if chessmove.from != ksq {
                     return chessmove;
                 }
-                return ChessMove::new(
+                ChessMove::new(
                     chessmove.from,
                     safe_squares,
-                );
+                )
             })
             .filter(|chessmove| chessmove.to != EMPTY)
             .collect::<Vec<ChessMove>>();
@@ -40,19 +40,19 @@ impl MoveGen {
                 if safe_squares == EMPTY {
                     return Vec::new();
                 }
-                return safe_king_moves
+                safe_king_moves
                     .into_iter()
                     .filter(|chessmove| {
                         if chessmove.from != ksq {
                             return false;
                         }
-                        return true;
+                        true
                     })
-                    .collect::<Vec<ChessMove>>();
+                    .collect::<Vec<ChessMove>>()
             } else {
                 let attack_ray = between_bb(board.checkers, ksq);
                 
-                return safe_king_moves
+                safe_king_moves
                     .into_iter()
                     .map(|chessmove| {
                         if chessmove.from == ksq {
@@ -64,19 +64,21 @@ impl MoveGen {
                                 let square = SQUARES[bit];
                                 if between_bb(ksq, square) & chessmove.from != EMPTY
                                     || between_bb(ksq, chessmove.from) & square != EMPTY {
-                                        return acc | square;
-                                    }
-                                return acc;
+                                    acc | square
+                                } else {
+                                    acc
+                                }
+                                
                             }),
                         };
                     
-                        return ChessMove::new(
+                        ChessMove::new(
                             chessmove.from,
                             allowed_squares & (board.checkers | attack_ray)
-                        );
+                        )
                     })
                     .filter(|chessmove| chessmove.to != EMPTY)
-                    .collect::<Vec<ChessMove>>();
+                    .collect::<Vec<ChessMove>>()
             }
         } else {
             MoveGen::gen_psuedo_legal_moves(board)
@@ -97,15 +99,16 @@ impl MoveGen {
                             let square = SQUARES[bit];
                             if between_bb(ksq, square) & chessmove.from != EMPTY
                                 || between_bb(ksq, chessmove.from) & square != EMPTY {
-                                    return acc | square;
-                                }
-                            return acc;
+                                acc | square
+                            } else {
+                                acc
+                            }
                         });
 
-                        return ChessMove::new(
+                        ChessMove::new(
                             chessmove.from,
                             allowed_squares,
-                        );
+                        )
                     })
                     .filter(|chessmove| chessmove.to != EMPTY)
                     .collect::<Vec<ChessMove>>()
@@ -439,17 +442,19 @@ impl MoveGen {
         let bishop_like_attackers_without_blockers = bishop_like_attackers.bits().fold(EMPTY, |acc, bit| {
             let square = SQUARES[bit];
             if between_bb(square, ksq) != EMPTY && ksq.row() != square.row() && ksq.col() != square.col() {
-                return acc | square;
+                acc | square
+            } else {
+                acc
             }
-            return acc;
         });
 
         let rook_like_attackers_without_blockers = rook_like_attackers.bits().fold(EMPTY, |acc, bit| {
             let square = SQUARES[bit];
             if between_bb(square, ksq) != EMPTY && (ksq.row() == square.row() || ksq.col() == square.col()) {
-                return acc | square;
+                acc | square
+            } else {
+                acc
             }
-            return acc;
         });
 
         let attackers_without_blockers = bishop_like_attackers_without_blockers | rook_like_attackers_without_blockers;
@@ -547,412 +552,6 @@ mod tests {
     #[test]
     fn it_works() {
         assert_eq!(2 + 2, 4);
-    }
-
-    mod valid_king_moves {
-        use super::*;
-
-        #[test]
-        fn it_works_with_no_obstacles() {
-            let b = Board::new_from_pieces(
-                EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, E3_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
-                EMPTY, WHITE,
-            );
-
-            let valid_squares = D4_SQUARE
-                | E4_SQUARE
-                | F4_SQUARE
-                | F3_SQUARE
-                | F2_SQUARE
-                | E2_SQUARE
-                | D2_SQUARE
-                | D3_SQUARE;
-            
-            assert_eq!(
-                MoveGen::valid_king_moves(&b, b.piece_bbs[WHITE][KINGS_BB], b.color_bbs[WHITE]),
-                valid_squares
-            );
-        }
-
-        #[test]
-        fn it_works_with_edges() {
-            let b = Board::new_from_pieces(
-                EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, A1_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
-                EMPTY, WHITE,
-            );
-
-            let valid_squares = A2_SQUARE | B2_SQUARE | B1_SQUARE;
-
-            assert_eq!(
-                MoveGen::valid_king_moves(&b, b.piece_bbs[WHITE][KINGS_BB], b.color_bbs[WHITE]),
-                valid_squares
-            );
-        }
-
-        #[test]
-        fn it_works_with_other_shared_pieces() {
-            let b = Board::new_from_pieces(
-                RANK_4,
-                E2_SQUARE | D2_SQUARE,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                E3_SQUARE,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                WHITE,
-            );
-
-            let valid_squares = F3_SQUARE | F2_SQUARE | D3_SQUARE;
-
-            assert_eq!(
-                MoveGen::valid_king_moves(&b, b.piece_bbs[WHITE][KINGS_BB], b.color_bbs[WHITE]),
-                valid_squares
-            );
-        }
-    }
-
-    mod valid_knight_moves {
-        use super::*;
-
-        #[test]
-        fn it_works_with_no_obstacles() {
-            let b = Board::new_from_pieces(
-                EMPTY, D4_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
-                EMPTY, WHITE,
-            );
-
-            let valid_squares = B5_SQUARE
-                | C6_SQUARE
-                | E6_SQUARE
-                | F5_SQUARE
-                | F3_SQUARE
-                | E2_SQUARE
-                | C2_SQUARE
-                | B3_SQUARE;
-
-            assert_eq!(
-                MoveGen::valid_knight_moves(&b, b.piece_bbs[WHITE][KNIGHTS_BB], b.color_bbs[WHITE]),
-                valid_squares
-            );
-        }
-
-        #[test]
-        fn it_works_with_edges() {
-            let b = Board::new_from_pieces(
-                EMPTY, B4_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
-                EMPTY, WHITE,
-            );
-
-            let valid_squares =
-                A6_SQUARE | C6_SQUARE | D5_SQUARE | D3_SQUARE | C2_SQUARE | A2_SQUARE;
-
-            assert_eq!(
-                MoveGen::valid_knight_moves(&b, b.piece_bbs[WHITE][KNIGHTS_BB], b.color_bbs[WHITE]),
-                valid_squares
-            );
-        }
-
-        #[test]
-        fn it_works_with_other_shared_pieces() {
-            let b = Board::new_from_pieces(
-                C_FILE, B4_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
-                EMPTY, WHITE,
-            );
-
-            let valid_squares = A6_SQUARE | D5_SQUARE | D3_SQUARE | A2_SQUARE;
-
-            assert_eq!(
-                MoveGen::valid_knight_moves(&b, b.piece_bbs[WHITE][KNIGHTS_BB], b.color_bbs[WHITE]),
-                valid_squares
-            );
-        }
-    }
-
-    mod valid_rook_moves {
-        use super::*;
-
-        #[test]
-        fn it_works_with_no_obstacles() {
-            let b = Board::new_from_pieces(
-                EMPTY, EMPTY, EMPTY, E4_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
-                EMPTY, WHITE,
-            );
-
-            let valid_squares = (E_FILE | RANK_4) ^ E4_SQUARE;
-
-            assert_eq!(
-                MoveGen::valid_rook_moves(&b, b.piece_bbs[WHITE][ROOKS_BB], b.color_bbs[WHITE]),
-                valid_squares
-            );
-        }
-
-        #[test]
-        fn it_works_with_other_shared_pieces() {
-            let b = Board::new_from_pieces(
-                E6_SQUARE, EMPTY, EMPTY, E4_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
-                EMPTY, EMPTY, WHITE,
-            );
-
-            let valid_squares = (E_FILE | RANK_4) ^ E4_SQUARE ^ E6_SQUARE ^ E7_SQUARE ^ E8_SQUARE;
-
-            assert_eq!(
-                MoveGen::valid_rook_moves(&b, b.piece_bbs[WHITE][ROOKS_BB], b.color_bbs[WHITE]),
-                valid_squares
-            );
-        }
-    }
-
-    mod valid_bishop_moves {
-        use super::*;
-
-        #[test]
-        fn it_works_with_no_obstacles() {
-            let b = Board::new_from_pieces(
-                EMPTY, EMPTY, B1_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
-                EMPTY, WHITE,
-            );
-
-            let valid_squares =
-                A2_SQUARE | C2_SQUARE | D3_SQUARE | E4_SQUARE | F5_SQUARE | G6_SQUARE | H7_SQUARE;
-
-            assert_eq!(
-                MoveGen::valid_bishop_moves(&b, b.piece_bbs[WHITE][BISHOPS_BB], b.color_bbs[WHITE]),
-                valid_squares
-            );
-        }
-
-        #[test]
-        fn it_works_with_other_shared_pieces() {
-            let b = Board::new_from_pieces(
-                EMPTY, G6_SQUARE, B1_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
-                EMPTY, EMPTY, WHITE,
-            );
-
-            let valid_squares = A2_SQUARE | C2_SQUARE | D3_SQUARE | E4_SQUARE | F5_SQUARE;
-
-            assert_eq!(
-                MoveGen::valid_bishop_moves(&b, b.piece_bbs[WHITE][BISHOPS_BB], b.color_bbs[WHITE]),
-                valid_squares
-            );
-        }
-    }
-
-    mod valid_queen_moves {
-        use super::*;
-
-        #[test]
-        fn it_combines_rooks_and_bishop_moves() {
-            let b = Board::new_from_pieces(
-                G3_SQUARE, B6_SQUARE, EMPTY, EMPTY, G6_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
-                EMPTY, EMPTY, WHITE,
-            );
-
-            let bishop_moves =
-                MoveGen::valid_bishop_moves(&b, b.piece_bbs[WHITE][QUEENS_BB], b.color_bbs[WHITE]);
-            let rook_moves =
-                MoveGen::valid_rook_moves(&b, b.piece_bbs[WHITE][QUEENS_BB], b.color_bbs[WHITE]);
-            let valid_moves = bishop_moves | rook_moves;
-
-            assert_eq!(
-                MoveGen::valid_queen_moves(&b, b.piece_bbs[WHITE][QUEENS_BB], b.color_bbs[WHITE]),
-                valid_moves,
-            );
-        }
-    }
-
-    mod valid_white_pawn_moves {
-        use super::*;
-
-        #[test]
-        fn it_works_from_home_square() {
-            let b = Board::new_from_pieces(
-                RANK_2 ^ C2_SQUARE,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                WHITE,
-            );
-
-            let valid_squares = A3_SQUARE
-                | A4_SQUARE
-                | B3_SQUARE
-                | B4_SQUARE
-                | D3_SQUARE
-                | D4_SQUARE
-                | E3_SQUARE
-                | E4_SQUARE
-                | F3_SQUARE
-                | F4_SQUARE
-                | G3_SQUARE
-                | G4_SQUARE
-                | H3_SQUARE
-                | H4_SQUARE;
-
-            assert_eq!(
-                MoveGen::valid_white_pawn_moves(&b, b.piece_bbs[WHITE][PAWNS_BB]),
-                valid_squares
-            );
-        }
-
-        #[test]
-        fn it_works_from_non_home_square() {
-            let b = Board::new_from_pieces(
-                RANK_4, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,
-                EMPTY, WHITE,
-            );
-
-            let valid_squares = A5_SQUARE
-                | B5_SQUARE
-                | C5_SQUARE
-                | D5_SQUARE
-                | E5_SQUARE
-                | F5_SQUARE
-                | G5_SQUARE
-                | H5_SQUARE;
-
-            assert_eq!(
-                MoveGen::valid_white_pawn_moves(&b, b.piece_bbs[WHITE][PAWNS_BB]),
-                valid_squares
-            );
-        }
-
-        #[test]
-        fn it_works_with_captures() {
-            let b = Board::new_from_pieces(
-                E5_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, F6_SQUARE, EMPTY, EMPTY, EMPTY,
-                EMPTY, EMPTY, WHITE,
-            );
-
-            let valid_squares = E6_SQUARE | F6_SQUARE;
-
-            assert_eq!(
-                MoveGen::valid_white_pawn_moves(&b, b.piece_bbs[WHITE][PAWNS_BB]),
-                valid_squares
-            );
-        }
-
-        #[test]
-        fn it_works_with_obstacles() {
-            let b = Board::new_from_pieces(
-                E5_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, E6_SQUARE, EMPTY, EMPTY, EMPTY,
-                EMPTY, EMPTY, WHITE,
-            );
-
-            let valid_squares = EMPTY;
-
-            assert_eq!(
-                MoveGen::valid_white_pawn_moves(&b, b.piece_bbs[WHITE][PAWNS_BB]),
-                valid_squares
-            );
-        }
-    }
-
-    mod valid_black_pawn_moves {
-        use super::*;
-
-        #[test]
-        fn it_works_from_home_square() {
-            let b = Board::new_from_pieces(
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                RANK_7 ^ C7_SQUARE,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                EMPTY,
-                WHITE,
-            );
-
-            let valid_squares = A6_SQUARE
-                | A5_SQUARE
-                | B6_SQUARE
-                | B5_SQUARE
-                | D6_SQUARE
-                | D5_SQUARE
-                | E6_SQUARE
-                | E5_SQUARE
-                | F6_SQUARE
-                | F5_SQUARE
-                | G6_SQUARE
-                | G5_SQUARE
-                | H6_SQUARE
-                | H5_SQUARE;
-
-            assert_eq!(
-                MoveGen::valid_black_pawn_moves(&b, b.piece_bbs[BLACK][PAWNS_BB]),
-                valid_squares
-            );
-        }
-
-        #[test]
-        fn it_works_from_non_home_square() {
-            let b = Board::new_from_pieces(
-                EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, RANK_4, EMPTY, EMPTY, EMPTY, EMPTY,
-                EMPTY, WHITE,
-            );
-
-            let valid_squares = A3_SQUARE
-                | B3_SQUARE
-                | C3_SQUARE
-                | D3_SQUARE
-                | E3_SQUARE
-                | F3_SQUARE
-                | G3_SQUARE
-                | H3_SQUARE;
-
-            assert_eq!(
-                MoveGen::valid_black_pawn_moves(&b, b.piece_bbs[BLACK][PAWNS_BB]),
-                valid_squares
-            );
-        }
-
-        #[test]
-        fn it_works_with_captures() {
-            let b = Board::new_from_pieces(
-                E5_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, F6_SQUARE, EMPTY, EMPTY, EMPTY,
-                EMPTY, EMPTY, WHITE,
-            );
-
-            let valid_squares = E5_SQUARE | F5_SQUARE;
-
-            assert_eq!(
-                MoveGen::valid_black_pawn_moves(&b, b.piece_bbs[BLACK][PAWNS_BB]),
-                valid_squares
-            );
-        }
-
-        #[test]
-        fn it_works_with_obstacles() {
-            let b = Board::new_from_pieces(
-                E5_SQUARE, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, E6_SQUARE, EMPTY, EMPTY, EMPTY,
-                EMPTY, EMPTY, WHITE,
-            );
-
-            let valid_squares = EMPTY;
-
-            assert_eq!(
-                MoveGen::valid_black_pawn_moves(&b, b.piece_bbs[BLACK][PAWNS_BB]),
-                valid_squares
-            );
-        }
     }
 
     mod pinned_pieces {

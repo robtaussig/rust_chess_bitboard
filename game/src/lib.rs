@@ -11,6 +11,7 @@ use crate::constants::*;
 extern crate bitboard;
 use crate::bitboard::*;
 mod moment;
+use board::BoardParams;
 use moment::*;
 
 #[derive(Clone)]
@@ -84,7 +85,7 @@ impl Game {
     //TODO test
     //Returns list of all moved pieces, including castling rook
     pub fn make_move(&mut self, chessmove: &ChessMove) -> Vec<(BitBoard, BitBoard)> {
-        self.prev_board = Some(self.board.clone());
+        self.prev_board = Some(self.board);
         let prev_en_passant = self.board.en_passant;
         self.board.en_passant = EMPTY;
         let mut moves: Vec<(BitBoard, BitBoard)> = Vec::new();
@@ -442,20 +443,26 @@ impl Game {
             black_kings |= square & !taken_squares;
         }
         
-        self.board = Board::new_from_pieces(
-            white_pawns,
-            white_knights,
-            white_bishops,
-            white_rooks,
-            white_queens,
-            white_kings,
-            black_pawns,
-            black_knights,
-            black_bishops,
-            black_rooks,
-            black_queens,
-            black_kings,
-            WHITE,
+        self.board = Board::new(
+            BoardParams {
+                white_pawns,
+                white_knights,
+                white_bishops,
+                white_rooks,
+                white_queens,
+                white_kings,
+                black_pawns,
+                black_knights,
+                black_bishops,
+                black_rooks,
+                black_queens,
+                black_kings,
+                side_to_move: Some(WHITE),
+                castle_rights: None,
+                en_passant: None,
+                half_moves_since_action: None,
+                full_moves: None,
+            }
         );
 
         self.record_moment((EMPTY, EMPTY));
