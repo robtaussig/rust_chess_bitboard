@@ -218,121 +218,122 @@ impl Game {
         }
     }
 
-    //TODO test
-    pub fn get_strategic_eval(_board: &Board) -> i32 {
-        //Consider phase of game
-        //Consider board openness
-        0
-    }
+    //TODO test everything else first
+    // //TODO test
+    // pub fn get_strategic_eval(_board: &Board) -> i32 {
+    //     //Consider phase of game
+    //     //Consider board openness
+    //     0
+    // }
 
-    //TODO test
-    pub fn get_positional_eval(_board: &Board) -> i32 {
-        //Consider #attacked squares
-        //Consider castle rights
-        //Consider strong positions by pieces
-        //Consdier #attacked pieces
-        //Consider #
-        0
-    }
+    // //TODO test
+    // pub fn get_positional_eval(_board: &Board) -> i32 {
+    //     //Consider #attacked squares
+    //     //Consider castle rights
+    //     //Consider strong positions by pieces
+    //     //Consdier #attacked pieces
+    //     //Consider #
+    //     0
+    // }
 
-    //TODO test
-    pub fn get_material_eval(board: &Board) -> i32 {
-        let (white, black) = board.get_material_eval();
+    // //TODO test
+    // pub fn get_material_eval(board: &Board) -> i32 {
+    //     let (white, black) = board.get_material_eval();
 
-        if board.side_to_move == WHITE {
-            white as i32 - black as i32
-        } else {
-            black as i32 - white as i32
-        }
-    }
+    //     if board.side_to_move == WHITE {
+    //         white as i32 - black as i32
+    //     } else {
+    //         black as i32 - white as i32
+    //     }
+    // }
 
-    //Always from white perspective
-    //TODO test
-    pub fn get_full_eval(board: &Board) -> i32 {
-        let material = Game::get_material_eval(board);
-        let positional = Game::get_positional_eval(board);
-        let strategic = Game::get_strategic_eval(board);
-        material + positional + strategic
-    }
+    // //Always from white perspective
+    // //TODO test
+    // pub fn get_full_eval(board: &Board) -> i32 {
+    //     let material = Game::get_material_eval(board);
+    //     let positional = Game::get_positional_eval(board);
+    //     let strategic = Game::get_strategic_eval(board);
+    //     material + positional + strategic
+    // }
 
-    //TODO test
-    pub fn get_best_move(&mut self, depth: u8) -> Option<(BitBoard, BitBoard)> {
-        let mut g = self.clone();
+    // //TODO test
+    // pub fn get_best_move(&mut self, depth: u8) -> Option<(BitBoard, BitBoard)> {
+    //     let mut g = self.clone();
 
-        g.record_history = false;
+    //     g.record_history = false;
 
-        let (_eval_score, chessmove) = g.get_best_move_recursive(depth, true, i32::MIN, i32::MAX);
+    //     let (_eval_score, chessmove) = g.get_best_move_recursive(depth, true, i32::MIN, i32::MAX);
 
-        println!("{}", _eval_score);
+    //     println!("{}", _eval_score);
 
-        chessmove
-    }
+    //     chessmove
+    // }
 
-    pub fn get_best_move_recursive(
-        &mut self,
-        depth: u8,
-        is_maximizer: bool,
-        mut alpha: i32,
-        mut beta: i32,
-    ) -> (i32, Option<(BitBoard, BitBoard)>) {
-        if depth == 0 {
-            let eval_score = Game::get_full_eval(&self.board);
-            if is_maximizer {
-                return (eval_score, None);
-            } else {
-                return (-eval_score, None);
-            }
-        }
+    // pub fn get_best_move_recursive(
+    //     &mut self,
+    //     depth: u8,
+    //     is_maximizer: bool,
+    //     mut alpha: i32,
+    //     mut beta: i32,
+    // ) -> (i32, Option<(BitBoard, BitBoard)>) {
+    //     if depth == 0 {
+    //         let eval_score = Game::get_full_eval(&self.board);
+    //         if is_maximizer {
+    //             return (eval_score, None);
+    //         } else {
+    //             return (-eval_score, None);
+    //         }
+    //     }
 
-        let mut best_move: Option<(BitBoard, BitBoard)> = None;
-        let mut best_move_value = match is_maximizer {
-            true => i32::MIN,
-            false => i32::MAX,
-        };
-        let mut value: i32;
+    //     let mut best_move: Option<(BitBoard, BitBoard)> = None;
+    //     let mut best_move_value = match is_maximizer {
+    //         true => i32::MIN,
+    //         false => i32::MAX,
+    //     };
+    //     let mut value: i32;
 
-        let valid_moves = ChessMove::broken_up(MoveGen::gen_legal_moves(&self.board));
+    //     let valid_moves = ChessMove::broken_up(MoveGen::gen_legal_moves(&self.board));
 
-        let mut valid_moves_with_eval: Vec<(&ChessMove, i32, Board)> = valid_moves
-            .iter()
-            .map(|chessmove| {
-                self.make_move(chessmove);
-                let board = self.board;
-                let eval = Game::get_material_eval(&board);
-                self.undo();
-                (chessmove, eval, board)
-            })
-            .collect();
+    //     let mut valid_moves_with_eval: Vec<(&ChessMove, i32, Board)> = valid_moves
+    //         .iter()
+    //         .map(|chessmove| {
+    //             self.make_move(chessmove);
+    //             let board = self.board;
+    //             let eval = Game::get_material_eval(&board);
+    //             self.undo();
+    //             (chessmove, eval, board)
+    //         })
+    //         .collect();
 
-        valid_moves_with_eval.sort_by(|l, r| l.1.partial_cmp(&r.1).unwrap());
+    //     valid_moves_with_eval.sort_by(|l, r| l.1.partial_cmp(&r.1).unwrap());
 
-        for valid_move in valid_moves_with_eval {
-            self.board = valid_move.2;
-            value = self
-                .get_best_move_recursive(depth - 1, !is_maximizer, alpha, beta)
-                .0;
+    //     for valid_move in valid_moves_with_eval {
+    //         self.board = valid_move.2;
+    //         value = self
+    //             .get_best_move_recursive(depth - 1, !is_maximizer, alpha, beta)
+    //             .0;
 
-            if is_maximizer {
-                if value > best_move_value {
-                    best_move_value = value;
-                    best_move = Some((valid_move.0.from, valid_move.0.to));
-                }
-                alpha = std::cmp::max(alpha, value);
-            } else {
-                if value < best_move_value {
-                    best_move_value = value;
-                    best_move = Some((valid_move.0.from, valid_move.0.to));
-                }
-                beta = std::cmp::min(beta, value);
-            }
+    //         if is_maximizer {
+    //             if value > best_move_value {
+    //                 best_move_value = value;
+    //                 best_move = Some((valid_move.0.from, valid_move.0.to));
+    //             }
+    //             alpha = std::cmp::max(alpha, value);
+    //         } else {
+    //             if value < best_move_value {
+    //                 best_move_value = value;
+    //                 best_move = Some((valid_move.0.from, valid_move.0.to));
+    //             }
+    //             beta = std::cmp::min(beta, value);
+    //         }
 
-            if beta <= alpha {
-                break;
-            }
-        }
+    //         if beta <= alpha {
+    //             break;
+    //         }
+    //     }
 
-        (best_move_value, best_move)
-    }
+    //     (best_move_value, best_move)
+    // }
 
     pub fn randomize_board(&mut self) -> &Self {
         use rand::{thread_rng, Rng};
@@ -527,15 +528,26 @@ mod tests {
             }
         }
 
-        #[test]
-        fn it_works() {
-            let mut g =
-                Game::from_fen("rn1qkbnr/1pp2ppp/p7/3pp3/4P1b1/3P4/PPP2PPP/RNB1KBNR w kq - 0 1");
-            let best_move = g.get_best_move(6);
-            if let Some(chessmove) = best_move {
-                chessmove.0.print_bb("From");
-                chessmove.1.print_bb("To");
-            }
-        }
+        // #[test]
+        // fn it_works() {
+        //     let mut g =
+        //         Game::from_fen("rn1qkbnr/1pp2ppp/p7/3pp3/4P1b1/3P4/PPP2PPP/RNB1KBNR w kq - 0 1");
+        //     let best_move = g.get_best_move(6);
+        //     if let Some(chessmove) = best_move {
+        //         chessmove.0.print_bb("From");
+        //         chessmove.1.print_bb("To");
+        //     }
+        // }
+
+        // #[test]
+        // fn it_works2() {
+        //     let mut g =
+        //         Game::from_fen("r1bqkbnr/1ppp1pp1/p1n4p/4p3/4P3/1P3N2/PBPP1PPP/RN1QKB1R w KQkq - 0 1");
+        //     let best_move = g.get_best_move(3);
+        //     if let Some(chessmove) = best_move {
+        //         chessmove.0.print_bb("From");
+        //         chessmove.1.print_bb("To");
+        //     }
+        // }
     }
 }
