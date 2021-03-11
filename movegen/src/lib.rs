@@ -192,7 +192,7 @@ impl MoveGen {
         let mut kingside_castle_move = EMPTY;
         let mut queenside_castle_move = EMPTY;
 
-        if board.side_to_move == WHITE && (board.castle_rights & (G1_SQUARE | C1_SQUARE) != EMPTY) {
+        if board.side_to_move == WHITE && squares == E1_SQUARE && (board.castle_rights & (G1_SQUARE | C1_SQUARE) != EMPTY) {
             if board.combined_bbs[EMPTY_SQUARES_BB] & WHITE_KINGSIDE_CASTLE_EMPTY_SQUARES
                 == WHITE_KINGSIDE_CASTLE_EMPTY_SQUARES
             {
@@ -203,7 +203,7 @@ impl MoveGen {
             {
                 queenside_castle_move = C1_SQUARE;
             }
-        } else if board.side_to_move == BLACK
+        } else if board.side_to_move == BLACK && squares == E8_SQUARE
             && (board.castle_rights & (G8_SQUARE | C8_SQUARE) != EMPTY)
         {
             if board.combined_bbs[EMPTY_SQUARES_BB] & BLACK_KINGSIDE_CASTLE_EMPTY_SQUARES
@@ -266,28 +266,34 @@ impl MoveGen {
         moves & !own_side
     }
 
+    pub fn valid_white_pawn_attacks(board: &Board, squares: BitBoard) -> BitBoard {
+        let left_attack = (squares & CLEAR_A_FILE).shl(7);
+        let right_attack = (squares & CLEAR_H_FILE).shl(9);
+        let attacks = left_attack | right_attack;
+        attacks & (board.color_bbs[BLACK] | board.en_passant)
+    }
+
     pub fn valid_white_pawn_moves(board: &Board, squares: BitBoard) -> BitBoard {
         let one_step = (squares.shl(8)) & board.combined_bbs[EMPTY_SQUARES_BB];
         let two_steps = ((one_step & RANK_3).shl(8)) & board.combined_bbs[EMPTY_SQUARES_BB];
         let valid_steps = one_step | two_steps;
-
-        let left_attack = (squares & CLEAR_A_FILE).shl(7);
-        let right_attack = (squares & CLEAR_H_FILE).shl(9);
-        let attacks = left_attack | right_attack;
-        let valid_attacks = attacks & (board.color_bbs[BLACK] | board.en_passant);
+        let valid_attacks = MoveGen::valid_white_pawn_attacks(board, squares);
 
         valid_steps | valid_attacks
+    }
+
+    pub fn valid_black_pawn_attacks(board: &Board, squares: BitBoard) -> BitBoard {
+        let left_attack = (squares & CLEAR_A_FILE).shr(9);
+        let right_attack = (squares & CLEAR_H_FILE).shr(7);
+        let attacks = left_attack | right_attack;
+        attacks & board.color_bbs[WHITE]
     }
 
     pub fn valid_black_pawn_moves(board: &Board, squares: BitBoard) -> BitBoard {
         let one_step = (squares.shr(8)) & board.combined_bbs[EMPTY_SQUARES_BB];
         let two_steps = ((one_step & RANK_6).shr(8)) & board.combined_bbs[EMPTY_SQUARES_BB];
         let valid_steps = one_step | two_steps;
-
-        let left_attack = (squares & CLEAR_A_FILE).shr(9);
-        let right_attack = (squares & CLEAR_H_FILE).shr(7);
-        let attacks = left_attack | right_attack;
-        let valid_attacks = attacks & board.color_bbs[WHITE];
+        let valid_attacks = MoveGen::valid_black_pawn_attacks(board, squares);
 
         valid_steps | valid_attacks
     }
@@ -520,9 +526,9 @@ impl MoveGen {
         let knight_attackers = MoveGen::valid_knight_moves(board, test_square, own_pieces);
         let pawn_attackers: BitBoard;
         if board.side_to_move == WHITE {
-            pawn_attackers = MoveGen::valid_white_pawn_moves(board, test_square);
+            pawn_attackers = MoveGen::valid_white_pawn_attacks(board, test_square);
         } else {
-            pawn_attackers = MoveGen::valid_black_pawn_moves(board, test_square);
+            pawn_attackers = MoveGen::valid_black_pawn_attacks(board, test_square);
         }
 
         attackers ^= bishop_attackers
@@ -577,6 +583,40 @@ mod tests {
     #[test]
     fn it_works() {
         assert_eq!(2 + 2, 4);
+    }
+
+    mod castling {
+        use super::*;
+
+        #[test]
+        fn it_works() {
+            let b = Board::from_fen("r2qkbnr/pppbpppp/2n5/1B1p4/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 1");
+            let moves = MoveGen::gen_legal_moves(&b);
+            for cm in moves {
+                cm.from.print_bb("from");
+                cm.to.print_bb("to");
+            }
+        }
+    }
+
+    mod moving_into_check {
+        use super::*;
+
+        #[test]
+        fn it_works() {
+            
+        }
+    }
+
+    mod attacked_squares {
+        use super::*;
+
+        #[test]
+        fn it_works() {
+            let b = Board::from_fen("8/8/8/8/8/8/8/4K2R w KQkq - 0 1");
+            let a = MoveGen::find_attacked_squares(&b);
+            a.print_bb("Attacked squares");
+        }
     }
 
     mod pinned_pieces {

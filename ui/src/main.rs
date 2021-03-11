@@ -90,6 +90,25 @@ impl MainState {
         }
     }
 
+
+    fn debug(&mut self, verbose: bool) {
+        self.game.board.print_board();
+        println!("{}", self.game.board.to_fen());
+
+        self.game.board.pinned.print_bb("Pinned");
+        self.game.board.checkers.print_bb("Checkers");
+        self.game.board.attacked_squares.print_bb("Attacked Squares");
+
+        if verbose {
+            print!("Valid moves");
+            for i in 0..self.valid_moves.len() {
+                let cm = self.valid_moves[i];
+                cm.from.print_bb("From");
+                cm.to.print_bb("To");
+            }
+        }
+    }
+
     fn make_move(&mut self, from: BitBoard, to: BitBoard) {
         let moving_piece = self.game.board.get_piece_at(from);
         if moving_piece == Pieces::WPawn && to & RANK_8 != EMPTY {
@@ -400,6 +419,11 @@ impl EventHandler for MainState {
             KeyCode::Y => {
                 if keymods.contains(KeyMods::CTRL) || keymods.contains(KeyMods::LOGO) {
                     self.go_forward();
+                }
+            }
+            KeyCode::D => {
+                if keymods.contains(KeyMods::CTRL) || keymods.contains(KeyMods::LOGO) {
+                    self.debug(keymods.contains(KeyMods::SHIFT));
                 }
             }
             _ => (),
