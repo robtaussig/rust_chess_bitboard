@@ -175,6 +175,11 @@ impl MainState {
     }
 
     fn restart_game(&mut self) {
+        let (checkers, pinned, attacked_squares) = MoveGen::calculate_derived_bitboards(&self.game.board);
+        self.game.board.attacked_squares = attacked_squares;
+        self.game.board.checkers = checkers;
+        self.game.board.pinned = pinned;
+
         let valid_moves = MoveGen::gen_legal_moves(&self.game.board);
 
         self.last_move = (EMPTY, EMPTY);
@@ -191,6 +196,7 @@ impl MainState {
                 );
             }
         }
+        
         self.promotion_panel = None;
         self.dragged_piece = None;
         self.move_from = EMPTY;

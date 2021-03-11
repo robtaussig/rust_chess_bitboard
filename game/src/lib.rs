@@ -13,6 +13,7 @@ use crate::bitboard::*;
 mod moment;
 use board::BoardParams;
 use moment::*;
+use rayon::prelude::*;
 
 #[derive(Clone)]
 pub struct Game {
@@ -25,7 +26,7 @@ pub struct Game {
 
 impl Game {
     pub fn new(mut board: Board) -> Self {
-        let (checkers, pinned, attacked_squares) = Game::calculate_derived_bitboards(&board);
+        let (checkers, pinned, attacked_squares) = MoveGen::calculate_derived_bitboards(&board);
         board.checkers = checkers;
         board.pinned = pinned;
         board.attacked_squares = attacked_squares;
@@ -74,12 +75,6 @@ impl Game {
             self.history.push(Moment::new(board_fen, last_move));
             self.future = Vec::new();
         }
-    }
-
-    pub fn calculate_derived_bitboards(board: &Board) -> (BitBoard, BitBoard, BitBoard) {
-        let (checkers, pinned) = MoveGen::find_checkers_and_pinned_pieces(&board);
-        let attacked_squares = MoveGen::find_attacked_squares(&board);
-        (checkers, pinned, attacked_squares)
     }
 
     //TODO test
@@ -202,7 +197,7 @@ impl Game {
             moves.push((EMPTY, chessmove.to));
         }
         self.board.switch_side_to_move();
-        let (checkers, pinned, attacked_squares) = Game::calculate_derived_bitboards(&self.board);
+        let (checkers, pinned, attacked_squares) = MoveGen::calculate_derived_bitboards(&self.board);
         self.board.checkers = checkers;
         self.board.pinned = pinned;
         self.board.attacked_squares = attacked_squares;
@@ -218,7 +213,7 @@ impl Game {
         }
     }
 
-    //TODO test everything else first
+    // // TODO test everything else first
     // //TODO test
     // pub fn get_strategic_eval(_board: &Board) -> i32 {
     //     //Consider phase of game
@@ -297,6 +292,7 @@ impl Game {
     //     let mut valid_moves_with_eval: Vec<(&ChessMove, i32, Board)> = valid_moves
     //         .iter()
     //         .map(|chessmove| {
+    //             // let mut cloned = self.clone();
     //             self.make_move(chessmove);
     //             let board = self.board;
     //             let eval = Game::get_material_eval(&board);

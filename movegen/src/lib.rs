@@ -445,6 +445,12 @@ impl MoveGen {
         bishop_attacks | rook_attacks
     }
 
+    pub fn calculate_derived_bitboards(board: &Board) -> (BitBoard, BitBoard, BitBoard) {
+        let (checkers, pinned) = MoveGen::find_checkers_and_pinned_pieces(&board);
+        let attacked_squares = MoveGen::find_attacked_squares(&board);
+        (checkers, pinned, attacked_squares)
+    }
+
     pub fn find_pinned_pieces(board: &Board) -> BitBoard {
         let ksq = board.piece_bbs[board.side_to_move][KINGS_BB];
 
@@ -576,6 +582,15 @@ impl MoveGen {
     }
 }
 
+pub fn init_board_from_fen(fen: &str) -> Board {
+    let mut b = Board::from_fen(fen);
+    let (checkers, pinned, attacked_squares) = MoveGen::calculate_derived_bitboards(&b);
+    b.attacked_squares = attacked_squares;
+    b.checkers = checkers;
+    b.pinned = pinned;
+    b
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -590,7 +605,7 @@ mod tests {
 
         #[test]
         fn it_works() {
-            let b = Board::from_fen("r2qkbnr/pppbpppp/2n5/1B1p4/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 1");
+            let b = init_board_from_fen("r2qkbnr/pppbpppp/2n5/1B1p4/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 1");
             let moves = MoveGen::gen_legal_moves(&b);
             for cm in moves {
                 cm.from.print_bb("from");
@@ -604,7 +619,14 @@ mod tests {
 
         #[test]
         fn it_works() {
-            
+            let b = init_board_from_fen("r1bqkbnr/1pp2pp1/p1n4p/1B1pp1B1/4P3/3P1N1P/PPP2PP1/RN1QK2R b KQkq - 0 1");
+            let moves = MoveGen::gen_legal_moves(&b);
+            for cm in moves {
+                if cm.from == E8_SQUARE {
+                    cm.from.print_bb("from");
+                    cm.to.print_bb("to");
+                }
+            }
         }
     }
 
@@ -613,7 +635,7 @@ mod tests {
 
         #[test]
         fn it_works() {
-            let b = Board::from_fen("8/8/8/8/8/8/8/4K2R w KQkq - 0 1");
+            let b = init_board_from_fen("8/8/8/8/8/8/8/4K2R w KQkq - 0 1");
             let a = MoveGen::find_attacked_squares(&b);
             a.print_bb("Attacked squares");
         }
@@ -625,7 +647,7 @@ mod tests {
         #[test]
         fn it_works() {
             let b =
-                Board::from_fen("rnbqkbnr/pppp1ppp/8/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR b KQkq - 0 1");
+                init_board_from_fen("rnbqkbnr/pppp1ppp/8/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR b KQkq - 0 1");
             let pinned = MoveGen::find_pinned_pieces(&b);
 
             assert_eq!(pinned, F7_SQUARE);
