@@ -139,6 +139,14 @@ impl BitBoard {
     pub fn index(&self) -> usize {
         self.0.trailing_zeros() as usize
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.0 == 0
+    }
+
+    pub fn is_not_empty(&self) -> bool {
+        !self.is_empty()
+    }
 }
 
 pub struct BitIterator {

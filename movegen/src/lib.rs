@@ -30,12 +30,12 @@ impl MoveGen {
                 }
                 ChessMove::new(chessmove.from, safe_squares)
             })
-            .filter(|chessmove| chessmove.to != EMPTY)
+            .filter(|chessmove| chessmove.to.is_not_empty())
             .collect::<Vec<ChessMove>>();
 
-        if board.checkers != EMPTY {
+        if board.checkers.is_not_empty() {
             if board.checkers.popcnt() > 1 {
-                if safe_squares == EMPTY {
+                if safe_squares.is_empty() {
                     return Vec::new();
                 }
                 safe_king_moves
@@ -56,12 +56,12 @@ impl MoveGen {
                         if chessmove.from == ksq {
                             return chessmove;
                         }
-                        let allowed_squares = match chessmove.from & board.pinned == EMPTY {
+                        let allowed_squares = match (chessmove.from & board.pinned).is_empty() {
                             true => chessmove.to,
                             false => chessmove.to.bits().fold(EMPTY, |acc, bit| {
                                 let square = SQUARES[bit];
-                                if between_bb(ksq, square) & chessmove.from != EMPTY
-                                    || between_bb(ksq, chessmove.from) & square != EMPTY
+                                if (between_bb(ksq, square) & chessmove.from).is_not_empty()
+                                    || (between_bb(ksq, chessmove.from) & square).is_not_empty()
                                 {
                                     acc | square
                                 } else {
@@ -75,7 +75,7 @@ impl MoveGen {
                             allowed_squares & (board.checkers | attack_ray),
                         )
                     })
-                    .filter(|chessmove| chessmove.to != EMPTY)
+                    .filter(|chessmove| chessmove.to.is_not_empty())
                     .collect::<Vec<ChessMove>>()
             }
         } else {
@@ -86,14 +86,14 @@ impl MoveGen {
                         return ChessMove::new(chessmove.from, chessmove.to & safe_squares);
                     }
 
-                    if chessmove.from & board.pinned == EMPTY {
+                    if (chessmove.from & board.pinned).is_empty() {
                         return chessmove;
                     }
 
                     let allowed_squares = chessmove.to.bits().fold(EMPTY, |acc, bit| {
                         let square = SQUARES[bit];
-                        if between_bb(ksq, square) & chessmove.from != EMPTY
-                            || between_bb(ksq, chessmove.from) & square != EMPTY
+                        if (between_bb(ksq, square) & chessmove.from).is_not_empty()
+                            || (between_bb(ksq, chessmove.from) & square).is_not_empty()
                         {
                             acc | square
                         } else {
@@ -103,7 +103,7 @@ impl MoveGen {
 
                     ChessMove::new(chessmove.from, allowed_squares)
                 })
-                .filter(|chessmove| chessmove.to != EMPTY)
+                .filter(|chessmove| chessmove.to.is_not_empty())
                 .collect::<Vec<ChessMove>>()
         }
     }
@@ -123,12 +123,12 @@ impl MoveGen {
             let square = SQUARES[bit];
             if board.side_to_move == WHITE {
                 let cm = MoveGen::valid_white_pawn_moves(board, square);
-                if cm != EMPTY {
+                if cm.is_not_empty() {
                     move_vec.push(ChessMove::new(square, cm));
                 }
             } else {
                 let cm = MoveGen::valid_black_pawn_moves(board, square);
-                if cm != EMPTY {
+                if cm.is_not_empty() {
                     move_vec.push(ChessMove::new(square, cm));
                 }
             }
@@ -137,7 +137,7 @@ impl MoveGen {
         for bit in knights.bits() {
             let square = SQUARES[bit];
             let cm = MoveGen::valid_knight_moves(board, square, own_side);
-            if cm != EMPTY {
+            if cm.is_not_empty() {
                 move_vec.push(ChessMove::new(square, cm));
             }
         }
@@ -145,7 +145,7 @@ impl MoveGen {
         for bit in bishops.bits() {
             let square = SQUARES[bit];
             let cm = MoveGen::valid_bishop_moves(board, square, own_side);
-            if cm != EMPTY {
+            if cm.is_not_empty() {
                 move_vec.push(ChessMove::new(square, cm));
             }
         }
@@ -153,7 +153,7 @@ impl MoveGen {
         for bit in rooks.bits() {
             let square = SQUARES[bit];
             let cm = MoveGen::valid_rook_moves(board, square, own_side);
-            if cm != EMPTY {
+            if cm.is_not_empty() {
                 move_vec.push(ChessMove::new(square, cm));
             }
         }
@@ -161,7 +161,7 @@ impl MoveGen {
         for bit in queens.bits() {
             let square = SQUARES[bit];
             let cm = MoveGen::valid_queen_moves(board, square, own_side);
-            if cm != EMPTY {
+            if cm.is_not_empty() {
                 move_vec.push(ChessMove::new(square, cm));
             }
         }
@@ -169,7 +169,7 @@ impl MoveGen {
         for bit in kings.bits() {
             let square = SQUARES[bit];
             let cm = MoveGen::valid_king_moves(board, square, own_side);
-            if cm != EMPTY {
+            if cm.is_not_empty() {
                 move_vec.push(ChessMove::new(square, cm));
             }
         }
@@ -192,7 +192,7 @@ impl MoveGen {
         let mut kingside_castle_move = EMPTY;
         let mut queenside_castle_move = EMPTY;
 
-        if board.side_to_move == WHITE && squares == E1_SQUARE && (board.castle_rights & (G1_SQUARE | C1_SQUARE) != EMPTY) {
+        if board.side_to_move == WHITE && squares == E1_SQUARE && ((board.castle_rights & (G1_SQUARE | C1_SQUARE)).is_not_empty()) {
             if board.combined_bbs[EMPTY_SQUARES_BB] & WHITE_KINGSIDE_CASTLE_EMPTY_SQUARES
                 == WHITE_KINGSIDE_CASTLE_EMPTY_SQUARES
             {
@@ -204,7 +204,7 @@ impl MoveGen {
                 queenside_castle_move = C1_SQUARE;
             }
         } else if board.side_to_move == BLACK && squares == E8_SQUARE
-            && (board.castle_rights & (G8_SQUARE | C8_SQUARE) != EMPTY)
+            && ((board.castle_rights & (G8_SQUARE | C8_SQUARE)).is_not_empty())
         {
             if board.combined_bbs[EMPTY_SQUARES_BB] & BLACK_KINGSIDE_CASTLE_EMPTY_SQUARES
                 == BLACK_KINGSIDE_CASTLE_EMPTY_SQUARES
@@ -426,7 +426,7 @@ impl MoveGen {
         let bishop_like_attackers = bishop_attacks
             & (other_pieces_collection[BISHOPS_BB] | other_pieces_collection[QUEENS_BB]);
 
-        if bishop_like_attackers == EMPTY {
+        if bishop_like_attackers.is_empty() {
             bishop_attacks = EMPTY;
         } else {
             bishop_attacks &=
@@ -436,7 +436,7 @@ impl MoveGen {
         let rook_like_attackers =
             rook_attacks & (other_pieces_collection[ROOKS_BB] | other_pieces_collection[QUEENS_BB]);
 
-        if rook_like_attackers == EMPTY {
+        if rook_like_attackers.is_empty() {
             rook_attacks = EMPTY;
         } else {
             rook_attacks &= MoveGen::valid_rook_moves(board, rook_like_attackers, other_pieces);
@@ -468,7 +468,7 @@ impl MoveGen {
         let bishop_like_attackers_without_blockers =
             bishop_like_attackers.bits().fold(EMPTY, |acc, bit| {
                 let square = SQUARES[bit];
-                if between_bb(square, ksq) != EMPTY
+                if between_bb(square, ksq).is_not_empty()
                     && ksq.row() != square.row()
                     && ksq.col() != square.col()
                 {
@@ -481,7 +481,7 @@ impl MoveGen {
         let rook_like_attackers_without_blockers =
             rook_like_attackers.bits().fold(EMPTY, |acc, bit| {
                 let square = SQUARES[bit];
-                if between_bb(square, ksq) != EMPTY
+                if between_bb(square, ksq).is_not_empty()
                     && (ksq.row() == square.row() || ksq.col() == square.col())
                 {
                     acc | square
@@ -499,12 +499,12 @@ impl MoveGen {
             let king_to_attacker = between_bb(attacker_square, ksq);
             let mut num_blockers = 0;
             let mut blocker = EMPTY;
-            if king_to_attacker != EMPTY {
+            if king_to_attacker.is_not_empty() {
                 board.color_bbs[board.side_to_move]
                     .bits()
                     .for_each(|blocker_bit| {
                         let test_blocker = SQUARES[blocker_bit];
-                        if king_to_attacker & test_blocker != EMPTY {
+                        if (king_to_attacker & test_blocker).is_not_empty() {
                             blocker = test_blocker;
                             num_blockers += 1;
                         }
@@ -621,12 +621,14 @@ mod tests {
         fn it_works() {
             let b = init_board_from_fen("r1bqkbnr/1pp2pp1/p1n4p/1B1pp1B1/4P3/3P1N1P/PPP2PP1/RN1QK2R b KQkq - 0 1");
             let moves = MoveGen::gen_legal_moves(&b);
-            for cm in moves {
-                if cm.from == E8_SQUARE {
-                    cm.from.print_bb("from");
-                    cm.to.print_bb("to");
-                }
-            }
+            assert_eq!(
+                moves
+                    .iter()
+                    .find(|cm| {
+                        cm.from == E8_SQUARE && ((cm.to & E7_SQUARE).is_not_empty())
+                    }),
+                None
+            )
         }
     }
 

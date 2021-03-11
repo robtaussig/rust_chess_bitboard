@@ -123,16 +123,16 @@ impl Board {
         combined_bbs[ALL_PIECES_BB] = pieces;
         combined_bbs[EMPTY_SQUARES_BB] = empty_squares;
 
-        if params.white_rooks & A1_SQUARE == EMPTY {
+        if (params.white_rooks & A1_SQUARE).is_empty() {
             castle_rights &= !C1_SQUARE;
         }
-        if params.white_rooks & H1_SQUARE == EMPTY {
+        if (params.white_rooks & H1_SQUARE).is_empty() {
             castle_rights &= !G1_SQUARE;
         }
-        if params.black_rooks & A8_SQUARE == EMPTY {
+        if (params.black_rooks & A8_SQUARE).is_empty() {
             castle_rights &= !C8_SQUARE;
         }
-        if params.black_rooks & H8_SQUARE == EMPTY {
+        if (params.black_rooks & H8_SQUARE).is_empty() {
             castle_rights &= !G8_SQUARE;
         }
 
@@ -360,25 +360,25 @@ impl Board {
         }
         let mut castle_rights: Vec<&str> = Vec::new();
 
-        if self.castle_rights & G1_SQUARE != EMPTY {
+        if (self.castle_rights & G1_SQUARE).is_not_empty() {
             castle_rights.push("K");
         }
 
-        if self.castle_rights & C1_SQUARE != EMPTY {
+        if (self.castle_rights & C1_SQUARE).is_not_empty() {
             castle_rights.push("Q");
         }
 
-        if self.castle_rights & G8_SQUARE != EMPTY {
+        if (self.castle_rights & G8_SQUARE).is_not_empty() {
             castle_rights.push("k");
         }
 
-        if self.castle_rights & C8_SQUARE != EMPTY {
+        if (self.castle_rights & C8_SQUARE).is_not_empty() {
             castle_rights.push("q");
         }
 
         let castle_rights_str = castle_rights.join("");
         let en_passant_str: String;
-        if self.en_passant == EMPTY {
+        if self.en_passant.is_empty() {
             en_passant_str = String::from("-");
         } else {
             en_passant_str = Board::square_to_notation(self.en_passant);
@@ -399,39 +399,39 @@ impl Board {
     }
 
     pub fn get_piece_at(&self, square: BitBoard) -> Pieces {
-        if self.combined_bbs[EMPTY_SQUARES_BB] & square != EMPTY {
+        if (self.combined_bbs[EMPTY_SQUARES_BB] & square).is_not_empty() {
             Pieces::Empty
-        } else if self.combined_bbs[ALL_PAWNS_BB] & square != EMPTY {
-            if self.color_bbs[BLACK] & square != EMPTY {
+        } else if (self.combined_bbs[ALL_PAWNS_BB] & square).is_not_empty() {
+            if (self.color_bbs[BLACK] & square).is_not_empty() {
                 Pieces::BPawn
             } else {
                 Pieces::WPawn
             }
-        } else if self.combined_bbs[ALL_KNIGHTS_BB] & square != EMPTY {
-            if self.color_bbs[BLACK] & square != EMPTY {
+        } else if (self.combined_bbs[ALL_KNIGHTS_BB] & square).is_not_empty() {
+            if (self.color_bbs[BLACK] & square).is_not_empty() {
                 Pieces::BKnight
             } else {
                 Pieces::WKnight
             }
-        } else if self.combined_bbs[ALL_BISHOPS_BB] & square != EMPTY {
-            if self.color_bbs[BLACK] & square != EMPTY {
+        } else if (self.combined_bbs[ALL_BISHOPS_BB] & square).is_not_empty() {
+            if (self.color_bbs[BLACK] & square).is_not_empty() {
                 Pieces::BBishop
             } else {
                 Pieces::WBishop
             }
-        } else if self.combined_bbs[ALL_ROOKS_BB] & square != EMPTY {
-            if self.color_bbs[BLACK] & square != EMPTY {
+        } else if (self.combined_bbs[ALL_ROOKS_BB] & square).is_not_empty() {
+            if (self.color_bbs[BLACK] & square).is_not_empty() {
                 Pieces::BRook
             } else {
                 Pieces::WRook
             }
-        } else if self.combined_bbs[ALL_QUEENS_BB] & square != EMPTY {
-            if self.color_bbs[BLACK] & square != EMPTY {
+        } else if (self.combined_bbs[ALL_QUEENS_BB] & square).is_not_empty() {
+            if (self.color_bbs[BLACK] & square).is_not_empty() {
                 Pieces::BQueen
             } else {
                 Pieces::WQueen
             }
-        } else if self.color_bbs[BLACK] & square != EMPTY {
+        } else if (self.color_bbs[BLACK] & square).is_not_empty() {
             Pieces::BKing
         } else {
             Pieces::WKing

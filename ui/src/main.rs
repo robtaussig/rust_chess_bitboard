@@ -58,7 +58,7 @@ impl MainState {
 
     fn is_valid_destination(&self, to: BitBoard) -> bool {
         self.valid_moves.iter().any(|chessmove| {
-            ((chessmove.from & self.move_from) != EMPTY) && ((chessmove.to & to) != EMPTY)
+            ((chessmove.from & self.move_from).is_not_empty()) && ((chessmove.to & to).is_not_empty())
         })
     }
 
@@ -111,9 +111,9 @@ impl MainState {
 
     fn make_move(&mut self, from: BitBoard, to: BitBoard) {
         let moving_piece = self.game.board.get_piece_at(from);
-        if moving_piece == Pieces::WPawn && to & RANK_8 != EMPTY {
+        if moving_piece == Pieces::WPawn && (to & RANK_8).is_not_empty() {
             self.handle_white_promotion(from, to);
-        } else if moving_piece == Pieces::BPawn && to & RANK_1 != EMPTY {
+        } else if moving_piece == Pieces::BPawn && (to & RANK_1).is_not_empty() {
             self.handle_black_promotion(from, to);
         } else {
             self.commit_move(from, to);
@@ -183,8 +183,8 @@ impl MainState {
         let valid_moves = MoveGen::gen_legal_moves(&self.game.board);
 
         self.last_move = (EMPTY, EMPTY);
-        if self.game.board.en_passant != EMPTY {
-            if self.game.board.en_passant & RANK_6 != EMPTY {
+        if self.game.board.en_passant.is_not_empty() {
+            if (self.game.board.en_passant & RANK_6).is_not_empty() {
                 self.last_move = (
                     self.game.board.en_passant.shl(8),
                     self.game.board.en_passant.shr(8),
@@ -286,7 +286,7 @@ impl MainState {
                                 }
                             }
                         }
-                        if found_piece != EMPTY {
+                        if found_piece.is_not_empty() {
                             found_pieces[found_piece.row()][found_piece.col()] = true;
                             movers.insert(square.bitboard, found_piece);
                         } else {
@@ -331,7 +331,7 @@ impl EventHandler for MainState {
                 dragged_piece.2 .1 = pos.y;
             } else {
                 let destination = coord_to_bitboard(pos.x, pos.y);
-                if self.move_from != EMPTY && self.is_valid_destination(destination) {
+                if self.move_from.is_not_empty() && self.is_valid_destination(destination) {
                     self.make_move(self.move_from, destination);
                 }
                 self.dragged_piece = None;
@@ -377,7 +377,7 @@ impl EventHandler for MainState {
             return promotion_panel.mouse_button_down_event(ctx, button, x, y);
         }
         let destination = coord_to_bitboard(x, y);
-        if self.move_from != EMPTY && self.is_valid_destination(destination) {
+        if self.move_from.is_not_empty() && self.is_valid_destination(destination) {
             self.make_move(self.move_from, destination);
         } else {
             self.move_from = destination;
@@ -481,7 +481,7 @@ impl EventHandler for MainState {
             .expect("Failed to draw destination");
         draw_last_move_border(ctx, self.last_move.1.row(), self.last_move.1.col())
             .expect("Failed to draw destination");
-        if self.move_from != EMPTY {
+        if self.move_from.is_not_empty() {
             draw_move_from_border(ctx, self.move_from.row(), self.move_from.col())
                 .expect("Failed to draw destination");
         }

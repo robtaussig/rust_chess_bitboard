@@ -309,6 +309,19 @@ mod tests {
     }
 
     #[test]
+    fn empty_works() {
+        assert_eq!(
+            EMPTY.is_empty(),
+            true
+        );
+
+        assert_eq!(
+            A1_SQUARE.is_empty(),
+            false
+        );
+    }
+
+    #[test]
     fn squares_work() {
         assert_eq!(
             BitBoard::from_str("1000000000000000000000000000000000000000000000000000000000000000"),
