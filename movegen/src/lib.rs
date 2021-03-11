@@ -22,6 +22,11 @@ impl MoveGen {
         let valid_king_moves =
             MoveGen::valid_king_moves(board, ksq, board.color_bbs[board.side_to_move]);
         let safe_squares = valid_king_moves & !board.attacked_squares;
+        
+        // Instead of testing every move for whether it leaves the player in check,
+        // first filter out king moves that place the king on an attacked square.
+        // Then later filter out moves involving pinned pieces (pre-calculated) that move out of the pin,
+        // And then filtler out moves that do not address an immediate check (pre-calculated).
         let safe_king_moves = MoveGen::gen_psuedo_legal_moves(board)
             .into_iter()
             .map(|chessmove| {
@@ -33,7 +38,12 @@ impl MoveGen {
             .filter(|chessmove| chessmove.to.is_not_empty())
             .collect::<Vec<ChessMove>>();
 
+        // If king is currently in check, only consider moves that:
+        // a) Move the king
+        // b) Capture checking piece
+        // c) Block checking piece
         if board.checkers.is_not_empty() {
+            // If king is in check by more than one piece, the only valid response is to move the king
             if board.checkers.popcnt() > 1 {
                 if safe_squares.is_empty() {
                     return Vec::new();
@@ -48,6 +58,8 @@ impl MoveGen {
                     })
                     .collect::<Vec<ChessMove>>()
             } else {
+                // Only 1 piece is attacking the king, so between_bb() returns path from attacker to king
+                // A non-king move can only be valid by capturing attacker or moving to path
                 let attack_ray = between_bb(board.checkers, ksq);
 
                 safe_king_moves
@@ -56,19 +68,8 @@ impl MoveGen {
                         if chessmove.from == ksq {
                             return chessmove;
                         }
-                        let allowed_squares = match (chessmove.from & board.pinned).is_empty() {
-                            true => chessmove.to,
-                            false => chessmove.to.bits().fold(EMPTY, |acc, bit| {
-                                let square = SQUARES[bit];
-                                if (between_bb(ksq, square) & chessmove.from).is_not_empty()
-                                    || (between_bb(ksq, chessmove.from) & square).is_not_empty()
-                                {
-                                    acc | square
-                                } else {
-                                    acc
-                                }
-                            }),
-                        };
+
+                        let allowed_squares = MoveGen::filter_moves_out_of_pin(board, &chessmove, ksq);
 
                         ChessMove::new(
                             chessmove.from,
@@ -79,32 +80,45 @@ impl MoveGen {
                     .collect::<Vec<ChessMove>>()
             }
         } else {
-            MoveGen::gen_psuedo_legal_moves(board)
+            // King is not in check
+            safe_king_moves
                 .into_iter()
                 .map(|chessmove| {
                     if chessmove.from == ksq {
-                        return ChessMove::new(chessmove.from, chessmove.to & safe_squares);
+                        return chessmove;
                     }
 
                     if (chessmove.from & board.pinned).is_empty() {
                         return chessmove;
                     }
 
-                    let allowed_squares = chessmove.to.bits().fold(EMPTY, |acc, bit| {
-                        let square = SQUARES[bit];
-                        if (between_bb(ksq, square) & chessmove.from).is_not_empty()
-                            || (between_bb(ksq, chessmove.from) & square).is_not_empty()
-                        {
-                            acc | square
-                        } else {
-                            acc
-                        }
-                    });
+                    let allowed_squares = MoveGen::filter_moves_out_of_pin(board, &chessmove, ksq);
 
                     ChessMove::new(chessmove.from, allowed_squares)
                 })
                 .filter(|chessmove| chessmove.to.is_not_empty())
                 .collect::<Vec<ChessMove>>()
+        }
+    }
+
+    fn filter_moves_out_of_pin(board: &Board, chessmove: &ChessMove, king_square: BitBoard) -> BitBoard {
+        match (chessmove.from & board.pinned).is_empty() {
+            // Piece is not pinned
+            true => chessmove.to,
+            // Piece is pinned, so only squares on the same attack ray are valid destinations
+            // This can determined if the destination is between the king and the origin,
+            // or if the origin is between the destination and the king; the latter
+            // can be safely assumed because a sliding piece cannot skip over the attacker
+            false => chessmove.to.bits().fold(EMPTY, |acc, bit| {
+                let square = SQUARES[bit];
+                if (between_bb(king_square, square) & chessmove.from).is_not_empty()
+                    || (between_bb(king_square, chessmove.from) & square).is_not_empty()
+                {
+                    acc | square
+                } else {
+                    acc
+                }
+            }),
         }
     }
 
@@ -192,32 +206,34 @@ impl MoveGen {
         let mut kingside_castle_move = EMPTY;
         let mut queenside_castle_move = EMPTY;
 
-        if board.side_to_move == WHITE && squares == E1_SQUARE && ((board.castle_rights & (G1_SQUARE | C1_SQUARE)).is_not_empty()) {
-            if board.combined_bbs[EMPTY_SQUARES_BB] & WHITE_KINGSIDE_CASTLE_EMPTY_SQUARES
-                == WHITE_KINGSIDE_CASTLE_EMPTY_SQUARES
+        if board.checkers.is_empty() {
+            if board.side_to_move == WHITE && squares == E1_SQUARE && ((board.castle_rights & (G1_SQUARE | C1_SQUARE)).is_not_empty()) {
+                if board.combined_bbs[EMPTY_SQUARES_BB] & (WHITE_KINGSIDE_CASTLE_EMPTY_SQUARES & !board.attacked_squares)
+                    == WHITE_KINGSIDE_CASTLE_EMPTY_SQUARES
+                {
+                    kingside_castle_move = G1_SQUARE;
+                }
+                if board.combined_bbs[EMPTY_SQUARES_BB] & (WHITE_QUEENSIDE_CASTLE_EMPTY_SQUARES & !board.attacked_squares)
+                    == WHITE_QUEENSIDE_CASTLE_EMPTY_SQUARES
+                {
+                    queenside_castle_move = C1_SQUARE;
+                }
+            } else if board.side_to_move == BLACK && squares == E8_SQUARE
+                && ((board.castle_rights & (G8_SQUARE | C8_SQUARE)).is_not_empty())
             {
-                kingside_castle_move = G1_SQUARE;
-            }
-            if board.combined_bbs[EMPTY_SQUARES_BB] & WHITE_QUEENSIDE_CASTLE_EMPTY_SQUARES
-                == WHITE_QUEENSIDE_CASTLE_EMPTY_SQUARES
-            {
-                queenside_castle_move = C1_SQUARE;
-            }
-        } else if board.side_to_move == BLACK && squares == E8_SQUARE
-            && ((board.castle_rights & (G8_SQUARE | C8_SQUARE)).is_not_empty())
-        {
-            if board.combined_bbs[EMPTY_SQUARES_BB] & BLACK_KINGSIDE_CASTLE_EMPTY_SQUARES
-                == BLACK_KINGSIDE_CASTLE_EMPTY_SQUARES
-            {
-                kingside_castle_move = G8_SQUARE;
-            }
-            if board.combined_bbs[EMPTY_SQUARES_BB] & BLACK_QUEENSIDE_CASTLE_EMPTY_SQUARES
-                == BLACK_QUEENSIDE_CASTLE_EMPTY_SQUARES
-            {
-                queenside_castle_move = C8_SQUARE;
+                if board.combined_bbs[EMPTY_SQUARES_BB] & (BLACK_KINGSIDE_CASTLE_EMPTY_SQUARES & !board.attacked_squares)
+                    == BLACK_KINGSIDE_CASTLE_EMPTY_SQUARES
+                {
+                    kingside_castle_move = G8_SQUARE;
+                }
+                if board.combined_bbs[EMPTY_SQUARES_BB] & (BLACK_QUEENSIDE_CASTLE_EMPTY_SQUARES & !board.attacked_squares)
+                    == BLACK_QUEENSIDE_CASTLE_EMPTY_SQUARES
+                {
+                    queenside_castle_move = C8_SQUARE;
+                }
             }
         }
-
+        
         let moves = left_up
             | up
             | right_up
@@ -604,13 +620,31 @@ mod tests {
         use super::*;
 
         #[test]
-        fn it_works() {
-            let b = init_board_from_fen("r2qkbnr/pppbpppp/2n5/1B1p4/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 1");
+        fn cannot_castle_through_check() {
+            let b = init_board_from_fen("r2qkbnr/ppp1pppp/8/1b1pn3/P7/5N2/1PPP1PPP/RNBQK2R w KQkq - 0 1");
             let moves = MoveGen::gen_legal_moves(&b);
-            for cm in moves {
-                cm.from.print_bb("from");
-                cm.to.print_bb("to");
-            }
+            assert_eq!(
+                moves
+                    .iter()
+                    .find(|cm| {
+                        cm.from == E1_SQUARE && ((cm.to & G1_SQUARE).is_not_empty())
+                    }),
+                None
+            );
+        }
+
+        #[test]
+        fn cannot_castle_out_of_check() {
+            let b = init_board_from_fen("rnbqk1nr/2pp1ppp/pp6/1B2p3/1b1PP3/5N2/PPP2PPP/RNBQK2R w KQkq - 0 1");
+            let moves = MoveGen::gen_legal_moves(&b);
+            assert_eq!(
+                moves
+                    .iter()
+                    .find(|cm| {
+                        cm.from == E1_SQUARE && ((cm.to & G1_SQUARE).is_not_empty())
+                    }),
+                None
+            );
         }
     }
 
@@ -628,7 +662,7 @@ mod tests {
                         cm.from == E8_SQUARE && ((cm.to & E7_SQUARE).is_not_empty())
                     }),
                 None
-            )
+            );
         }
     }
 
@@ -637,9 +671,7 @@ mod tests {
 
         #[test]
         fn it_works() {
-            let b = init_board_from_fen("8/8/8/8/8/8/8/4K2R w KQkq - 0 1");
-            let a = MoveGen::find_attacked_squares(&b);
-            a.print_bb("Attacked squares");
+            //TODO
         }
     }
 
