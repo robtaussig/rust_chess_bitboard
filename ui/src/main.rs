@@ -58,7 +58,8 @@ impl MainState {
 
     fn is_valid_destination(&self, to: BitBoard) -> bool {
         self.valid_moves.iter().any(|chessmove| {
-            ((chessmove.from & self.move_from).is_not_empty()) && ((chessmove.to & to).is_not_empty())
+            ((chessmove.from & self.move_from).is_not_empty())
+                && ((chessmove.to & to).is_not_empty())
         })
     }
 
@@ -90,14 +91,16 @@ impl MainState {
         }
     }
 
-
     fn debug(&mut self, verbose: bool) {
         self.game.board.print_board();
         println!("{}", self.game.board.to_fen());
 
         self.game.board.pinned.print_bb("Pinned");
         self.game.board.checkers.print_bb("Checkers");
-        self.game.board.attacked_squares.print_bb("Attacked Squares");
+        self.game
+            .board
+            .attacked_squares
+            .print_bb("Attacked Squares");
 
         if verbose {
             print!("Valid moves");
@@ -175,7 +178,8 @@ impl MainState {
     }
 
     fn restart_game(&mut self) {
-        let (checkers, pinned, attacked_squares) = MoveGen::calculate_derived_bitboards(&self.game.board);
+        let (checkers, pinned, attacked_squares) =
+            MoveGen::calculate_derived_bitboards(&self.game.board);
         self.game.board.attacked_squares = attacked_squares;
         self.game.board.checkers = checkers;
         self.game.board.pinned = pinned;
@@ -196,7 +200,7 @@ impl MainState {
                 );
             }
         }
-        
+
         self.promotion_panel = None;
         self.dragged_piece = None;
         self.move_from = EMPTY;

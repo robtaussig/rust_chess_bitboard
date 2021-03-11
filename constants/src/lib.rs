@@ -310,15 +310,9 @@ mod tests {
 
     #[test]
     fn empty_works() {
-        assert_eq!(
-            EMPTY.is_empty(),
-            true
-        );
+        assert_eq!(EMPTY.is_empty(), true);
 
-        assert_eq!(
-            A1_SQUARE.is_empty(),
-            false
-        );
+        assert_eq!(A1_SQUARE.is_empty(), false);
     }
 
     #[test]

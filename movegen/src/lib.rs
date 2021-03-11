@@ -22,7 +22,7 @@ impl MoveGen {
         let valid_king_moves =
             MoveGen::valid_king_moves(board, ksq, board.color_bbs[board.side_to_move]);
         let safe_squares = valid_king_moves & !board.attacked_squares;
-        
+
         // Instead of testing every move for whether it leaves the player in check,
         // first filter out king moves that place the king on an attacked square.
         // Then later filter out moves involving pinned pieces (pre-calculated) that move out of the pin,
@@ -69,7 +69,8 @@ impl MoveGen {
                             return chessmove;
                         }
 
-                        let allowed_squares = MoveGen::filter_moves_out_of_pin(board, &chessmove, ksq);
+                        let allowed_squares =
+                            MoveGen::filter_moves_out_of_pin(board, &chessmove, ksq);
 
                         ChessMove::new(
                             chessmove.from,
@@ -101,7 +102,11 @@ impl MoveGen {
         }
     }
 
-    fn filter_moves_out_of_pin(board: &Board, chessmove: &ChessMove, king_square: BitBoard) -> BitBoard {
+    fn filter_moves_out_of_pin(
+        board: &Board,
+        chessmove: &ChessMove,
+        king_square: BitBoard,
+    ) -> BitBoard {
         match (chessmove.from & board.pinned).is_empty() {
             // Piece is not pinned
             true => chessmove.to,
@@ -207,33 +212,41 @@ impl MoveGen {
         let mut queenside_castle_move = EMPTY;
 
         if board.checkers.is_empty() {
-            if board.side_to_move == WHITE && squares == E1_SQUARE && ((board.castle_rights & (G1_SQUARE | C1_SQUARE)).is_not_empty()) {
-                if board.combined_bbs[EMPTY_SQUARES_BB] & (WHITE_KINGSIDE_CASTLE_EMPTY_SQUARES & !board.attacked_squares)
+            if board.side_to_move == WHITE
+                && squares == E1_SQUARE
+                && ((board.castle_rights & (G1_SQUARE | C1_SQUARE)).is_not_empty())
+            {
+                if board.combined_bbs[EMPTY_SQUARES_BB]
+                    & (WHITE_KINGSIDE_CASTLE_EMPTY_SQUARES & !board.attacked_squares)
                     == WHITE_KINGSIDE_CASTLE_EMPTY_SQUARES
                 {
                     kingside_castle_move = G1_SQUARE;
                 }
-                if board.combined_bbs[EMPTY_SQUARES_BB] & (WHITE_QUEENSIDE_CASTLE_EMPTY_SQUARES & !board.attacked_squares)
+                if board.combined_bbs[EMPTY_SQUARES_BB]
+                    & (WHITE_QUEENSIDE_CASTLE_EMPTY_SQUARES & !board.attacked_squares)
                     == WHITE_QUEENSIDE_CASTLE_EMPTY_SQUARES
                 {
                     queenside_castle_move = C1_SQUARE;
                 }
-            } else if board.side_to_move == BLACK && squares == E8_SQUARE
+            } else if board.side_to_move == BLACK
+                && squares == E8_SQUARE
                 && ((board.castle_rights & (G8_SQUARE | C8_SQUARE)).is_not_empty())
             {
-                if board.combined_bbs[EMPTY_SQUARES_BB] & (BLACK_KINGSIDE_CASTLE_EMPTY_SQUARES & !board.attacked_squares)
+                if board.combined_bbs[EMPTY_SQUARES_BB]
+                    & (BLACK_KINGSIDE_CASTLE_EMPTY_SQUARES & !board.attacked_squares)
                     == BLACK_KINGSIDE_CASTLE_EMPTY_SQUARES
                 {
                     kingside_castle_move = G8_SQUARE;
                 }
-                if board.combined_bbs[EMPTY_SQUARES_BB] & (BLACK_QUEENSIDE_CASTLE_EMPTY_SQUARES & !board.attacked_squares)
+                if board.combined_bbs[EMPTY_SQUARES_BB]
+                    & (BLACK_QUEENSIDE_CASTLE_EMPTY_SQUARES & !board.attacked_squares)
                     == BLACK_QUEENSIDE_CASTLE_EMPTY_SQUARES
                 {
                     queenside_castle_move = C8_SQUARE;
                 }
             }
         }
-        
+
         let moves = left_up
             | up
             | right_up
@@ -621,28 +634,28 @@ mod tests {
 
         #[test]
         fn cannot_castle_through_check() {
-            let b = init_board_from_fen("r2qkbnr/ppp1pppp/8/1b1pn3/P7/5N2/1PPP1PPP/RNBQK2R w KQkq - 0 1");
+            let b = init_board_from_fen(
+                "r2qkbnr/ppp1pppp/8/1b1pn3/P7/5N2/1PPP1PPP/RNBQK2R w KQkq - 0 1",
+            );
             let moves = MoveGen::gen_legal_moves(&b);
             assert_eq!(
                 moves
                     .iter()
-                    .find(|cm| {
-                        cm.from == E1_SQUARE && ((cm.to & G1_SQUARE).is_not_empty())
-                    }),
+                    .find(|cm| { cm.from == E1_SQUARE && ((cm.to & G1_SQUARE).is_not_empty()) }),
                 None
             );
         }
 
         #[test]
         fn cannot_castle_out_of_check() {
-            let b = init_board_from_fen("rnbqk1nr/2pp1ppp/pp6/1B2p3/1b1PP3/5N2/PPP2PPP/RNBQK2R w KQkq - 0 1");
+            let b = init_board_from_fen(
+                "rnbqk1nr/2pp1ppp/pp6/1B2p3/1b1PP3/5N2/PPP2PPP/RNBQK2R w KQkq - 0 1",
+            );
             let moves = MoveGen::gen_legal_moves(&b);
             assert_eq!(
                 moves
                     .iter()
-                    .find(|cm| {
-                        cm.from == E1_SQUARE && ((cm.to & G1_SQUARE).is_not_empty())
-                    }),
+                    .find(|cm| { cm.from == E1_SQUARE && ((cm.to & G1_SQUARE).is_not_empty()) }),
                 None
             );
         }
@@ -653,14 +666,14 @@ mod tests {
 
         #[test]
         fn it_works() {
-            let b = init_board_from_fen("r1bqkbnr/1pp2pp1/p1n4p/1B1pp1B1/4P3/3P1N1P/PPP2PP1/RN1QK2R b KQkq - 0 1");
+            let b = init_board_from_fen(
+                "r1bqkbnr/1pp2pp1/p1n4p/1B1pp1B1/4P3/3P1N1P/PPP2PP1/RN1QK2R b KQkq - 0 1",
+            );
             let moves = MoveGen::gen_legal_moves(&b);
             assert_eq!(
                 moves
                     .iter()
-                    .find(|cm| {
-                        cm.from == E8_SQUARE && ((cm.to & E7_SQUARE).is_not_empty())
-                    }),
+                    .find(|cm| { cm.from == E8_SQUARE && ((cm.to & E7_SQUARE).is_not_empty()) }),
                 None
             );
         }
@@ -680,8 +693,9 @@ mod tests {
 
         #[test]
         fn it_works() {
-            let b =
-                init_board_from_fen("rnbqkbnr/pppp1ppp/8/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR b KQkq - 0 1");
+            let b = init_board_from_fen(
+                "rnbqkbnr/pppp1ppp/8/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR b KQkq - 0 1",
+            );
             let pinned = MoveGen::find_pinned_pieces(&b);
 
             assert_eq!(pinned, F7_SQUARE);

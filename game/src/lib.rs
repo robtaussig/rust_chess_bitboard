@@ -197,7 +197,8 @@ impl Game {
             moves.push((EMPTY, chessmove.to));
         }
         self.board.switch_side_to_move();
-        let (checkers, pinned, attacked_squares) = MoveGen::calculate_derived_bitboards(&self.board);
+        let (checkers, pinned, attacked_squares) =
+            MoveGen::calculate_derived_bitboards(&self.board);
         self.board.checkers = checkers;
         self.board.pinned = pinned;
         self.board.attacked_squares = attacked_squares;
