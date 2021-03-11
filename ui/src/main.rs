@@ -17,7 +17,6 @@ extern crate movegen;
 use movegen::MoveGen;
 extern crate constants;
 use constants::*;
-use ggez;
 use ggez::event::{run, EventHandler, KeyCode, KeyMods};
 use ggez::graphics::{clear, present, Color};
 use ggez::input::mouse;

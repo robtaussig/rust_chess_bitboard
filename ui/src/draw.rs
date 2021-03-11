@@ -5,7 +5,6 @@ extern crate bitboard;
 use bitboard::BitBoard;
 extern crate constants;
 use constants::*;
-use ggez;
 use ggez::graphics::{draw, Color, DrawMode, DrawParam, Mesh, Rect};
 use ggez::mint::Point2;
 

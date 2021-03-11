@@ -13,7 +13,6 @@ use crate::bitboard::*;
 mod moment;
 use board::BoardParams;
 use moment::*;
-use rayon::prelude::*;
 
 #[derive(Clone)]
 pub struct Game {

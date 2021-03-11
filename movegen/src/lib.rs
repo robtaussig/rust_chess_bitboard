@@ -680,8 +680,6 @@ mod tests {
     }
 
     mod attacked_squares {
-        use super::*;
-
         #[test]
         fn it_works() {
             //TODO
